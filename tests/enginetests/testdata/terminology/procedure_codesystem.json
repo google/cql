@@ -1,0 +1,32 @@
+{
+  "resourceType": "CodeSystem",
+  "name": "Procedure Codesystem",
+  "title": "Procedure Codesystem",
+  "id": "https://example.com/cs/procedure",
+  "url": "https://example.com/cs/procedure",
+  "version": "1.0.0",
+  "identifier": [],
+  "status": "draft",
+  "date": "2024-02-22",
+  "description": "Various codes relates to procedures and operations.",
+  "content": "complete",
+  "concept": [
+    {
+      "code": "vitls",
+      "definition": "Vital Signs"
+    },
+    {
+      "code": "sys-bld-prs",
+      "display": "Systolic Blood Pressure",
+      "definition": "Systolic Blood Pressure"
+    },
+    {
+      "code": "invs",
+      "definition": "Invasive"
+    },
+    {
+      "code": "crdgy",
+      "definition": "Cardiology Department"
+    }
+  ]
+}

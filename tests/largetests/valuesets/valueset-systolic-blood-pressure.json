@@ -1,0 +1,11 @@
+{
+  "resourceType": "ValueSet",
+  "id": "valueset-systolic-blood-pressure",
+  "url": "valueset-systolic-blood-pressure",
+  "version": "1.0.0",
+  "expansion": {
+    "contains": [
+      { "system": "http://example.com", "code": "8480-6"}
+    ]
+  }
+}

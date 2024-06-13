@@ -1,0 +1,89 @@
+[
+  {
+    "libName": "M2",
+    "libVersion": "0.0.1",
+    "expressionDefinitions": {
+      "Coronary arteriosclerosis": {
+        "@type": "System.ValueSet",
+        "id": "url-valueset-coronary-arteriosclerosis",
+        "version": "1.0.0"
+      },
+      "Denominator": {
+        "@type": "System.Boolean",
+        "value": true
+      },
+      "Has coronary heart disease": {
+        "@type": "System.Boolean",
+        "value": true
+      },
+      "Initial Population": {
+        "@type": "System.Boolean",
+        "value": true
+      },
+      "Measurement Period": {
+        "@type": "Interval\u003cSystem.DateTime\u003e",
+        "low": {
+          "@type": "System.DateTime",
+          "value": "@2010-04-01T00:00:00.000Z"
+        },
+        "high": {
+          "@type": "System.DateTime",
+          "value": "@2024-03-31T00:00:00.000Z"
+        },
+        "lowClosed": true,
+        "highClosed": false
+      },
+      "Most recent blood pressure reading": {
+        "@type": "FHIR.Observation",
+        "value": {
+          "id": {
+            "value": "2"
+          },
+          "status": {
+            "value": "FINAL"
+          },
+          "code": {
+            "coding": [
+              {
+                "system": {
+                  "value": "http://example.com"
+                },
+                "code": {
+                  "value": "8480-6"
+                },
+                "display": {
+                  "value": "Systolic Blood Pressure"
+                }
+              }
+            ]
+          },
+          "effective": {
+            "dateTime": {
+              "valueUs": "1422835200000000",
+              "timezone": "UTC",
+              "precision": "DAY"
+            }
+          },
+          "value": {
+            "integer": {
+              "value": 140
+            }
+          }
+        }
+      },
+      "Most recent blood pressure reading below 150": {
+        "@type": "System.Boolean",
+        "value": true
+      },
+      "Numerator": {
+        "@type": "System.Boolean",
+        "value": true
+      },
+      "Systolic blood pressure": {
+        "@type": "System.ValueSet",
+        "id": "valueset-systolic-blood-pressure",
+        "version": "1.0.0"
+      }
+    }
+  }
+]

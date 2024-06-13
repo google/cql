@@ -1,0 +1,11 @@
+{
+  "resourceType": "ValueSet",
+  "id": "url-valueset-coronary-arteriosclerosis",
+  "url": "url-valueset-coronary-arteriosclerosis",
+  "version": "1.0.0",
+  "expansion": {
+    "contains": [
+      { "system": "http://hl7.org/fhir/sid/icd-10", "code": "I25.10"}
+    ]
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "1",
+        "gender": "male",
+        "birthDate": "1950-01-01"}
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1",
+        "status": "cancelled",
+        "code": {
+          "coding": [
+              {
+                "system": "http://example.com",
+                "code": "8480-6",
+                "display": "Systolic Blood Pressure"
+              }
+          ]
+        },
+        "effectiveDateTime": "2014-01-01"
+      }
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "2",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://example.com",
+              "code": "8480-6",
+              "display": "Systolic Blood Pressure"
+            }
+          ]
+        },
+        "effectiveDateTime": "2015-02-02"
+      }
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "3",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://example.com",
+              "code": "612",
+              "display": "Not blood pressure"
+            }
+          ]
+        },
+        "effectiveDateTime": "2016-03-03"
+      }
+    }
+  ]
+}

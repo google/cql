@@ -1,0 +1,179 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+
+package google.cql.proto;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/date.proto";
+import "google/type/timeofday.proto";
+import "protos/cql_types.proto";
+
+option java_multiple_files = true;
+option go_package = "github.com/google/cql/protos/cql_result_go_proto";
+
+message Libraries {
+  // List of CQL libraries that were evaluated.
+  repeated Library libraries = 1;
+}
+
+message Library {
+  // Qualified name of the library.
+  optional string name = 1;
+  // Version of the library.
+  optional string version = 2;
+  // Maps the named of the expression defintion to the result.
+  map<string, Value> expr_defs = 3;
+}
+
+message Value {
+  // Proto representation of a CQL Value. For CQL nulls the value oneof field
+  // will be unset.
+  // TODO(b/301606416): Consider supporting typed nulls.
+  oneof value {
+    bool boolean_value = 1;
+    string string_value = 2;
+    int32 integer_value = 3;
+    int64 long_value = 4;
+    double decimal_value = 5;
+    Quantity quantity_value = 6;
+    Ratio ratio_value = 7;
+    Date date_value = 8;
+    DateTime date_time_value = 9;
+    Time time_value = 10;
+    Interval interval_value = 11;
+    List list_value = 12;
+    Tuple tuple_value = 13;
+    Named named_value = 14;
+    CodeSystem code_system_value = 15;
+    ValueSet value_set_value = 16;
+    Code code_value = 17;
+    Concept concept_value = 18;
+  }
+}
+
+message Quantity {
+  optional double value = 1;
+  optional string unit = 2;
+}
+
+message Ratio {
+  optional Quantity numerator = 1;
+  optional Quantity denominator = 2;
+}
+
+message Date {
+  optional google.type.Date date = 1;
+  optional Precision precision = 2;
+  enum Precision {
+    PRECISION_UNSPECIFIED = 0;
+    PRECISION_YEAR = 1;
+    PRECISION_MONTH = 2;
+    PRECISION_DAY = 3;
+  }
+}
+
+message DateTime {
+  // date is normalized to UTC, which is more conventient and less confusing for
+  // most use cases. However, the orginal time zone is lost in the process.
+  optional google.protobuf.Timestamp date = 1;
+  optional Precision precision = 2;
+  enum Precision {
+    PRECISION_UNSPECIFIED = 0;
+    PRECISION_YEAR = 1;
+    PRECISION_MONTH = 2;
+    PRECISION_DAY = 3;
+    PRECISION_HOUR = 4;
+    PRECISION_MINUTE = 5;
+    PRECISION_SECOND = 6;
+    PRECISION_MILLISECOND = 7;
+  }
+}
+
+message Time {
+  optional google.type.TimeOfDay date = 1;
+  optional Precision precision = 2;
+  enum Precision {
+    PRECISION_UNSPECIFIED = 0;
+    PRECISION_HOUR = 1;
+    PRECISION_MINUTE = 2;
+    PRECISION_SECOND = 3;
+    PRECISION_MILLISECOND = 4;
+  }
+}
+
+message Interval {
+  optional Value low = 1;
+  optional Value high = 2;
+  optional bool low_inclusive = 3;
+  optional bool high_inclusive = 4;
+  // StaticType is used for the RuntimeType of the interval when the interval
+  // low and high are null. Otherwise, the RuntimeType can be inferred by
+  // inspecting the type of the low and high values.
+  // TODO(b/301606416): Remove this field once we support typed nulls.
+  optional IntervalType static_type = 5;
+}
+
+// List is wrapped in a message because oneof does not support repeated fields.
+message List {
+  repeated Value value = 1;
+  // StaticType is used for the RuntimeType of the list when the list is empty.
+  // Otherwise, the RuntimeType can be inferred by inspecting the type of each
+  // of the elements in the list.
+  optional ListType static_type = 2;
+}
+
+// Tuple is wrapped in a message because oneof does not support map fields.
+message Tuple {
+  map<string, Value> value = 1;
+  // RuntimeType could be a tuple type or if this was a Class instance could be
+  // the class type (FHIR.Patient, System.Quantity...).
+  oneof RuntimeType {
+    TupleType tuple_type = 2;
+    NamedType named_type = 3;
+  }
+}
+
+// Named is the proto representation of a CQL Named type (type defined in the
+// data model). google.protobuf.Any should be a type in FHIR Proto, but it hard
+// to work with. In the future, we may want to convert this to a map<string,
+// Value> simlilar to Tuple.
+message Named {
+  optional google.protobuf.Any value = 1;
+  optional NamedType runtime_type = 2;
+}
+
+message CodeSystem {
+  optional string id = 1;
+  optional string version = 2;
+}
+
+message ValueSet {
+  optional string id = 1;
+  optional string version = 2;
+  repeated CodeSystem code_systems = 3;
+}
+
+message Concept {
+  repeated Code codes = 1;
+  optional string display = 2;
+}
+
+message Code {
+  optional string code = 1;
+  optional string display = 2;
+  optional string system = 3;
+  optional string version = 4;
+}

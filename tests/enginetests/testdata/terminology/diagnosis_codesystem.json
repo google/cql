@@ -1,0 +1,33 @@
+{
+  "resourceType": "CodeSystem",
+  "name": "Diagnosis Codesystem",
+  "title": "Diagnosis Codesystem",
+  "id": "https://example.com/cs/diagnosis",
+  "url": "https://example.com/cs/diagnosis",
+  "version": "1.0.0",
+  "identifier": [],
+  "status": "draft",
+  "date": "2024-02-22",
+  "description": "Various codes relates to diagnosing conditions.",
+  "content": "complete",
+  "concept": [
+    {
+      "code": "gluc",
+      "definition": "Glucose in Blood"
+    },
+    {
+      "code": "snfl",
+      "definition": "The Sniffles"
+    },
+    {
+      "code": "sre-thrt",
+      "display": "A Sore Throat",
+      "definition": "A Sore Throat"
+    },
+    {
+      "code": "bld-prs",
+      "display": "Blood Pressure",
+      "definition": "Blood Pressure"
+    }
+  ]
+}

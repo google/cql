@@ -1,0 +1,41 @@
+// Copyright 2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+
+package google.cql.proto;
+
+import "google/protobuf/timestamp.proto";
+import "protos/cql_result.proto";
+
+option java_multiple_files = true;
+option go_package = "github.com/google/cql/protos/cql_beam_go_proto";
+
+// The results of the evaluated CQL for a particular id and timestamp.
+message BeamResult {
+  // The id of the result. Usually this is the Patient ID but can be overriden.
+  optional string id = 1;
+  // The timestamp at which the CQL was evaluated.
+  optional google.protobuf.Timestamp evaluation_timestamp = 2;
+  // The result of the CQL evaluation.
+  optional Libraries result = 3;
+}
+
+// Indicates an error that occured at some phase of CQL processing.
+message BeamError {
+  // A message describing the error.
+  optional string error_message = 1;
+  // A URI referencing the error's source. This could be a file path to a
+  // malformed input, resource ID, or other item.
+  optional string source_uri = 2;
+}

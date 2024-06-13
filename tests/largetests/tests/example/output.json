@@ -1,0 +1,81 @@
+[
+  {
+    "libName": "main",
+    "libVersion": "0.0.1",
+    "expressionDefinitions": {
+      "Most recent systolic blood pressure": {
+        "@type": "FHIR.Observation",
+        "value": {
+          "id": {
+            "value": "2"
+          },
+          "status": {
+            "value": "FINAL"
+          },
+          "code": {
+            "coding": [
+              {
+                "system": {
+                  "value": "http://example.com"
+                },
+                "code": {
+                  "value": "8480-6"
+                },
+                "display": {
+                  "value": "Systolic Blood Pressure"
+                }
+              }
+            ]
+          },
+          "effective": {
+            "dateTime": {
+              "valueUs": "1422835200000000",
+              "timezone": "UTC",
+              "precision": "DAY"
+            }
+          }
+        }
+      },
+      "Systolic blood pressure": {
+        "@type": "System.ValueSet",
+        "id": "valueset-systolic-blood-pressure",
+        "version": "1.0.0"
+      },
+      "Valid systolic blood pressures sorted by effective": [
+        {
+          "@type": "FHIR.Observation",
+          "value": {
+            "id": {
+              "value": "2"
+            },
+            "status": {
+              "value": "FINAL"
+            },
+            "code": {
+              "coding": [
+                {
+                  "system": {
+                    "value": "http://example.com"
+                  },
+                  "code": {
+                    "value": "8480-6"
+                  },
+                  "display": {
+                    "value": "Systolic Blood Pressure"
+                  }
+                }
+              ]
+            },
+            "effective": {
+              "dateTime": {
+                "valueUs": "1422835200000000",
+                "timezone": "UTC",
+                "precision": "DAY"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+]

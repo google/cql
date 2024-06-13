@@ -1,0 +1,88 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "1",
+        "gender": "male",
+        "birthDate": "1920-01-01"}
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1",
+        "status": "cancelled",
+        "code": {
+          "coding": [
+              {
+                "system": "http://example.com",
+                "code": "8480-6",
+                "display": "Systolic Blood Pressure"
+              }
+          ]
+        },
+        "valueInteger": 151,
+        "effectiveDateTime": "2014-01-01"
+      }
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "2",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://example.com",
+              "code": "8480-6",
+              "display": "Systolic Blood Pressure"
+            }
+          ]
+        },
+        "valueInteger": 140,
+        "effectiveDateTime": "2015-02-02"
+      }
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "3",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://example.com",
+              "code": "612",
+              "display": "Not blood pressure"
+            }
+          ]
+        },
+        "valueInteger": 100,
+        "effectiveDateTime": "2016-03-03"
+      }
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "8",
+        "code": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/icd-10",
+              "code": "I25.10",
+              "display": "Coronary heart disease"
+            }
+          ]
+        },
+        "onsetDateTime": "2009-02-02"
+      }
+    }
+  ]
+}
