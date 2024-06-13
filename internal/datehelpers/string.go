@@ -58,11 +58,8 @@ func DateTimeString(d time.Time, precision model.DateTimePrecision) (string, err
 	default:
 		return "", fmt.Errorf("unsupported precision in Date with value %v %w", precision, ErrUnsupportedPrecision)
 	}
-	timeZone, err := locationToTimeZoneString(d.Location())
-	if err != nil {
-		return "", err
-	}
-	return "@" + d.Format(dtFormat+timeZone), nil
+	tzFormat := "Z07:00" // uses "Z" for UTC timezones, -07:00 style for others.
+	return "@" + d.Format(dtFormat+tzFormat), nil
 }
 
 // TimeString returns a CQL Time string representation of a Time.
@@ -81,14 +78,4 @@ func TimeString(d time.Time, precision model.DateTimePrecision) (string, error) 
 		return "", fmt.Errorf("unsupported precision in Date with value %v %w", precision, ErrUnsupportedPrecision)
 	}
 	return d.Format(tFormat), nil
-}
-
-func locationToTimeZoneString(loc *time.Location) (string, error) {
-	if loc == nil {
-		return "", fmt.Errorf("internal error - loc must be set when calling locationToTimeZoneString")
-	}
-	if loc == time.UTC {
-		return zuluTZ, nil
-	}
-	return tz, nil
 }
