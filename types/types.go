@@ -659,17 +659,24 @@ func (t *Tuple) String() string {
 		return "Tuple<nil>"
 	}
 
+	// Deterministically order the types by type name.
+	elementKeys := make([]string, 0, len(t.ElementTypes))
+	for name := range t.ElementTypes {
+		elementKeys = append(elementKeys, name)
+	}
+	sort.Strings(elementKeys)
+
 	var sb strings.Builder
 	fmt.Fprint(&sb, "Tuple<")
 	i := 0
-	for name, t := range t.ElementTypes {
+	for _, name := range elementKeys {
 		if i > 0 {
 			fmt.Fprint(&sb, ", ")
 		}
 		if t == nil {
 			fmt.Fprintf(&sb, "%s: nil", name)
 		} else {
-			fmt.Fprintf(&sb, "%s: %s", name, t.String())
+			fmt.Fprintf(&sb, "%s: %s", name, t.ElementTypes[name].String())
 		}
 		i++
 	}
