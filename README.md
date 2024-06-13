@@ -2,7 +2,7 @@
   <h2 align=center>Clinical Quality Language Engine</h2>
   <p align="center">A experimental CQL execution engine for analyzing FHIR healthcare data at
 scale<p>
-  <p align="center"> 
+  <p align="center">
   <a href="https://godoc.org/github.com/google/cql">
     <img src="https://godoc.org/github.com/google/cql?status.svg" alt="Go Documentation" />
   </a>
