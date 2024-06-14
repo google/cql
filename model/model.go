@@ -736,6 +736,14 @@ type ToTime struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &ToTime{}
 
+// Count ELM expression from https://cql.hl7.org/09-b-cqlreference.html#count.
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Count struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &Count{}
+
 // CalculateAge CQL expression type
 type CalculateAge struct {
 	*UnaryExpression
@@ -1260,3 +1268,6 @@ func (a *Time) GetName() string { return "Time" }
 
 // GetName returns the name of the system operator.
 func (a *Today) GetName() string { return "Today" }
+
+// GetName returns the name of the system operator.
+func (c *Count) GetName() string { return "Count" }

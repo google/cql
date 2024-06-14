@@ -33,7 +33,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"AllTrue",
 				"AnyTrue",
 				"Avg",
-				"Count",
 				"Max",
 				"Median",
 				"Min",

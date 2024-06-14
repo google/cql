@@ -1029,6 +1029,17 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		// AGGREGATE FUNCTIONS - https://cql.hl7.org/09-b-cqlreference.html#aggregate-functions
+		{
+			name: "Count",
+			cql:  "Count({1, 2, 3})",
+			want: &model.Count{
+					UnaryExpression: &model.UnaryExpression{
+						Operand: model.NewList([]string{"1", "2", "3"}, types.Integer),
+						Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
 		// CLINICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#clinical-operators-3
 		{
 			name: "AgeInYears",

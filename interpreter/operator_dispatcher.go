@@ -423,6 +423,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalSuccessor,
 			},
 		}, nil
+	case *model.Count:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}},
+				Result:   i.evalCount,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}

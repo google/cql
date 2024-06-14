@@ -1365,6 +1365,20 @@ func (p *Parser) loadSystemOperators() error {
 				}
 			},
 		},
+		// AGGREGATE FUNCTIONS - https://cql.hl7.org/09-b-cqlreference.html#aggregate-functions
+		{
+			name: "Count",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}},
+			},
+			model: func() model.IExpression {
+				return &model.Count{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
 		// CLINICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#clinical-operators-3
 		{
 			name:     "AgeInYears",
