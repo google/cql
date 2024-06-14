@@ -749,16 +749,18 @@ func TestBuiltInFunctions(t *testing.T) {
 		{
 			name: "Contains",
 			cql:  "Contains({3}, 1)",
-			want: &model.Contains{
+			// The contains operator is optimized away and replaced with an in operator with the original
+			// operands reversed.
+			want: &model.In{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
+						model.NewLiteral("1", types.Integer),
 						&model.List{
 							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
 							List: []model.IExpression{
 								model.NewLiteral("3", types.Integer),
 							},
 						},
-						model.NewLiteral("1", types.Integer),
 					},
 					Expression: model.ResultType(types.Boolean),
 				},

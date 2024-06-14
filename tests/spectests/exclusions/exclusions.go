@@ -264,7 +264,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Before",
 				"Collapse",
 				"Expand",
-				"Contains",
 				"Ends",
 				"Except",
 				"Includes",
@@ -286,6 +285,9 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Width",
 			},
 			NamesExcludes: []string{
+				// TODO: b/342061715 - unsupported operators.
+				"TimeContainsFalse",
+				"TimeContainsTrue",
 				// TODO: b/342061783 - Got unexpected result.
 				"TimeInTrue",
 				"TimeInFalse",
@@ -310,6 +312,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TestOnOrBeforeDecimalFalse",
 				"TestOnOrBeforeQuantityTrue",
 				// TODO: b/342064453 - Ambiguous match.
+				"TestNullElement1",
 				"TestEqualNull",
 				"TestInNullBoundaries",
 			},
@@ -317,7 +320,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlListOperatorsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Contains",
 				"Descendents",
 				"Distinct",
 				"Except",
@@ -339,6 +341,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operator.
+				"ContainsNullLeft",
 				"In1Null",
 				"EquivalentABCAnd123",
 				"Equivalent123AndABC",

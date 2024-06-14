@@ -59,6 +59,14 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	switch t := r.(type) {
 	case *model.Coalesce:
 		return v.parseCoalesce(t, resolved.WrappedOperands)
+	case *model.Contains:
+		// If we reverse the operands we can treat contains as an In.
+		contains := t
+		r = &model.In{
+			Precision:        contains.Precision,
+			BinaryExpression: &model.BinaryExpression{Expression: contains.Expression},
+		}
+		resolved.WrappedOperands[0], resolved.WrappedOperands[1] = resolved.WrappedOperands[1], resolved.WrappedOperands[0]
 	case *model.Message:
 		if len(resolved.WrappedOperands) != 5 {
 			return nil, errors.New("internal error - resolving message function returned incorrect argument")
@@ -987,6 +995,8 @@ func (p *Parser) loadSystemOperators() error {
 		},
 		{
 			name: "Contains",
+			// Contains is a macro for the In operator but with the operands reversed.
+			// We convert to that model in resolveFunctions() above.
 			operands: [][]types.IType{
 				{convert.GenericList, convert.GenericType},
 				// TODO(b/301606416): Add support for ContainsYears, ContainsDays...

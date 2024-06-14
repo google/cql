@@ -816,10 +816,11 @@ func TestOperatorExpressions(t *testing.T) {
 		{
 			name: "MembershipExpression Contains With Precision",
 			cql:  "Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0) contains year of @2013-01-01T00:00:00.0",
-			want: &model.Contains{
+			want: &model.In{
 				Precision: model.YEAR,
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
+						model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
 						&model.Interval{
 							Low:           model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
 							High:          model.NewLiteral("@2014-01-01T00:00:00.0", types.DateTime),
@@ -827,7 +828,6 @@ func TestOperatorExpressions(t *testing.T) {
 							LowInclusive:  true,
 							HighInclusive: false,
 						},
-						model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
 					},
 					Expression: model.ResultType(types.Boolean),
 				},
@@ -836,9 +836,10 @@ func TestOperatorExpressions(t *testing.T) {
 		{
 			name: "MembershipExpression Contains Without Precision",
 			cql:  "Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0) contains @2013-01-01T00:00:00.0",
-			want: &model.Contains{
+			want: &model.In{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
+						model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
 						&model.Interval{
 							Low:           model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
 							High:          model.NewLiteral("@2014-01-01T00:00:00.0", types.DateTime),
@@ -846,7 +847,6 @@ func TestOperatorExpressions(t *testing.T) {
 							LowInclusive:  true,
 							HighInclusive: false,
 						},
-						model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
 					},
 					Expression: model.ResultType(types.Boolean),
 				},

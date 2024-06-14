@@ -1521,6 +1521,189 @@ func TestIntervalIncludedIn(t *testing.T) {
 	}
 }
 
+func TestIntervalContains(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// TODO: b/331225778 - Null support handling for Contains operator
+		{
+			name: "On inclusive bound date",
+			cql:  "Interval[@2020-03-25, @2022-04] contains month of @2020-03",
+			wantModel: &model.In{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.Boolean),
+					Operands: []model.IExpression{
+						model.NewLiteral("@2020-03", types.Date),
+						&model.Interval{
+							Low:           model.NewLiteral("@2020-03-25", types.Date),
+							High:          model.NewLiteral("@2022-04", types.Date),
+							LowInclusive:  true,
+							HighInclusive: true,
+							Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+						},
+					},
+				},
+				Precision: model.MONTH,
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Point arg null datetime",
+			cql:        "Interval[@2024-03-31T00:00:00.000Z, @2024-03-31T00:00:00.000Z] contains null",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "On inclusive bound datetime",
+			cql:        "Interval[@2024-03-31T00:00:00.000Z, @2025-03-31T00:00:00.000Z) contains month of @2024-03-31T00:00:00.000Z",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "On exclusive bound date",
+			cql:        "Interval(@2020-03-25, @2022-04) contains month of @2020-03",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "On exclusive bound datetime",
+			cql:        "Interval(@2024-03-31T00:00:00.000Z, @2025-03-31T00:00:00.000Z) contains month of @2024-03-31T00:00:00.000Z",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "On inclusive bound datetime second precision",
+			cql:        "Interval[@2024-03-31T00:00:00.000Z, @2024-03-31T00:00:05.000Z] contains second of @2024-03-31T00:00:00.000Z",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "On exclusive and inclusive bound",
+			cql:        "Interval(@2020-03, @2022-03] contains month of @2020-03",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Insufficient precision date",
+			cql:        "Interval[@2020-03-25, @2020-04] contains day of @2020-03",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Insufficient precision datetime",
+			cql:        "Interval[@2024-03-28T00:00:00.000Z, @2024-03-31T00:00:00.000Z] contains day of @2024-03",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Insufficient precision but for sure false",
+			cql:        "Interval[@2028-03-25, @2020-04] contains day of @2020-03",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Null inclusive bound is true",
+			cql:        "Interval[null, @2022-04) contains month of @2020-03",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Null inclusive bound but this is for sure false",
+			cql:        "Interval[null, @2022-04) contains month of @2025-03",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Null exclusive bound is null",
+			cql:        "Interval(null, @2022-04) contains month of @2021-03",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Null exclusive bound but this is for sure false",
+			cql:        "Interval(null, @2022-04) contains month of @2025-03",
+			wantResult: newOrFatal(t, false),
+		},
+		// No precision
+		{
+			name:       "No included in operator precision: On inclusive bound date",
+			cql:        "Interval[@2020-03-25, @2022-04) contains day of @2020-03-25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "No included in operator precision: On exclusive bound datetime",
+			cql:        "Interval(@2024-03-31T00:00:00.000Z, @2025-03-31T00:00:00.000Z) contains day of @2024-03-31T00:00:00.000Z",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "No included in operator precision with differing operand precision",
+			cql:        "Interval[@2020-03-25, @2022-04-25) contains @2020-03",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "interval contains integer",
+			cql:        "Interval[0, 100] contains 42",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Interval does not contain integer",
+			cql:        "Interval[0, 25] contains 42",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Interval contains integer on bounds",
+			cql:        "Interval[0, 25] contains 25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Interval on bounds not inclusive integer",
+			cql:        "Interval[0, 25) contains 25",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Integer before interval bounds not inclusive",
+			cql:        "Interval[0, 25) contains 24",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Interval not contains integer with null exlusive bounds",
+			cql:        "Interval[0, null) contains 25",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Interval contains double on upper bounds",
+			cql:        "Interval[1.0, 1.5] contains 1.5",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Interval not contains long",
+			cql:        "Interval[1L, 2L] contains 0L",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Interval contains quantity on bounds",
+			cql:        "Interval[1'cm', 2'cm') contains 1'cm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Functional syntax",
+			cql:        "Contains(Interval[0, 100], 42)",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestComparison_Error(t *testing.T) {
 	tests := []struct {
 		name                string

@@ -260,6 +260,7 @@ func (i *interpreter) evalCompareIntervalDateTimeInterval(be model.IBinaryExpres
 // in _precision_ (point Integer, argument Interval<Integer>) Boolean
 // in _precision_ (point Quantity, argument Interval<Quantity>) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#in
+// 'Contains' with the left and right args reversed is forwarded here.
 func evalInIntervalNumeral(b model.IBinaryExpression, pointObj, intervalObj result.Value) (result.Value, error) {
 	if result.IsNull(pointObj) {
 		return result.New(nil)
@@ -358,6 +359,7 @@ func compareNumeral[t float64 | int64 | int32](left, right t) comparison {
 // in _precision_ (point Date, argument Interval<Date>) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#in
 // 'IncludedIn' with left arg of point type is forwarded here.
+// 'Contains' with the left and right args reversed is forwarded here.
 func (i *interpreter) evalInIntervalDateTime(b model.IBinaryExpression, pointObj, intervalObj result.Value) (result.Value, error) {
 	m := b.(*model.In)
 	precision := model.DateTimePrecision(m.Precision)
