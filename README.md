@@ -46,11 +46,11 @@ Language:
 - Only the FHIR version 4.0.1 data model is supported
 - Only the Patient Context is supported
 - Not all system operators are supported
-- No support for Quantities with UCUM units
 - No support for Interval/List Promotion and Demotion
 - No support for related context retrieves
 - No support for uncertainties
 - No support for importing or exporting ELM
+- No support for Quantity unit conversion
 
 ## Getting Started
 
