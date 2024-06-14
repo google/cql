@@ -96,3 +96,21 @@ usage examples are documented at [cmd/repl/README.md](cmd/repl/README.md).
 If you are interested in how this engine was implemented see
 [docs/implementation.md](docs/implementation.md) for an overview of the
 codebase.
+
+## Contributors
+
+We would like to recognize those who were significant contributors to the
+ [initial squash commit](https://github.com/google/cql/commit/bf9849f80b57acea42612a1808d4461bb8412f93) of this project:
+
+**[Kai Bailey](https://github.com/kai-bailey)**, **[Suyash Kumar](https://github.com/suyashkumar)**,  **[Evan Gordon](https://github.com/evan-gordon)**, [Ryan Brush](https://github.com/rbrush),  [Lisa Yin](https://github.com/lisayin), Other Googlers
+
+These are in order of number of changes. Bolded contributors sent
+over 100 changes each to the initial commit.
+
+Tech Lead: [Suyash Kumar](https://github.com/suyashkumar) <br />
+Product Manager: [Chris Grenz](https://github.com/chrisgrenz) <br />
+Eng Manager: [Ed Nanale](https://github.com/enanale)
+
+Contributors since the initial squash commit can be seen in the [contributors tab](https://github.com/google/cql/graphs/contributors).
+
+Thank you to all contributors!
