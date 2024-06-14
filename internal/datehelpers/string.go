@@ -38,15 +38,18 @@ func DateString(d time.Time, precision model.DateTimePrecision) (string, error) 
 }
 
 // DateTimeString returns a CQL DateTime string representation of a DateTime.
+// For Year, Month, and Day precision, we remove the 'T' value but still include the timezone.
+// The correct behavior here is unclear in the spec but this seems like the correct behavior for
+// now.
 func DateTimeString(d time.Time, precision model.DateTimePrecision) (string, error) {
 	var dtFormat string
 	switch precision {
 	case model.YEAR:
-		dtFormat = dateTimeYear
+		dtFormat = dateYear
 	case model.MONTH:
-		dtFormat = dateTimeMonth
+		dtFormat = dateMonth
 	case model.DAY:
-		dtFormat = dateTimeDay
+		dtFormat = dateDay
 	case model.HOUR:
 		dtFormat = dateTimeHour
 	case model.MINUTE:

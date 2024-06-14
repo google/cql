@@ -395,6 +395,7 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "ToString",
 			operands: [][]types.IType{
+				{types.Any},
 				{types.String},
 				{types.Integer},
 				{types.Long},

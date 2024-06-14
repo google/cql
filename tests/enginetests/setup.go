@@ -146,6 +146,9 @@ func addFHIRHelpersLib(t testing.TB, lib string) []string {
 	return []string{lib, string(fhirHelpers)}
 }
 
+// defaultInterpreterConfig returns an interpreter.Config with the default values used in the
+// engine tests.
+// The evaluation timestamp is fixed at Jan 1, 2024 +04:00.
 func defaultInterpreterConfig(t testing.TB, p *parser.Parser) interpreter.Config {
 	return interpreter.Config{
 		DataModels:          p.DataModel(),

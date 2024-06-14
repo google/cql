@@ -119,3 +119,118 @@ func TestConcatenate(t *testing.T) {
 		})
 	}
 }
+
+func TestToString(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name:       "ToString(true)",
+			cql:        "ToString(true)",
+			wantResult: newOrFatal(t, "true"),
+		},
+		{
+			name:       "ToString(false)",
+			cql:        "ToString(false)",
+			wantResult: newOrFatal(t, "false"),
+		},
+		{
+			name:       "ToString(1)",
+			cql:        "ToString(1)",
+			wantResult: newOrFatal(t, "1"),
+		},
+		{
+			name:       "ToString(-1)",
+			cql:        "ToString(-1)",
+			wantResult: newOrFatal(t, "-1"),
+		},
+		{
+			name:       "ToString(100000L)",
+			cql:        "ToString(100000L)",
+			wantResult: newOrFatal(t, "100000"),
+		},
+		{
+			name:       "ToString(-100000L)",
+			cql:        "ToString(-100000L)",
+			wantResult: newOrFatal(t, "-100000"),
+		},
+		{
+			name:       "ToString(1.42)",
+			cql:        "ToString(1.42)",
+			wantResult: newOrFatal(t, "1.42"),
+		},
+		{
+			name:       "ToString(-1.42)",
+			cql:        "ToString(-1.42)",
+			wantResult: newOrFatal(t, "-1.42"),
+		},
+		{
+			name:       "ToString(1 'cm')",
+			cql:        "ToString(1 'cm')",
+			wantResult: newOrFatal(t, "1 'cm'"),
+		},
+		{
+			name:       "ToString(-1 'cm')",
+			cql:        "ToString(-1 'cm')",
+			wantResult: newOrFatal(t, "-1 'cm'"),
+		},
+		{
+			name:       "ToString(1'g':0.1'g')",
+			cql:        "ToString(1'g':0.1'g')",
+			wantResult: newOrFatal(t, "1 'g':0.1 'g'"),
+		},
+		{
+			name:       "ToString(@2022-01-03)",
+			cql:        "ToString(@2022-01-03)",
+			wantResult: newOrFatal(t, "2022-01-03"),
+		},
+		{
+			name:       "ToString(@2022-01-03T12:00:00Z)",
+			cql:        "ToString(@2022-01-03T12:00:00Z)",
+			wantResult: newOrFatal(t, "2022-01-03T12:00:00Z"),
+		},
+		{
+			name:       "ToString(DateTime(2022, 1, 3))",
+			cql:        "ToString(DateTime(2022, 1, 3))",
+			wantResult: newOrFatal(t, "2022-01-03+04:00"),
+		},
+		{
+			name:       "ToString(@T12:01:00)",
+			cql:        "ToString(@T12:01:00)",
+			wantResult: newOrFatal(t, "12:01:00"),
+		},
+		{
+			name:       "ToString(null as Date)",
+			cql:        "ToString(null as Date)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "ToString(null)",
+			cql:        "ToString(null)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}

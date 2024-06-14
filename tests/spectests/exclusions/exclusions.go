@@ -376,9 +376,12 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"StartsWith",
 				"Substring",
 				"Upper",
-				"toString tests",
 			},
-			NamesExcludes: []string{},
+			NamesExcludes: []string{
+				// TODO: b/346880550 - These test appear to have incorrect assertions.
+				"DateTimeToString1",
+				"DateTimeToString2",
+			},
 		},
 		"CqlTypesTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{},
@@ -400,7 +403,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"ToBoolean",
 				"ToConcept",
 				"ToInteger",
-				"ToString",
 				"ToTime",
 			},
 			NamesExcludes: []string{

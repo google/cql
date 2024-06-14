@@ -243,6 +243,49 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalToConceptList,
 			},
 		}, nil
+	case *model.ToString:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Any},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Boolean},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Integer},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Long},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Quantity},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Ratio},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Date},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.DateTime},
+				Result:   evalToString,
+			},
+			{
+				Operands: []types.IType{types.Time},
+				Result:   evalToString,
+			},
+		}, nil
 	case *model.End:
 		return []convert.Overload[evalUnarySignature]{
 			{
