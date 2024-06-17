@@ -21,6 +21,31 @@ import (
 
 // AGGREGATE FUNCTIONS - https://cql.hl7.org/09-b-cqlreference.html#aggregate-functions
 
+// AllTrue(argument List<Boolean>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#alltrue
+func (i *interpreter) evalAllTrue(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(true)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		bv, err := result.ToBool(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !bv {
+			return result.New(false)
+		}
+	}
+	return result.New(true)
+}
+
 // Count(argument List<T>) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#count
 func (i *interpreter) evalCount(m model.IUnaryExpression, operand result.Value) (result.Value, error) {

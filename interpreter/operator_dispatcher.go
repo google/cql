@@ -430,6 +430,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalSuccessor,
 			},
 		}, nil
+	case *model.AllTrue:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Boolean}},
+				Result:   i.evalAllTrue,
+			},
+		}, nil
 	case *model.Count:
 		return []convert.Overload[evalUnarySignature]{
 			{

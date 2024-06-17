@@ -1378,6 +1378,19 @@ func (p *Parser) loadSystemOperators() error {
 		},
 		// AGGREGATE FUNCTIONS - https://cql.hl7.org/09-b-cqlreference.html#aggregate-functions
 		{
+			name: "AllTrue",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Boolean}},
+			},
+			model: func() model.IExpression {
+				return &model.AllTrue{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name: "Count",
 			operands: [][]types.IType{
 				{&types.List{ElementType: types.Any}},
