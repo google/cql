@@ -262,6 +262,19 @@ func arithmeticDateTime(m model.IBinaryExpression, l result.DateTime, r result.Q
 	return result.DateTime{}, fmt.Errorf("internal error - unsupported quantity unit %v in arithmetic operation", cq.Unit)
 }
 
+// Truncate(arg Decimal) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#truncate
+func evalTruncate(_ model.IUnaryExpression, decimalVal result.Value) (result.Value, error) {
+	if result.IsNull(decimalVal) {
+		return result.New(nil)
+	}
+	d, err := result.ToFloat64(decimalVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(int32(d))
+}
+
 // -(argument Integer) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#negate
 func evalNegateInteger(m model.IUnaryExpression, obj result.Value) (result.Value, error) {

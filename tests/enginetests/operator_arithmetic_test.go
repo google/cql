@@ -385,6 +385,74 @@ func TestMultiply(t *testing.T) {
 	}
 }
 
+
+func TestTruncate(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name:       "Simple",
+			cql:        "Truncate(42.101)",
+			wantResult: newOrFatal(t, 42),
+		},
+		{
+			name:       "Negative decimal",
+			cql:        "Truncate(-101.42)",
+			wantResult: newOrFatal(t, -101),
+		},
+		{
+			name: "Integers",
+			cql:  "Truncate(2)",
+			wantModel: &model.Truncate{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: 		&model.ToDecimal{
+						UnaryExpression: &model.UnaryExpression{
+							Operand:    model.NewLiteral("2", types.Integer),
+							Expression: model.ResultType(types.Decimal),
+						},
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Zero",
+			cql:        "Truncate(0.0)",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "Null",
+			cql:        "Truncate(null as Decimal)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestTruncatedDivide(t *testing.T) {
 	tests := []struct {
 		name       string

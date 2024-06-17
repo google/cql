@@ -689,6 +689,17 @@ func (p *Parser) loadSystemOperators() error {
 			model:    divideModel(types.Quantity),
 		},
 		{
+			name:     "Truncate",
+			operands: [][]types.IType{{types.Decimal}},
+			model:    func() model.IExpression {
+				return &model.Truncate{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		{
 			name:     "TruncatedDivide",
 			operands: [][]types.IType{{types.Integer, types.Integer}},
 			model:    truncatedDivideModel(types.Integer),

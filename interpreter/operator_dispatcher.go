@@ -361,6 +361,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalNegateQuantity,
 			},
 		}, nil
+	case *model.Truncate:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalTruncate,
+			},
+		}, nil
 	case *model.Predecessor:
 		return []convert.Overload[evalUnarySignature]{
 			{

@@ -622,6 +622,11 @@ type Negate struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &Negate{}
 
+// Truncate ELM expression https://cql.hl7.org/04-logicalspecification.html#truncate
+type Truncate struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &Truncate{}
+
 // Exists is https://cql.hl7.org/04-logicalspecification.html#exists.
 type Exists struct{ *UnaryExpression }
 
@@ -1081,6 +1086,9 @@ func (e *Exists) GetName() string { return "Exists" }
 
 // GetName returns the name of the system operator.
 func (n *Not) GetName() string { return "Not" }
+
+// GetName returns the name of the system operator.
+func (a *Truncate) GetName() string { return "Truncate" }
 
 // GetName returns the name of the system operator.
 func (f *First) GetName() string { return "First" }

@@ -66,7 +66,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Precision",
 				"Power",
 				"Round",
-				"Truncate",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
