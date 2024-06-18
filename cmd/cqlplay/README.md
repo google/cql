@@ -34,7 +34,7 @@ go build -o cqlplay cmd/cqlplay/main.go
 ```
 
 ### Quick Start on GitHub Codespaces
-If you want to get up and running quickly without any local setup, you can run this playground on GitHub codespaces.
+If you want to get up and running quickly without any local setup, you can run this playground on [GitHub codespaces](https://github.com/features/codespaces):
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/google/cql?quickstart=1)
 
