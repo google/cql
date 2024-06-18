@@ -46,6 +46,31 @@ func (i *interpreter) evalAllTrue(m model.IUnaryExpression, operand result.Value
 	return result.New(true)
 }
 
+// AnyTrue(argument List<Boolean>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#anytrue
+func (i *interpreter) evalAnyTrue(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(false)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		bv, err := result.ToBool(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if bv {
+			return result.New(true)
+		}
+	}
+	return result.New(false)
+}
+
 // Count(argument List<T>) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#count
 func (i *interpreter) evalCount(m model.IUnaryExpression, operand result.Value) (result.Value, error) {

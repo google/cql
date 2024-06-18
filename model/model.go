@@ -749,6 +749,14 @@ type AllTrue struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &AllTrue{}
 
+// AnyTrue ELM expression from https://cql.hl7.org/04-logicalspecification.html#anytrue.
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type AnyTrue struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &AnyTrue{}
+
 // Count ELM expression from https://cql.hl7.org/09-b-cqlreference.html#count.
 // TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
 // UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
@@ -1287,6 +1295,9 @@ func (a *Today) GetName() string { return "Today" }
 
 // GetName returns the name of the system operator.
 func (a *AllTrue) GetName() string { return "AllTrue" }
+
+// GetName returns the name of the system operator.
+func (a *AnyTrue) GetName() string { return "AnyTrue" }
 
 // GetName returns the name of the system operator.
 func (c *Count) GetName() string { return "Count" }

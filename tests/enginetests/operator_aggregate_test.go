@@ -105,6 +105,83 @@ func TestAllTrue(t *testing.T) {
 	}
 }
 
+func TestAnyTrue(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "AnyTrue({true, true, true})",
+			cql:  "AnyTrue({true, true, true})",
+			wantModel: &model.AnyTrue{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"true", "true", "true"}, types.Boolean),
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "AnyTrue with null input",
+			cql:        "AnyTrue(null as List<Boolean>)",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "AnyTrue({true, true, null})",
+			cql:        "AnyTrue({true, true, null})",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "AnyTrue with empty list",
+			cql:        "AnyTrue({})",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "AnyTrue with all null list",
+			cql:        "AnyTrue({null, null})",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "AnyTrue with false in null list",
+			cql:        "AnyTrue({null, false})",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "AnyTrue with false in true list",
+			cql:        "AnyTrue({false, true})",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "AnyTrue where list contains null false and true",
+			cql:        "AnyTrue({false, null, true})",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestCount(t *testing.T) {
 	tests := []struct {
 		name       string

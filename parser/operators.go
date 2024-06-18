@@ -1391,6 +1391,19 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "AnyTrue",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Boolean}},
+			},
+			model: func() model.IExpression {
+				return &model.AnyTrue{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name: "Count",
 			operands: [][]types.IType{
 				{&types.List{ElementType: types.Any}},
