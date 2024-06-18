@@ -65,6 +65,10 @@ terminology server.
 > When using these tools with protected health information (PHI), please be sure
 to follow your organization's policies with respect to PHI.
 
+## Web Playground
+To quickly experiment with the CQL engine and editable FHIR data, try our local
+web playground in the browser at [cmd/cqlplay](cmd/cqlplay).
+
 ## CLI
 
 When intending to run the CQL engine locally over small populations or for quick

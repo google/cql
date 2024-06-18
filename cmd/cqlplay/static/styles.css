@@ -1,0 +1,94 @@
+/**
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+h2,h3 {
+  font-family: Roboto, Helvetica;
+}
+
+p {
+  font-family: Roboto, Helvetica;
+}
+
+body {
+  padding: 16px;
+}
+
+button {
+  padding: 5px;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.codeInput {
+  height: 500px;
+  margin: 0px;
+}
+
+.codeInputContainer {
+  background-color: #f6f2f0;
+  padding:16px;
+}
+
+code-input {
+  --padding: 0px !important;
+}
+
+.tabContent {
+  animation: fadeEffect 500ms;
+  padding:10px;
+}
+
+@keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+.tabholder {
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+
+.tabholder button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
+
+.tabholder button:hover {
+  background-color: #ddd;
+}
+
+.tab button.active {
+  background-color: #ccc;
+}
+
+.tabholder button.active {
+  background-color: #ccc;
+}
+
+.editor {
+  border: 1px solid #ccc;
+}
+
+.submitButton {
+  margin: 10px;
+}

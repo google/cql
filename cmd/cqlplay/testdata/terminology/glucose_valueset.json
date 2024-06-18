@@ -1,0 +1,15 @@
+{
+  "resourceType": "ValueSet",
+  "id": "https://example.com/vs/glucose",
+  "url": "https://example.com/vs/glucose",
+  "version": "1.0.0",
+  "expansion": {
+    "contains": [
+      {
+        "system": "https://example.com/cs/diagnosis",
+        "code": "gluc",
+        "display": "Glucose In Blood"
+      }
+    ]
+  }
+}
