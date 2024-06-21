@@ -38,7 +38,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"PopulationStdDev",
 				"PopulationVariance",
 				"StdDev",
-				"Sum",
 				"Variance",
 			},
 			NamesExcludes: []string{},

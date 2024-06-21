@@ -1034,9 +1034,19 @@ func TestBuiltInFunctions(t *testing.T) {
 			name: "Count",
 			cql:  "Count({1, 2, 3})",
 			want: &model.Count{
-					UnaryExpression: &model.UnaryExpression{
-						Operand: model.NewList([]string{"1", "2", "3"}, types.Integer),
-						Expression: model.ResultType(types.Integer),
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "Sum",
+			cql:  "Sum({1, 2, 3})",
+			want: &model.Sum{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
 				},
 			},
 		},

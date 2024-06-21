@@ -88,6 +88,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 			return nil, err
 		}
 		t.Expression = model.ResultType(&types.List{ElementType: listElemType})
+	case *model.Sum:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	case *model.Union:
 		listTypeLeft := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		listTypeRight := resolved.WrappedOperands[1].GetResultType().(*types.List)
@@ -691,7 +694,7 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name:     "Truncate",
 			operands: [][]types.IType{{types.Decimal}},
-			model:    func() model.IExpression {
+			model: func() model.IExpression {
 				return &model.Truncate{
 					UnaryExpression: &model.UnaryExpression{
 						Expression: model.ResultType(types.Integer),
@@ -1428,6 +1431,20 @@ func (p *Parser) loadSystemOperators() error {
 					UnaryExpression: &model.UnaryExpression{
 						Expression: model.ResultType(types.Integer),
 					},
+				}
+			},
+		},
+		{
+			name: "Sum",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Sum{
+					UnaryExpression: &model.UnaryExpression{},
 				}
 			},
 		},

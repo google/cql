@@ -16,6 +16,7 @@ package enginetests
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/cql/interpreter"
@@ -26,7 +27,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 )
-
 
 func TestAllTrue(t *testing.T) {
 	tests := []struct {
@@ -239,6 +239,121 @@ func TestCount(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
 				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestSum(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Sum({1, 2, 3})",
+			cql:  "Sum({1, 2, 3})",
+			wantModel: &model.Sum{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 6),
+		},
+		{
+			name:       "Sum({1, -1})",
+			cql:        "Sum({1, -1})",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "Sum with null input",
+			cql:        "Sum(null as List<Integer>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Sum({1, 2, null})",
+			cql:        "Sum({1, 2, null})",
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "Sum with empty list",
+			cql:        "Sum({} as List<Integer>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Sum with all null integer list",
+			cql:        "Sum({null as Integer, null as Integer})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Sum({2.1, 3.1})",
+			cql:        "Sum({2.1, 3.1})",
+			wantResult: newOrFatal(t, 5.2),
+		},
+		{
+			name:       "Sum({100L, 900L})",
+			cql:        "Sum({100L, 900L})",
+			wantResult: newOrFatal(t, int64(1000)),
+		},
+		{
+			name:       "Sum({2.1 'g', 3.1 'g'})",
+			cql:        "Sum({2.1 'g', 3.1 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 5.2, Unit: "g"}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestSum_Error(t *testing.T) {
+	tests := []struct {
+		name            string
+		cql             string
+		wantModel       model.IExpression
+		wantErrContains string
+	}{
+		{
+			name:            "Sum({2.1 'cm', 3.1 'g'})",
+			cql:             "Sum({2.1 'cm', 3.1 'g'})",
+			wantErrContains: "Quantity values with different units",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if !strings.Contains(err.Error(), tc.wantErrContains) {
+				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
 			}
 		})
 	}

@@ -452,6 +452,25 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalCount,
 			},
 		}, nil
+	case *model.Sum:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalSum,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Integer}},
+				Result:   i.evalSum,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Long}},
+				Result:   i.evalSum,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalSum,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}
