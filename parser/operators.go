@@ -88,6 +88,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 			return nil, err
 		}
 		t.Expression = model.ResultType(&types.List{ElementType: listElemType})
+	case *model.Avg:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	case *model.Sum:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
@@ -1418,6 +1421,18 @@ func (p *Parser) loadSystemOperators() error {
 					UnaryExpression: &model.UnaryExpression{
 						Expression: model.ResultType(types.Boolean),
 					},
+				}
+			},
+		},
+		{
+			name: "Avg",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Avg{
+					UnaryExpression: &model.UnaryExpression{},
 				}
 			},
 		},

@@ -757,6 +757,12 @@ type AnyTrue struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &AnyTrue{}
 
+// Avg ELM expression from https://cql.hl7.org/04-logicalspecification.html#avg.
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Avg struct{ *UnaryExpression }
+
 // Count ELM expression from https://cql.hl7.org/09-b-cqlreference.html#count.
 // TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
 // UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
@@ -1310,6 +1316,9 @@ func (a *AllTrue) GetName() string { return "AllTrue" }
 
 // GetName returns the name of the system operator.
 func (a *AnyTrue) GetName() string { return "AnyTrue" }
+
+// GetName returns the name of the system operator.
+func (a *Avg) GetName() string { return "Avg" }
 
 // GetName returns the name of the system operator.
 func (c *Count) GetName() string { return "Count" }

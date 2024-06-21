@@ -444,7 +444,17 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalAnyTrue,
 			},
 		}, nil
-
+	case *model.Avg:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalAvg,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalAvg,
+			},
+		}, nil
 	case *model.Count:
 		return []convert.Overload[evalUnarySignature]{
 			{

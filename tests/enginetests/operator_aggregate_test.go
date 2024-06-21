@@ -182,6 +182,78 @@ func TestAnyTrue(t *testing.T) {
 	}
 }
 
+func TestAvg(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Avg({1.0, 2.0, 3.0})",
+			cql:  "Avg({1.0, 2.0, 3.0})",
+			wantModel: &model.Avg{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.0", "2.0", "3.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "Avg({1.0, -1.0})",
+			cql:        "Avg({1.0, -1.0})",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Avg with null input",
+			cql:        "Avg(null as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Avg({1.0, 2.0, null})",
+			cql:        "Avg({1.0, 2.0, null})",
+			wantResult: newOrFatal(t, 1.5),
+		},
+		{
+			name:       "Avg with empty list",
+			cql:        "Avg({} as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Avg with all null decimal list",
+			cql:        "Avg({null as Decimal, null as Decimal})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Avg({2.5 'g', 3.5 'g', null as Quantity})",
+			cql:        "Avg({2.5 'g', 3.5 'g', null as Quantity})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 3.0, Unit: "g"}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestCount(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -74,6 +74,73 @@ func (i *interpreter) evalAnyTrue(m model.IUnaryExpression, operand result.Value
 	return result.New(false)
 }
 
+// Avg(argument List<Decimal>) Decimal
+// Avg(argument List<Quantity>) Quantity
+// https://cql.hl7.org/09-b-cqlreference.html#avg
+func (i *interpreter) evalAvg(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Avg(%v) operand is not a list", m.GetName())
+	}
+	switch lType.ElementType {
+	case types.Any:
+		// Special case for handling lists that contain only null runtime values.
+		return result.New(nil)
+	case types.Decimal:
+		var sum, count float64
+		for _, elem := range l {
+			if result.IsNull(elem) {
+				continue
+			}
+			v, err := result.ToFloat64(elem)
+			if err != nil {
+				return result.Value{}, err
+			}
+			count++
+			sum += v
+		}
+		if count == 0 {
+			return result.New(nil)
+		}
+		return result.New(sum / count)
+	case types.Quantity:
+		// Keep a running sum of found quantity values and then divide by the count at the end.
+		var resultQuantity *result.Quantity
+		var count float64
+		for _, elem := range l {
+			if result.IsNull(elem) {
+				continue
+			}
+			v, err := result.ToQuantity(elem)
+			if err != nil {
+				return result.Value{}, err
+			}
+			if resultQuantity == nil {
+				resultQuantity = &result.Quantity{Value: 0, Unit: v.Unit}
+			}
+			if resultQuantity.Unit != v.Unit {
+				return result.Value{}, fmt.Errorf("Avg(%v) Quantity operand has different units which is not supported, got %v and %v", m.GetName(), resultQuantity.Unit, v.Unit)
+			}
+			count++
+			resultQuantity.Value += v.Value
+		}
+		if resultQuantity == nil {
+			return result.New(nil)
+		}
+		resultQuantity.Value /= count
+		return result.New(*resultQuantity)
+	default:
+		return result.Value{}, fmt.Errorf("Avg(%v) operand is not a list of Decimal or Quantity", m.GetName())
+	}
+}
+
 // Count(argument List<T>) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#count
 func (i *interpreter) evalCount(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
