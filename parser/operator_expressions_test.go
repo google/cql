@@ -127,6 +127,24 @@ func TestOperatorExpressions(t *testing.T) {
 			},
 		},
 		{
+			name: "Arithmetic Power with different types",
+			cql:  "4.0 ^ 2",
+			want: &model.Power{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("4.0", types.Decimal),
+						&model.ToDecimal{
+							UnaryExpression: &model.UnaryExpression{
+								Operand:    model.NewLiteral("2", types.Integer),
+								Expression: model.ResultType(types.Decimal),
+							},
+						},
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
 			name: "Arithmetic Truncated Divide",
 			cql:  "40 div 3",
 			want: &model.TruncatedDivide{

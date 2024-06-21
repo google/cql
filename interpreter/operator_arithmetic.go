@@ -17,6 +17,7 @@ package interpreter
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
 	"time"
 
@@ -186,6 +187,68 @@ func arithmetic[t float64 | int64 | int32](m model.IBinaryExpression, l, r t) (r
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Arithmetic Expression %v", m)
 }
 
+// ^(left Integer, right Integer) Integer
+// ^(left Long, right Long) Long
+// ^(left Decimal, right Decimal) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#power
+// In this case because we need different logic for different types, we aren't using the
+// evalArithmeticInteger function.
+func evalPower(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	switch m.GetResultType() {
+	case types.Integer:
+		l, r, err := applyToValues(lObj, rObj, result.ToInt32)
+		if err != nil {
+			return result.Value{}, err
+		}
+		bigPow := bigIntPow(int64(l), int64(r))
+		if _, ok := bigPow.(float64); ok {
+			return result.New(bigPow)
+		}
+		return result.New(int32(bigPow.(int64)))
+	case types.Long:
+		l, r, err := applyToValues(lObj, rObj, result.ToInt64)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(bigIntPow(l, r))
+	case types.Decimal:
+		l, r, err := applyToValues(lObj, rObj, result.ToFloat64)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(math.Pow(l, r))
+	default:
+		return result.Value{}, fmt.Errorf("internal error - unsupported type %v", m.GetResultType())
+	}
+}
+
+// bigIntPow performs integer exponentiation on big ints using the big package.
+// Returns a float64 if the right hand side is negative, otherwise returns an int64.
+// We do this because Golang does not have native support for exponents on integers.
+func bigIntPow(l, r int64) any {
+	if r == 0 {
+		return int64(1)
+	}
+	if r == 1 {
+		return l
+	}
+	exponentNegative := r < 0
+	if exponentNegative {
+		r = -r
+	}
+	bigL := big.NewInt(l)
+	bigR := big.NewInt(r)
+	bigResult := new(big.Int)
+	bigResult.Exp(bigL, bigR, nil)
+	if exponentNegative {
+		return 1.0 / float64(bigResult.Int64())
+	}
+	return bigResult.Int64()
+}
+
 // TODO(b/319156186): Add support for converting quantities between different units.
 // TODO(b/319333058): Add support for Date + Quantity arithmetic.
 // TODO(b/319525986): Add support for additional arithmetic for Quantities.
@@ -206,7 +269,7 @@ func arithmeticQuantity(m model.IBinaryExpression, l, r result.Quantity) (result
 		return result.New(result.Quantity{Value: l.Value / r.Value, Unit: model.ONEUNIT})
 	case *model.Modulo:
 		if l.Unit != r.Unit {
-		return result.Value{}, fmt.Errorf("internal error - quantity modulo with different units unsupported, got units: %s and %s", l.Unit, r.Unit)
+			return result.Value{}, fmt.Errorf("internal error - quantity modulo with different units unsupported, got units: %s and %s", l.Unit, r.Unit)
 		}
 		if r.Value == 0 {
 			return result.New(nil)

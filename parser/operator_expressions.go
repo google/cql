@@ -521,6 +521,18 @@ func (v *visitor) parseConcatenate(left model.IExpression, right model.IExpressi
 	return m, nil
 }
 
+func (v *visitor) VisitPowerExpressionTerm(ctx *cql.PowerExpressionTermContext) model.IExpression {
+	name := ctx.GetChild(1).(antlr.TerminalNode).GetText()
+	if name != "^" {
+		return v.badExpression("internal error - grammar should not allow this PowerExpressionTerm", ctx)
+	}
+	m, err := v.parseFunction("", "Power", []antlr.Tree{ctx.ExpressionTerm(0), ctx.ExpressionTerm(1)}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+	return m
+}
+
 func (v *visitor) VisitMultiplicationExpressionTerm(ctx *cql.MultiplicationExpressionTermContext) model.IExpression {
 	name := ctx.GetChild(1).(antlr.TerminalNode).GetText()
 	var m model.IExpression

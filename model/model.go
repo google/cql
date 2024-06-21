@@ -882,6 +882,9 @@ type Divide struct{ *BinaryExpression }
 // Modulo ELM Expression https://cql.hl7.org/04-logicalspecification.html#modulo
 type Modulo struct{ *BinaryExpression }
 
+// Power ELM Expression https://cql.hl7.org/04-logicalspecification.html#power
+type Power struct{ *BinaryExpression }
+
 // TruncatedDivide ELM Expression https://cql.hl7.org/04-logicalspecification.html#truncateddivide
 type TruncatedDivide struct{ *BinaryExpression }
 
@@ -1221,6 +1224,9 @@ func (a *Divide) GetName() string { return "Divide" }
 
 // GetName returns the name of the system operator.
 func (a *Modulo) GetName() string { return "Modulo" }
+
+// GetName returns the name of the system operator.
+func (a *Power) GetName() string { return "Power" }
 
 // GetName returns the name of the system operator.
 func (a *TruncatedDivide) GetName() string { return "TruncatedDivide" }

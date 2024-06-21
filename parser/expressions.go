@@ -100,6 +100,8 @@ func (v *visitor) VisitExpression(tree antlr.Tree) model.IExpression {
 		m = v.VisitAdditionExpressionTerm(t)
 	case *cql.MultiplicationExpressionTermContext:
 		m = v.VisitMultiplicationExpressionTerm(t)
+	case *cql.PowerExpressionTermContext:
+		m = v.VisitPowerExpressionTerm(t)
 	case *cql.TimeUnitExpressionTermContext:
 		m = v.VisitTimeUnitExpressionTerm(t)
 	case *cql.TupleSelectorTermContext:

@@ -506,6 +506,25 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalArithmeticQuantity,
 			},
 		}, nil
+	case *model.Power:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Integer, types.Integer},
+				Result:   evalPower,
+			},
+			{
+				Operands: []types.IType{types.Long, types.Long},
+				Result:   evalPower,
+			},
+			{
+				Operands: []types.IType{types.Decimal, types.Decimal},
+				Result:   evalPower,
+			},
+			{
+				Operands: []types.IType{types.Quantity, types.Quantity},
+				Result:   evalPower,
+			},
+		}, nil
 	case *model.Divide:
 		return []convert.Overload[evalBinarySignature]{
 			{

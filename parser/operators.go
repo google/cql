@@ -740,6 +740,21 @@ func (p *Parser) loadSystemOperators() error {
 			model:    modModel(types.Quantity),
 		},
 		{
+			name:     "Power",
+			operands: [][]types.IType{{types.Integer, types.Integer}},
+			model:    powerModel(types.Integer),
+		},
+		{
+			name:     "Power",
+			operands: [][]types.IType{{types.Long, types.Long}},
+			model:    powerModel(types.Long),
+		},
+		{
+			name:     "Power",
+			operands: [][]types.IType{{types.Decimal, types.Decimal}},
+			model:    powerModel(types.Decimal),
+		},
+		{
 			name: "Predecessor",
 			operands: [][]types.IType{
 				{types.Integer},
@@ -1985,6 +2000,16 @@ func truncatedDivideModel(resultType types.System) func() model.IExpression {
 func modModel(resultType types.System) func() model.IExpression {
 	return func() model.IExpression {
 		return &model.Modulo{
+			BinaryExpression: &model.BinaryExpression{
+				Expression: model.ResultType(resultType),
+			},
+		}
+	}
+}
+
+func powerModel(resultType types.System) func() model.IExpression {
+	return func() model.IExpression {
+		return &model.Power{
 			BinaryExpression: &model.BinaryExpression{
 				Expression: model.ResultType(resultType),
 			},

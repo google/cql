@@ -668,6 +668,96 @@ func TestMod(t *testing.T) {
 	}
 }
 
+func TestPower(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name:       "Integers Zero",
+			cql:        "0 ^ 0",
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name: "Integers",
+			cql:  "5 ^ 2",
+			wantModel: &model.Power{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("5", types.Integer),
+						model.NewLiteral("2", types.Integer),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 25),
+		},
+		{
+			name:       "Left arg negative",
+			cql:        "-5 ^ 2",
+			wantResult: newOrFatal(t, 25),
+		},
+		{
+			name:       "Right arg negative",
+			cql:        "5 ^ -2",
+			wantResult: newOrFatal(t, 1.0/25.0),
+		},
+		{
+			name:       "Right arg negative decimal",
+			cql:        "25 ^ -0.5",
+			wantResult: newOrFatal(t, .2),
+		},
+		{
+			name:       "Right arg negative long",
+			cql:        "5 ^ -2L",
+			wantResult: newOrFatal(t, 1.0/25.0),
+		},
+		{
+			name:       "Longs Zero",
+			cql:        "2L ^ 2L",
+			wantResult: newOrFatal(t, int64(4)),
+		},
+		{
+			name:       "Longs",
+			cql:        "5L ^ 2L",
+			wantResult: newOrFatal(t, int64(25)),
+		},
+		{
+			name:       "Decimals",
+			cql:        "2.5 ^ 2.0",
+			wantResult: newOrFatal(t, 6.25),
+		},
+		{
+			name:       "Functional Syntax",
+			cql:        "Power(2, 2)",
+			wantResult: newOrFatal(t, 4),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestMaximum(t *testing.T) {
 	tests := []struct {
 		name       string

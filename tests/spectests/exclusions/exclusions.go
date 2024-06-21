@@ -62,13 +62,13 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"LowBoundary",
 				"Ln",
 				"Precision",
-				"Power",
 				"Round",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
 				"Divide103",
 				"Multiply1CMBy2CM",
+				"Power2DToNeg2DEquivalence",
 				// TODO: b/342061606 - Unit conversion is not supported.
 				"Divide1Q1",
 				"Divide10Q5I",
@@ -412,34 +412,9 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"ValueLiteralsAndSelectors.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{},
 			NamesExcludes: []string{
-				// TODO: b/342061715 - unsupported operator.
-				"Integer10Pow9",
-				"IntegerPos10Pow9",
-				"IntegerNeg10Pow9",
-				"Integer2Pow31ToZero1IntegerMaxValue",
-				"IntegerPos2Pow31ToZero1IntegerMaxValue",
-				"IntegerNeg2Pow31ToZero1",
-				"IntegerNeg2Pow31IntegerMinValue",
-				"Decimal10Pow9",
-				"DecimalPos10Pow9",
-				"DecimalNeg10Pow9",
-				"Decimal2Pow31ToZero1",
-				"DecimalPos2Pow31ToZero1",
-				"DecimalNeg2Pow31ToZero1",
-				"Decimal2Pow31",
-				"DecimalPos2Pow31",
-				"DecimalNeg2Pow31",
-				"Decimal2Pow31ToInf1",
-				"DecimalPos2Pow31ToInf1",
-				"DecimalNeg2Pow31ToInf1",
-				"DecimalOneStep",
-				"DecimalPosOneStep",
+				// TODO: b/342061715 - unsupported operator. These return a decimal
+				// value at runtime but expects an integer. This operator should probably return a choice type.
 				"DecimalNegOneStep",
-				"DecimalTwoStep",
-				"DecimalPosTwoStep",
-				"DecimalNegTwoStep",
-				"DecimalTenStep",
-				"DecimalPosTenStep",
 				"DecimalNegTenStep",
 			},
 		},
