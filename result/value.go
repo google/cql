@@ -948,13 +948,22 @@ func inferListType(l []Value, staticType types.IType) types.IType {
 	// https://cql.hl7.org/03-developersguide.html#literals-and-selectors, if necessary for a List
 	// literal without a type specifier.
 	//
-	// At runtime, we simply return the runtime type of the first element, or fall back to the
-	// static type if the list is empty.
+	// There are a few cases to inferring the list type:
+	// 1. If the list is empty, we fall back to the static type.
+	// 2. We return the first non-null element from the list so that we can support lists that contain
+	// nulls. Mixed lists are still not fully supported.
+	// 3. If the list contains only nulls, return the runtime type of the first null.
 	// TODO(b/326277425): support mixed lists that may have a choice result type.
 	if len(l) == 0 {
 		// Because we fall back to a static type, this might be a choice type, even though mixed lists
 		// are not fully supported yet.
 		return staticType
+	}
+	for _, v := range l {
+		t := v.RuntimeType()
+		if t != types.Any {
+			return &types.List{ElementType: t}
+		}
 	}
 	return &types.List{ElementType: l[0].RuntimeType()}
 }

@@ -1190,23 +1190,56 @@ func TestRuntimeType(t *testing.T) {
 		wantRuntimeType types.IType
 	}{
 		{
-			name:            "Empty list falls back to static type",
-			input:           newOrFatal(t, List{Value: []Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+			name: "Empty list falls back to static type",
+			input: newOrFatal(
+				t,
+				List{
+					Value:      []Value{},
+					StaticType: &types.List{ElementType: types.Integer},
+				},
+			),
 			wantRuntimeType: &types.List{ElementType: types.Integer},
 		},
 		{
-			name:            "List runtime type is inferred for a non-empty list",
-			input:           newOrFatal(t, List{Value: []Value{newOrFatal(t, 3), newOrFatal(t, 4)}, StaticType: &types.List{ElementType: &types.Choice{ChoiceTypes: []types.IType{types.Integer, types.String}}}}),
+			name: "List runtime type is inferred for a non-empty list",
+			input: newOrFatal(
+				t,
+				List{
+					Value:      []Value{newOrFatal(t, 3), newOrFatal(t, 4)},
+					StaticType: &types.List{ElementType: &types.Choice{ChoiceTypes: []types.IType{types.Integer, types.String}}}},
+			),
 			wantRuntimeType: &types.List{ElementType: types.Integer},
 		},
 		{
-			name:            "Interval with two nulls falls back to static type",
-			input:           newOrFatal(t, Interval{Low: newOrFatal(t, nil), High: newOrFatal(t, nil), StaticType: &types.Interval{PointType: types.Integer}}),
+			name: "List runtime type is inferred from first non-null value",
+			input: newOrFatal(
+				t,
+				List{
+					Value:      []Value{newOrFatal(t, nil), newOrFatal(t, nil), newOrFatal(t, 4)},
+					StaticType: &types.List{ElementType: &types.Choice{ChoiceTypes: []types.IType{types.Integer}}}},
+			),
+			wantRuntimeType: &types.List{ElementType: types.Integer},
+		},
+		{
+			name: "Interval with two nulls falls back to static type",
+			input: newOrFatal(
+				t,
+				Interval{
+					Low:        newOrFatal(t, nil),
+					High:       newOrFatal(t, nil),
+					StaticType: &types.Interval{PointType: types.Integer}},
+			),
 			wantRuntimeType: &types.Interval{PointType: types.Integer},
 		},
 		{
-			name:            "Interval runtime type inferred for non-null values",
-			input:           newOrFatal(t, Interval{Low: newOrFatal(t, 1), High: newOrFatal(t, nil), StaticType: &types.Interval{PointType: &types.Choice{ChoiceTypes: []types.IType{types.Integer, types.Date}}}}),
+			name: "Interval runtime type inferred for non-null values",
+			input: newOrFatal(
+				t,
+				Interval{
+					Low:        newOrFatal(t, 1),
+					High:       newOrFatal(t, nil),
+					StaticType: &types.Interval{PointType: &types.Choice{ChoiceTypes: []types.IType{types.Integer, types.Date}}}},
+			),
 			wantRuntimeType: &types.Interval{PointType: types.Integer},
 		},
 	}
