@@ -138,6 +138,34 @@ func evalToString(_ model.IUnaryExpression, operand result.Value) (result.Value,
 	}
 }
 
+// Split(stringToSplit String, separator String) List<String>
+// https://cql.hl7.org/09-b-cqlreference.html#split
+func (i *interpreter) evalSplit(m model.IBinaryExpression, left, right result.Value) (result.Value, error) {
+	if result.IsNull(left) {
+		return result.New(nil)
+	}
+	if result.IsNull(right) {
+		return result.New(result.List{Value: []result.Value{left}, StaticType: &types.List{ElementType: types.String}})
+	}
+
+	s, sep, err := applyToValues(left, right, result.ToString)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	splits := strings.Split(s, sep)
+
+	l := result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.String}}
+	for _, split := range splits {
+		item, err := result.New(split)
+		if err != nil {
+			return result.Value{}, err
+		}
+		l.Value = append(l.Value, item)
+	}
+	return result.New(l)
+}
+
 // convert a quantity value to a string
 func quantityToString(q result.Quantity) string {
 	f := strconv.FormatFloat(q.Value, 'f', -1, 64)

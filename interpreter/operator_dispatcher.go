@@ -783,6 +783,13 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalCalculateAgeAtDateTime,
 			},
 		}, nil
+	case *model.Split:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String},
+				Result:   i.evalSplit,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Binary Expression %v", m.GetName())
 	}

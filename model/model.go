@@ -912,6 +912,11 @@ type Intersect struct{ *BinaryExpression }
 // Union is a nary expression but we are only supporting two operands.
 type Union struct{ *BinaryExpression }
 
+// Split ELM Expression https://cql.hl7.org/04-logicalspecification.html#split
+// Split is an OperatorExpression in ELM, but we're modeling it as a BinaryExpression since in CQL
+// it always takes two arguments.
+type Split struct{ *BinaryExpression }
+
 // BinaryExpressionWithPrecision represents a BinaryExpression with a precision property.
 type BinaryExpressionWithPrecision struct {
 	*BinaryExpression
@@ -1325,3 +1330,6 @@ func (c *Count) GetName() string { return "Count" }
 
 // GetName returns the name of the system operator.
 func (a *Sum) GetName() string { return "Sum" }
+
+// GetName returns the name of the system operator.
+func (a *Split) GetName() string { return "Split" }

@@ -234,3 +234,74 @@ func TestToString(t *testing.T) {
 		})
 	}
 }
+
+func TestSplit(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Split('A,B,C', ',')",
+			cql:  "Split('A,B,C', ',')",
+			wantModel: &model.Split{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("A,B,C", types.String),
+						model.NewLiteral(",", types.String),
+					},
+					Expression: model.ResultType(
+						&types.List{ElementType: types.String},
+					),
+				},
+			},
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, "A"), newOrFatal(t, "B"), newOrFatal(t, "C")}, StaticType: &types.List{ElementType: types.String}}),
+		},
+		{
+			name:       "Split with stringToSplit=null",
+			cql:        "Split(null, ',')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Split with seperator = null",
+			cql:        "Split('test', null)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, "test")}, StaticType: &types.List{ElementType: types.String}}),
+		},
+		{
+			name:       "Split with seperator not found in stringToSplit",
+			cql:        "Split('test abc', ',')",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, "test abc")}, StaticType: &types.List{ElementType: types.String}}),
+		},
+		{
+			name:       "Split with both operands null",
+			cql:        "Split(null, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Split with both multi-character seperator",
+			cql:        "Split('a//b', '//')",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, "a"), newOrFatal(t, "b")}, StaticType: &types.List{ElementType: types.String}}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}

@@ -369,7 +369,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Matches",
 				"PositionOf",
 				"ReplaceMatches",
-				"Split",
 				"StartsWith",
 				"Substring",
 				"Upper",
