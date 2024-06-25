@@ -10,6 +10,9 @@ sharding datasets, and other such tasks. See these
 [docs](https://cloud.google.com/dataflow/docs/concepts/beam-programming-model)
 for more information on Apache Beam.
 
+**Warning: When using these tools with protected health information (PHI),
+please be sure to follow your organization's policies with respect to PHI.**
+
 ## Running
 
 The CQL on Beam pipeline is currently limited to local file system IO. The
