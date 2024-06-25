@@ -7,6 +7,9 @@ The CLI is primarily designed for executing single patient or small population
 workflows. For larger population sets the scalable beam job is a more
 appropriate solution.
 
+**Warning: When using these tools with protected health information (PHI),
+please be sure to follow your organization's policies with respect to PHI.**
+
 ## Running
 
 To build the program from source run the following from the root of the

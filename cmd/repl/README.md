@@ -2,6 +2,9 @@
 
 A REPL CLI for interacting with the CQL engine. This can be a useful tool for quickly iterating while authoring CQL measures.
 
+**Warning: When using these tools with protected health information (PHI),
+please be sure to follow your organization's policies with respect to PHI.**
+
 ## Running
 
 To build the program from source run the following from the root of the
