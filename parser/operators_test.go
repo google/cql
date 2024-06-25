@@ -455,6 +455,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Arithmetic Floor",
+			cql:  "Floor(41.1)",
+			want: &model.Floor{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("41.1", types.Decimal),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "Arithmetic Addition",
 			cql:  "Add(1, 2)",
 			want: &model.Add{

@@ -116,6 +116,22 @@ func evalCeiling(_ model.IUnaryExpression, obj result.Value) (result.Value, erro
 	return result.New(int32(math.Ceil(val)))
 }
 
+// Floor(argument Decimal) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#floor
+func evalFloor(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToFloat64(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if val < math.MinInt32 || val >= math.MaxInt32+1 {
+		return result.New(nil)
+	}
+	return result.New(int32(math.Floor(val)))
+}
+
 // op(left Integer, right Integer) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#add
 // https://cql.hl7.org/09-b-cqlreference.html#subtract

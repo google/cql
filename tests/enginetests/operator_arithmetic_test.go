@@ -241,6 +241,109 @@ func TestCeiling(t *testing.T) {
 	}
 }
 
+func TestFloor(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Decimal",
+			cql:  "Floor(42.1)",
+			wantModel: &model.Floor{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("42.1", types.Decimal),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 42),
+		},
+		{
+			name:       "Negative",
+			cql:        "Floor(-2.1)",
+			wantResult: newOrFatal(t, -3),
+		},
+		{
+			name:       "Zero",
+			cql:        "Floor(0.0)",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "Integer",
+			cql:        "Floor(2)",
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Minimum Integer",
+			cql:        "Floor(-2147483648)",
+			wantResult: newOrFatal(t, -2147483648),
+		},
+		{
+			name:       "Minimum Decimal out of range",
+			cql:        "Floor(-99999999999999999999.99999999)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Maximum Decimal out of range",
+			cql:        "Floor(99999999999999999999.99999999)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Just less than min int32",
+			cql:        "Floor(-2147483648.5)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Just more than max int32",
+			cql:        "Floor(2147483647.5)",
+			wantResult: newOrFatal(t, math.MaxInt32),
+		},
+		{
+			name:       "More than one more than max int32",
+			cql:        "Floor(2147483648.5)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "equal to min int32",
+			cql:        "Floor(-2147483648.0)",
+			wantResult: newOrFatal(t, math.MinInt32),
+		},
+		{
+			name:       "equal to max int32",
+			cql:        "Floor(2147483647.0)",
+			wantResult: newOrFatal(t, math.MaxInt32),
+		},
+		{
+			name:       "Null",
+			cql:        "Floor(null as Decimal)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestAdd(t *testing.T) {
 	tests := []struct {
 		name       string

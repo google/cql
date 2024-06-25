@@ -657,6 +657,9 @@ type Abs struct{ *UnaryExpression }
 // Ceiling is https://cql.hl7.org/04-logicalspecification.html#ceiling.
 type Ceiling struct{ *UnaryExpression }
 
+// Floor  is https://cql.hl7.org/04-logicalspecification.html#floor.
+type Floor struct{ *UnaryExpression }
+
 // SingletonFrom is https://cql.hl7.org/04-logicalspecification.html#singletonfrom.
 type SingletonFrom struct{ *UnaryExpression }
 
@@ -1122,6 +1125,9 @@ func (a *Abs) GetName() string { return "Abs" }
 
 // GetName returns the name of the system operator.
 func (a *Ceiling) GetName() string { return "Ceiling" }
+
+// GetName returns the name of the system operator.
+func (a *Floor) GetName() string { return "Floor" }
 
 // GetName returns the name of the system operator.
 func (a *As) GetName() string { return "As" }
