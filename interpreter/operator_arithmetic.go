@@ -132,6 +132,22 @@ func evalFloor(_ model.IUnaryExpression, obj result.Value) (result.Value, error)
 	return result.New(int32(math.Floor(val)))
 }
 
+// Ln(argument Decimal) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#ln
+func evalLn(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToFloat64(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if val <= 0 {
+		return result.New(nil)
+	}
+	return result.New(math.Log(val))
+}
+
 // op(left Integer, right Integer) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#add
 // https://cql.hl7.org/09-b-cqlreference.html#subtract

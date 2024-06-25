@@ -660,6 +660,9 @@ type Ceiling struct{ *UnaryExpression }
 // Floor  is https://cql.hl7.org/04-logicalspecification.html#floor.
 type Floor struct{ *UnaryExpression }
 
+// Ln  is https://cql.hl7.org/04-logicalspecification.html#ln.
+type Ln struct{ *UnaryExpression }
+
 // SingletonFrom is https://cql.hl7.org/04-logicalspecification.html#singletonfrom.
 type SingletonFrom struct{ *UnaryExpression }
 
@@ -1128,6 +1131,9 @@ func (a *Ceiling) GetName() string { return "Ceiling" }
 
 // GetName returns the name of the system operator.
 func (a *Floor) GetName() string { return "Floor" }
+
+// GetName returns the name of the system operator.
+func (a *Ln) GetName() string { return "Ln" }
 
 // GetName returns the name of the system operator.
 func (a *As) GetName() string { return "As" }

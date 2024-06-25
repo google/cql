@@ -465,6 +465,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Arithmetic Ln",
+			cql:  "Ln(1.0)",
+			want: &model.Ln{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("1.0", types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
 			name: "Arithmetic Addition",
 			cql:  "Add(1, 2)",
 			want: &model.Add{

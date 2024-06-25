@@ -344,6 +344,84 @@ func TestFloor(t *testing.T) {
 	}
 }
 
+func TestLn(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Decimal",
+			cql:  "Ln(1.0)",
+			wantModel: &model.Ln{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("1.0", types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Negative",
+			cql:        "Ln(-2.1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Zero",
+			cql:        "Ln(0.0)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Ten",
+			cql:        "Ln(10.0)",
+			wantResult: newOrFatal(t, 2.302585092994046),
+		},
+		{
+			name:       "Integer",
+			cql:        "Ln(1)",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Minimum Integer",
+			cql:        "Ln(-2147483648)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Maximum Integer",
+			cql:        "Ln(2147483647.0)",
+			wantResult: newOrFatal(t, 21.487562596892644),
+		},
+		{
+			name:       "Null",
+			cql:        "Ln(null as Decimal)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestAdd(t *testing.T) {
 	tests := []struct {
 		name       string

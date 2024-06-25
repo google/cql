@@ -150,6 +150,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalFloor,
 			},
 		}, nil
+	case *model.Ln:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalLn,
+			},
+		}, nil
 	case *model.Exists:
 		return []convert.Overload[evalUnarySignature]{
 			{
