@@ -61,9 +61,6 @@ Language:
 
 ## Getting Started
 
-**⚠️ Warning: When using these tools with protected health information (PHI), please be sure
-to follow your organization's policies with respect to PHI. ⚠️**
-
 There are several different ways to use this CQL engine, and get up and running quickly.
 Click on the links below for details:
 
@@ -81,6 +78,9 @@ Click on the links below for details:
   to a custom database or FHIR server. The
   [Terminology Provider interface](terminology/provider.go) can be implemented to
   connect to a custom Terminology server.
+
+**⚠️ Warning: When using these tools with protected health information (PHI), please be sure
+to follow your organization's policies with respect to PHI. ⚠️**
 
 ## Documentation
 
