@@ -136,6 +136,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalAbsQuantity,
 			},
 		}, nil
+	case *model.Ceiling:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalCeiling,
+			},
+		}, nil
 	case *model.Exists:
 		return []convert.Overload[evalUnarySignature]{
 			{

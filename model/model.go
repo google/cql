@@ -654,6 +654,9 @@ var _ IUnaryExpression = &Last{}
 // Abs is https://cql.hl7.org/04-logicalspecification.html#abs.
 type Abs struct{ *UnaryExpression }
 
+// Ceiling is https://cql.hl7.org/04-logicalspecification.html#ceiling.
+type Ceiling struct{ *UnaryExpression }
+
 // SingletonFrom is https://cql.hl7.org/04-logicalspecification.html#singletonfrom.
 type SingletonFrom struct{ *UnaryExpression }
 
@@ -1116,6 +1119,9 @@ type OperandRef struct {
 
 // GetName returns the name of the system operator.
 func (a *Abs) GetName() string { return "Abs" }
+
+// GetName returns the name of the system operator.
+func (a *Ceiling) GetName() string { return "Ceiling" }
 
 // GetName returns the name of the system operator.
 func (a *As) GetName() string { return "As" }

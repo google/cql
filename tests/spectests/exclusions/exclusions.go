@@ -51,7 +51,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlArithmeticFunctionsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Ceiling",
 				"Floor",
 				"Exp",
 				"HighBoundary",

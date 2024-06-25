@@ -100,6 +100,22 @@ func evalAbsQuantity(_ model.IUnaryExpression, obj result.Value) (result.Value, 
 	return result.New(val)
 }
 
+// Ceiling(argument Decimal) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#ceiling
+func evalCeiling(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToFloat64(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if val <= math.MinInt32-1 || val > math.MaxInt32 {
+		return result.New(nil)
+	}
+	return result.New(int32(math.Ceil(val)))
+}
+
 // op(left Integer, right Integer) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#add
 // https://cql.hl7.org/09-b-cqlreference.html#subtract

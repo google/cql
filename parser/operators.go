@@ -645,6 +645,17 @@ func (p *Parser) loadSystemOperators() error {
 			model:    addModel(types.Quantity),
 		},
 		{
+			name:     "Ceiling",
+			operands: [][]types.IType{{types.Decimal}},
+			model: func() model.IExpression {
+				return &model.Ceiling{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		{
 			name:     "Negate",
 			operands: [][]types.IType{{types.Integer}},
 			model:    negateModel(types.Integer),
