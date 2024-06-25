@@ -208,9 +208,11 @@ func TestWriteFileGCS(t *testing.T) {
 	}
 }
 
+// gcsPath returns the full GCS path for a given suffixPath.
+// Since these are not real file paths, we don't need to use filepath.Join.
 func gcsPath(t *testing.T, suffixPath string) string {
 	t.Helper()
-	return "gs://" + filepath.Join(testBucketName, suffixPath)
+	return "gs://" + testBucketName + "/" + suffixPath
 }
 
 func gcsObject(t *testing.T, content string) testhelpers.GCSObjectEntry {
