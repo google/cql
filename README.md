@@ -8,8 +8,6 @@ scale</p>
   </p>
 </p>
 
-
-
 CQL is a domain specific language designed for querying and executing logic on
 healthcare data. CQL excels at healthcare data analysis such as defining quality
 measures, clinical decision support, cohorts or preparing data for dashboards.
@@ -22,9 +20,9 @@ This repository contains an experimental CQL execution engine in Go, along
 with various supporting tools and ecosystem connectors. See the 
 [Getting Started](#getting-started) section to get up and running quickly.
 
-Here's a CQL example:
 <div align="center">
-<img width="600" src="https://github.com/google/cql/assets/6299853/c4761a19-924c-4534-bd61-a95d5101a308"/>
+  <img width="600" src="https://github.com/google/cql/assets/6299853/f11cbde5-9a44-41ea-847d-1de20e327306"/>
+  <p><i>A CQL example snippet.</i></p>
 </div>
 
 ## Features
@@ -70,8 +68,8 @@ There are several different ways to use this CQL engine, and get up and running 
 Click on the links below for details:
 
 * [__Web Playground__](cmd/cqlplay/README.md): A local interactive web playground
-  in the browser (with editable FHIR data), to quickly experiment with our CQL
-  engine.
+  in the browser, to quickly experiment with our CQL engine. Includes CQL syntax
+  highlighting and a basic FHIR editor.
 * [__CLI__](cmd/cli/README.md): A command-line interface to run this CQL engine
   over small populations or for quick experimentation.
 * [__Apache Beam__](): The Beam pipeline is recommended when running CQL over
