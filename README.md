@@ -22,7 +22,7 @@ with various supporting tools and ecosystem connectors. See the
 
 <div align="center">
   <img width="600" src="https://github.com/google/cql/assets/6299853/f11cbde5-9a44-41ea-847d-1de20e327306"/>
-  <p><i>A CQL example snippet.</i></p>
+  <p><i>An example CQL snippet.</i></p>
 </div>
 
 ## Features
