@@ -17,7 +17,7 @@ data and built in clinical helper functions. You can find an intro to the CQL
 Language at https://cql.hl7.org.
 
 This repository contains an experimental CQL execution engine in Go, along
-with various supporting tools and ecosystem connectors. See the 
+with various supporting tools and ecosystem connectors. See the
 [Getting Started](#getting-started) section to get up and running quickly.
 
 <div align="center">
@@ -62,9 +62,9 @@ Language:
 ## Getting Started
 
 **⚠️ Warning: When using these tools with protected health information (PHI), please be sure
-to follow your organization's policies with respect to PHI.**
+to follow your organization's policies with respect to PHI. ⚠️**
 
-There are several different ways to use this CQL engine, and get up and running quickly. 
+There are several different ways to use this CQL engine, and get up and running quickly.
 Click on the links below for details:
 
 * [__Web Playground__](cmd/cqlplay/README.md): A local interactive web playground
@@ -74,9 +74,9 @@ Click on the links below for details:
   over small populations or for quick experimentation.
 * [__Apache Beam__](beam/README.md): The Beam pipeline is recommended when running CQL over
   large patient populations.
-* [__REPL__](cmd/repl/README.md): For quick experiments with our CQL Engine we have a REPL.
-* [__Golang Module__](https://pkg.go.dev/github.com/google/cql): The engine can be
-  used via the CQL golang module documented in the [godoc](https://pkg.go.dev/github.com/google/cql).
+* [__REPL__](cmd/repl/README.md): An interactive command line REPL for quick CQL explorations and experiments.
+* [__Golang Module__](https://pkg.go.dev/github.com/google/cql): The CQL execution engine can be
+  used as a Go library via the [CQL golang module](https://pkg.go.dev/github.com/google/cql).
   The [Retriever interface](retriever/retriever.go) can be implemented to connect
   to a custom database or FHIR server. The
   [Terminology Provider interface](terminology/provider.go) can be implemented to
