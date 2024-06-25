@@ -35,6 +35,71 @@ const (
 	minDecimal = float64(-99999999999999999999.99999999)
 )
 
+// Abs(argument Decimal) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#abs
+func evalAbsDecimal(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToFloat64(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(math.Abs(val))
+}
+
+// Abs(argument Integer) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#abs
+func evalAbsInteger(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToInt32(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if val == math.MinInt32 {
+		return result.New(nil)
+	}
+	if val < 0 {
+		return result.New(-val)
+	}
+	return result.New(val)
+}
+
+// Abs(argument Long) Long
+// https://cql.hl7.org/09-b-cqlreference.html#abs
+func evalAbsLong(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToInt64(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if val == math.MinInt64 {
+		return result.New(nil)
+	}
+	if val < 0 {
+		return result.New(-val)
+	}
+	return result.New(val)
+}
+
+// Abs(argument Quantity) Quantity
+// https://cql.hl7.org/09-b-cqlreference.html#abs
+func evalAbsQuantity(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToQuantity(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	val.Value = math.Abs(val.Value)
+	return result.New(val)
+}
+
 // op(left Integer, right Integer) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#add
 // https://cql.hl7.org/09-b-cqlreference.html#subtract

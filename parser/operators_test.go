@@ -435,6 +435,16 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		// ARITHMETIC OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#arithmetic-operators-4
 		{
+			name: "Arithmetic Absolute Value",
+			cql:  "Abs(1)",
+			want: &model.Abs{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("1", types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "Arithmetic Addition",
 			cql:  "Add(1, 2)",
 			want: &model.Add{

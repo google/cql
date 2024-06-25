@@ -30,6 +30,114 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
+func TestAbs(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Integer",
+			cql:  "Abs(-4)",
+			wantModel: &model.Abs{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Negate{
+						UnaryExpression: &model.UnaryExpression{
+							Operand:    model.NewLiteral("4", types.Integer),
+							Expression: model.ResultType(types.Integer),
+						},
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 4),
+		},
+		{
+			name:       "Positive Integer",
+			cql:        "Abs(2)",
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Minimum Integer",
+			cql:        "Abs(-2147483648)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Long",
+			cql:        "Abs(-4L)",
+			wantResult: newOrFatal(t, int64(4)),
+		},
+		{
+			name:       "Positive Long",
+			cql:        "Abs(2L)",
+			wantResult: newOrFatal(t, int64(2)),
+		},
+		{
+			name:       "Minimum Long",
+			cql:        "Abs(-9223372036854775808L)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Decimal",
+			cql:        "Abs(-1.0)",
+			wantResult: newOrFatal(t, 1.0),
+		},
+		{
+			name:       "Positive Decimal",
+			cql:        "Abs(1.0)",
+			wantResult: newOrFatal(t, 1.0),
+		},
+		{
+			name:       "Minimum Decimal",
+			cql:        "Abs(-99999999999999999999.99999999)",
+			wantResult: newOrFatal(t, float64(99999999999999999999.99999999)),
+		},
+		{
+			name:       "Quantity",
+			cql:        "Abs(-1.0 'day')",
+			wantResult: newOrFatal(t, result.Quantity{Value: 1.0, Unit: model.DAYUNIT}),
+		},
+		{
+			name:       "Positive Quantity",
+			cql:        "Abs(1.0 'day')",
+			wantResult: newOrFatal(t, result.Quantity{Value: 1.0, Unit: model.DAYUNIT}),
+		},
+		{
+			name:       "Quantity",
+			cql:        "Abs(-99999999999999999999.99999999 'day')",
+			wantResult: newOrFatal(t, result.Quantity{Value: 99999999999999999999.99999999, Unit: model.DAYUNIT}),
+		},
+		{
+			name:       "Null",
+			cql:        "Abs(null as Integer)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestAdd(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -385,7 +493,6 @@ func TestMultiply(t *testing.T) {
 	}
 }
 
-
 func TestTruncate(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -408,7 +515,7 @@ func TestTruncate(t *testing.T) {
 			cql:  "Truncate(2)",
 			wantModel: &model.Truncate{
 				UnaryExpression: &model.UnaryExpression{
-					Operand: 		&model.ToDecimal{
+					Operand: &model.ToDecimal{
 						UnaryExpression: &model.UnaryExpression{
 							Operand:    model.NewLiteral("2", types.Integer),
 							Expression: model.ResultType(types.Decimal),

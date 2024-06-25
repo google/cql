@@ -605,6 +605,26 @@ func (p *Parser) loadSystemOperators() error {
 		},
 		// ARITHMETIC OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#arithmetic-operators-4
 		{
+			name:     "Abs",
+			operands: [][]types.IType{{types.Decimal}},
+			model:    absModel(types.Decimal),
+		},
+		{
+			name:     "Abs",
+			operands: [][]types.IType{{types.Integer}},
+			model:    absModel(types.Integer),
+		},
+		{
+			name:     "Abs",
+			operands: [][]types.IType{{types.Long}},
+			model:    absModel(types.Long),
+		},
+		{
+			name:     "Abs",
+			operands: [][]types.IType{{types.Quantity}},
+			model:    absModel(types.Quantity),
+		},
+		{
 			name:     "Add",
 			operands: [][]types.IType{{types.Integer, types.Integer}},
 			model:    addModel(types.Integer),
@@ -1978,6 +1998,16 @@ func includedInModel(precision model.DateTimePrecision) func() model.IExpression
 				Expression: model.ResultType(types.Boolean),
 			},
 			Precision: precision,
+		}
+	}
+}
+
+func absModel(resultType types.System) func() model.IExpression {
+	return func() model.IExpression {
+		return &model.Abs{
+			UnaryExpression: &model.UnaryExpression{
+				Expression: model.ResultType(resultType),
+			},
 		}
 	}
 }

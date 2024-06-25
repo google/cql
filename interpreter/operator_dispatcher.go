@@ -117,6 +117,25 @@ type evalNarySignature func(model.INaryExpression, []result.Value) (result.Value
 
 func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overload[evalUnarySignature], error) {
 	switch m.(type) {
+	case *model.Abs:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalAbsDecimal,
+			},
+			{
+				Operands: []types.IType{types.Integer},
+				Result:   evalAbsInteger,
+			},
+			{
+				Operands: []types.IType{types.Long},
+				Result:   evalAbsLong,
+			},
+			{
+				Operands: []types.IType{types.Quantity},
+				Result:   evalAbsQuantity,
+			},
+		}, nil
 	case *model.Exists:
 		return []convert.Overload[evalUnarySignature]{
 			{
