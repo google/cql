@@ -18,6 +18,15 @@ querying of FHIR via FHIRPath, graceful handling of mixed precision or missing
 data and built in clinical helper functions. You can find an intro to the CQL
 Language at https://cql.hl7.org.
 
+This repository contains an experimental CQL execution engine in Go, along
+with various supporting tools and ecosystem connectors. See the 
+[Getting Started](#getting-started) section to get up and running quickly.
+
+Here's a CQL example:
+<div align="center">
+<img width="600" src="https://github.com/google/cql/assets/6299853/c4761a19-924c-4534-bd61-a95d5101a308"/>
+</div>
+
 ## Features
 
 Notable features of this engine include:
@@ -54,46 +63,26 @@ Language:
 
 ## Getting Started
 
-There are several different ways to use this engine. For quick experimentation
-we have a Command Line Interface and REPL. For executing CQL over a large
-patient population there is a Beam job. Finally, the CQL Golang Module allows
-you to execute CQL by implementing your own connector to a database and
-terminology server.
+**⚠️ Warning: When using these tools with protected health information (PHI), please be sure
+to follow your organization's policies with respect to PHI.**
 
-> ⚠️⚠️  **Warning**  ⚠️⚠️
->
-> When using these tools with protected health information (PHI), please be sure
-to follow your organization's policies with respect to PHI.
+There are several different ways to use this CQL engine, and get up and running quickly. 
+Click on the links below for details:
 
-## Web Playground
-To quickly experiment with the CQL engine and editable FHIR data, try our local
-web playground in the browser at [cmd/cqlplay](cmd/cqlplay).
-
-## CLI
-
-When intending to run the CQL engine locally over small populations or for quick
-experimentation use the CLI located at [cmd/cli](cmd/cli). For documentation
-and examples see [cmd/cli/README.md](cmd/cli/README.md).
-
-## Apache Beam Pipeline
-
-The Beam pipeline is recommended when running CQL over large patient populations.
-More information and usage examples are documented at
-[beam/README.md](beam/README.md).
-
-## Golang Module
-
-The engine can be used via the CQL golang module documented in the
+* [__Web Playground__](cmd/cqlplay/README.md): A local interactive web playground
+  in the browser (with editable FHIR data), to quickly experiment with our CQL
+  engine.
+* [__CLI__](cmd/cli/README.md): A command-line interface to run this CQL engine
+  over small populations or for quick experimentation.
+* [__Apache Beam__](): The Beam pipeline is recommended when running CQL over
+  large patient populations.
+* [__REPL__](): For quick experiments with our CQL Engine we have a REPL.
+* [__Golang Module__](): The engine can be used via the CQL golang module documented in the
 [godoc](https://pkg.go.dev/github.com/google/cql).
 The [Retriever interface](retriever/retriever.go) can be implemented to connect
 to a custom database or FHIR server. The
 [Terminology Provider interface](terminology/provider.go) can be implemented to
 connect to a custom Terminology server.
-
-## REPL
-
-For quick experiments with our CQL Engine we have a REPL. More information and
-usage examples are documented at [cmd/repl/README.md](cmd/repl/README.md).
 
 ## Documentation
 
