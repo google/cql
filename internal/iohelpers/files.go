@@ -92,7 +92,7 @@ func filesWithSuffixGCS(ctx context.Context, gcsPath, suffix string, cfg IOConfi
 
 // ReadFile reads the contents of a file at the given path.
 // If the path is a GCS it will attempt to read the file from GCS.
-func ReadFile(ctx context.Context, filePath string, cfg *IOConfig) ([]byte, error) {
+func ReadFile(ctx context.Context, filePath string, cfg *IOConfig) (contents []byte, funcErr error) {
 	if strings.HasPrefix(filePath, "gs://") {
 		if cfg == nil {
 			return nil, fmt.Errorf("ReadFile() IOConfig cannot be nil for GCS paths, but was nil. path: %s", filePath)
@@ -103,6 +103,15 @@ func ReadFile(ctx context.Context, filePath string, cfg *IOConfig) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		if err = f.Close(); err != nil {
+			if funcErr == nil {
+				funcErr = err
+			}
+		}
+	}()
+
 	return io.ReadAll(f)
 }
 

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+
 	"path/filepath"
 	"strings"
 
@@ -69,6 +70,7 @@ func NewLocalFHIRProvider(dir string) (*LocalFHIRProvider, error) {
 		if err != nil {
 			return nil, err
 		}
+		defer f.Close() // Possible returned error on read is ignored, since it'll be superseeded by the decodeFHIRResource error.
 		fr, err := decodeFHIRResource(f)
 		if err != nil {
 			return nil, err
