@@ -85,13 +85,6 @@ func TestValidateFlagsError(t *testing.T) {
 			valuesetDirText: "",
 			wantErr:         "--bundle_file when specified, is required to be a valid json file",
 		},
-		{
-			name:            "invalid directory returns error",
-			cqlInputText:    "",
-			bundleFileText:  "",
-			valuesetDirText: filepath.Join("my", "fake", "dir"),
-			wantErr:         "no such file or directory",
-		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

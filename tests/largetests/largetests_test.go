@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io/fs"
-	"path/filepath"
+	"path"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,7 +151,12 @@ func TestLarge(t *testing.T) {
 				}
 			}
 
-			if diff := cmp.Diff(outputFileData, jsonResults); diff != "" {
+			gotData := string(outputFileData)
+			if runtime.GOOS == "windows" {
+				// A '\r' is added when parsing on windows, removing.
+				gotData = strings.ReplaceAll(gotData, "\r\n", "\n")
+			}
+			if diff := cmp.Diff(gotData, string(jsonResults)); diff != "" {
 				t.Errorf("Test %s failed.\nTest Description: %s\n", test.Name, test.Description)
 				t.Errorf("For %s: Diff found in output file (%s) (-want +got). After the diff, the entire got file is pasted for easy copying and pasting:\n%s", test.Name, test.WantFile, diff)
 				t.Errorf("Got file:")
@@ -216,7 +223,7 @@ func getTerminologyProvider(t testing.TB, dir string) terminology.Provider {
 
 	var valuesets = make([]string, 0, len(entries))
 	for _, entry := range entries {
-		eData, err := testdata.ReadFile(filepath.Join(dir, entry.Name()))
+		eData, err := testdata.ReadFile(path.Join(dir, entry.Name()))
 		if err != nil {
 			t.Fatalf("Failed to read valueset file: %v", err)
 		}
