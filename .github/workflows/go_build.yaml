@@ -42,3 +42,30 @@ jobs:
     - name: Test
       run: |
             go test ./...
+
+  go_spec_test_coverage:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+
+    - name: Set up Go 1.22
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.22
+      id: go
+
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Get dependencies
+      run: |
+            go mod download
+    - name: Build
+      run: |
+            go build ./...
+
+    - name: Spec Test Coverage
+      run: |
+            go run tests/spectests/cmd/analyzer/analyzer.go
