@@ -97,12 +97,16 @@ type EvalConfig struct {
 // should not be called from multiple goroutines on a single *ELM.
 // Errors returned by Eval will always be a result.EngineError.
 func (e *ELM) Eval(ctx context.Context, retriever retriever.Retriever, config EvalConfig) (result.Libraries, error) {
+	evalTS := config.EvaluationTimestamp
+	if config.EvaluationTimestamp.IsZero() {
+		evalTS = time.Now()
+	}
 	c := interpreter.Config{
 		DataModels:          e.dataModels,
 		Parameters:          e.parsedParams,
 		Retriever:           retriever,
 		Terminology:         config.Terminology,
-		EvaluationTimestamp: config.EvaluationTimestamp,
+		EvaluationTimestamp: evalTS,
 		ReturnPrivateDefs:   config.ReturnPrivateDefs,
 	}
 

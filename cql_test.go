@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/cql"
 	"github.com/google/cql/model"
@@ -112,6 +113,40 @@ func TestCQL(t *testing.T) {
 				t.Errorf("Eval SourceValues diff (-want +got)\n%v", diff)
 			}
 		})
+	}
+}
+
+func TestCQL_EvalEmptyTimestamp(t *testing.T) {
+	// This test checks that an empty EvalConfig.EvaluationTimestamp is set to time.Now() at the start
+	// of the eval request. We do this by sanity checking the result of Now() is within 2 mins of the
+	// test assertion time.
+	cqlSources := []string{dedent.Dedent(`
+	library TESTLIB version '1.0.0'
+	define TESTRESULT: Now()`)}
+	parserConfig := cql.ParseConfig{}
+	evalConfig := cql.EvalConfig{}
+
+	elm, err := cql.Parse(context.Background(), cqlSources, parserConfig)
+	if err != nil {
+		t.Fatalf("Parse returned unexpected error: %v", err)
+	}
+
+	results, err := elm.Eval(context.Background(), nil, evalConfig)
+	if err != nil {
+		t.Fatalf("Eval returned unexpected error: %v", err)
+	}
+
+	gotResult := getTESTRESULTWithSources(t, results)
+	dt, err := result.ToDateTime(gotResult)
+	if err != nil {
+		t.Errorf("returned result is not a DateTime, err: %v", err)
+	}
+
+	// Check that the dt is within [time.Now()-2min, time.Now()]
+	end := time.Now()
+	start := end.Add(-2 * time.Minute)
+	if dt.Date.Before(start) || dt.Date.After(end) {
+		t.Errorf("returned CQL Now() result is not within 2 mins of time.Now()")
 	}
 }
 
