@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -117,6 +118,11 @@ func TestPipeline(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" {
+				// https://github.com/google/cql/issues/32
+				// For some reason the bundle file is not being closed properly on Windows.
+				t.Skip("Skipping test on Windows due to io error")
+			}
 			p, s := beam.NewPipelineWithRoot()
 			result, errors := buildPipeline(s, test.cfg)
 			beam.ParDo0(s, diffEvalResults, beam.Impulse(s), beam.SideInput{Input: beam.CreateList(s, test.wantOutput)}, beam.SideInput{Input: result})

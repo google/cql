@@ -13,6 +13,10 @@ for more information on Apache Beam.
 **Warning: When using these tools with protected health information (PHI),
 please be sure to follow your organization's policies with respect to PHI.**
 
+**Note: There's currently an issue with Beam tests on Windows. Until this is
+resolved it is not advised to use the beam job on Windows. See
+https://github.com/google/cql/issues/32 for further context.**
+
 ## Running
 
 The CQL on Beam pipeline is currently limited to local file system IO. The
