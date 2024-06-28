@@ -94,6 +94,8 @@ function runCQL() {
       document.getElementById('results').innerHTML = xhr.responseText;
       Prism.highlightAll();
       results = xhr.responseText;
+      let jsonResponse = JSON.parse(xhr.responseText);
+      document.getElementById('latency').innerHTML = `<b>CQL Engine Latency</b> (just the engine operations): <br /> <b>Parse:</b> ${jsonResponse.latency.parse} <b>Evaluation:</b> ${jsonResponse.latency.eval}`
     }
   };
   xhr.open('POST', '/eval_cql', true);

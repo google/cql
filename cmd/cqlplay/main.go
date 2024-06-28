@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"flag"
+
 	log "github.com/golang/glog"
 	"github.com/google/cql"
 	"github.com/google/cql/retriever/local"
@@ -107,11 +108,13 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	startParse := time.Now()
 	elm, err := cql.Parse(req.Context(), []string{evalCQLReq.CQL, fhirHelpers}, cql.ParseConfig{DataModels: [][]byte{fhirDM}})
 	if err != nil {
 		sendError(w, fmt.Errorf("failed to parse: %w", err), http.StatusInternalServerError)
 		return
 	}
+	parseTime := time.Since(startParse)
 
 	var ret *local.Retriever
 	if evalCQLReq.Data != "" {
@@ -122,14 +125,14 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	start := time.Now()
+	startEval := time.Now()
 	results, err := elm.Eval(req.Context(), ret, cql.EvalConfig{Terminology: tp})
 	if err != nil {
 		sendError(w, fmt.Errorf("failed to eval: %w", err), http.StatusInternalServerError)
 		return
 	}
 
-	evalTime := time.Since(start)
+	evalTime := time.Since(startEval)
 	log.Infof("eval time: %v", evalTime)
 
 	resJSON, err := json.MarshalIndent(results, "", "  ")
@@ -137,7 +140,22 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 		sendError(w, fmt.Errorf("unable to marshal CQL response: %w", err), http.StatusInternalServerError)
 		return
 	}
-	w.Write(resJSON)
+	resp := evalCQLResponse{
+		ResultJSON: resJSON,
+		Latency: latency{
+			Eval:       evalTime.String(),
+			EvalNanos:  int64(evalTime),
+			Parse:      parseTime.String(),
+			ParseNanos: int64(parseTime),
+		},
+	}
+	respJSON, err := json.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		sendError(w, fmt.Errorf("unable to marshal response struct: %w", err), http.StatusInternalServerError)
+		return
+	}
+	log.Infof("Resp: %s", respJSON)
+	w.Write(respJSON)
 }
 
 func sendError(w http.ResponseWriter, err error, code int) {
@@ -149,6 +167,20 @@ func sendError(w http.ResponseWriter, err error, code int) {
 type evalCQLRequest struct {
 	CQL  string `json:"cql"`
 	Data string `json:"data"`
+}
+
+type latency struct {
+	Eval      string `json:"eval"`
+	EvalNanos int64  `json:"evalNanos"`
+
+	Parse      string `json:"parse"`
+	ParseNanos int64  `json:"parseNanos"`
+	// TODO: suyashk - add some form of total latency, either the full request level or at engine processing level.
+}
+
+type evalCQLResponse struct {
+	ResultJSON json.RawMessage `json:"resultJSON"`
+	Latency    latency         `json:"latency"`
 }
 
 func getTerminologyProvider() (*terminology.LocalFHIRProvider, error) {
