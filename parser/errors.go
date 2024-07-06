@@ -33,7 +33,7 @@ type LibraryErrors struct {
 }
 
 func (le *LibraryErrors) Error() string {
-	var msgs []string
+	msgs := []string{fmt.Sprintf("error(s) in Library %q:", le.LibKey.String())}
 	for _, e := range le.Errors {
 		msgs = append(msgs, e.Error())
 	}
