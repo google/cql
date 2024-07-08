@@ -69,7 +69,8 @@ func TestLibraryErrors(t *testing.T) {
 		t.Errorf("errors.Is(gotErr, ErrorBadFile) = false, want true")
 	}
 
-	wantErrorString := `1-1 first parsing error
+	wantErrorString := `error(s) in Library "TESTLIB 1.0.0":
+1-1 first parsing error
 2-2 second parsing error: bad file`
 	if gotErr.Error() != wantErrorString {
 		t.Errorf("gotErr.Error() = %q, want %q", gotErr.Error(), wantErrorString)
