@@ -733,9 +733,10 @@ func TestToConcept_Error(t *testing.T) {
 		wantError string
 	}{
 		{
+			// TODO: b/301606416 - This shouldn't be an error once we support null values in concepts.
 			name:      "Concept must have a Code",
 			cql:       "ToConcept(List<Code>{null})",
-			wantError: "System.Concept must have at least one System.Code",
+			wantError: "System.Concept must specify the codes field",
 		},
 	}
 

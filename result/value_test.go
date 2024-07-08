@@ -782,9 +782,9 @@ func TestNew_Error(t *testing.T) {
 			wantErr: "System.CodeSystem must have an ID",
 		},
 		{
-			name:    "Concept must have one code",
+			name:    "Concept must specify codes",
 			input:   Concept{},
-			wantErr: "System.Concept must have at least one System.Code",
+			wantErr: "System.Concept must specify the codes field",
 		},
 		{
 			name:    "ValueSet missing ID",

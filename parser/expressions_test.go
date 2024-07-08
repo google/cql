@@ -133,6 +133,12 @@ func TestParserExpressions_Errors(t *testing.T) {
 			errContains: []string{"unsupported type for maximumString"},
 			errCount:    1,
 		},
+		{
+			name:        "Concept Instance codes not specified",
+			cql:         "Concept{ }",
+			errContains: []string{"no viable alternative at input 'Concept{ }'"},
+			errCount:    1,
+		},
 	}
 
 	for _, test := range tests {

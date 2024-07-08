@@ -401,8 +401,8 @@ func New(val any) (Value, error) {
 		}
 		return Value{runtimeType: types.CodeSystem, goValue: v}, nil
 	case Concept:
-		if len(v.Codes) == 0 {
-			return Value{}, fmt.Errorf("%v must have at least one %v", types.Concept, types.Code)
+		if v.Codes == nil {
+			return Value{}, fmt.Errorf("%v must specify the codes field", types.Concept)
 		}
 		return Value{runtimeType: types.Concept, goValue: v}, nil
 	case ValueSet:
