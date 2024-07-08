@@ -382,6 +382,47 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Equivalent(Concept, Code)",
+			cql:  "Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1' } } }, Code { system: 'http://example.com', code: '1' })",
+			want: &model.Equivalent{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.Instance{
+							Expression: model.ResultType(types.Concept),
+							ClassType:  types.Concept,
+							Elements: []*model.InstanceElement{
+								&model.InstanceElement{
+									Name: "codes",
+									Value: &model.List{
+										Expression: model.ResultType(&types.List{ElementType: types.Code}),
+										List: []model.IExpression{
+											&model.Instance{
+												Expression: model.ResultType(types.Code),
+												ClassType:  types.Code,
+												Elements: []*model.InstanceElement{
+													&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+													&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						&model.Instance{
+							Expression: model.ResultType(types.Code),
+							ClassType:  types.Code,
+							Elements: []*model.InstanceElement{
+								&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+								&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+							},
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
 			name: "Less",
 			cql:  "Less(5, 5)",
 			want: &model.Less{

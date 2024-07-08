@@ -602,7 +602,7 @@ func TestEquivalentCodes(t *testing.T) {
 			name: `null ~ Code`,
 			cql: dedent.Dedent(`
 			codesystem cs: 'https://example.com/cs/diagnosis' version '1.0'
-			define TESTRESULT: null ~ Code 'code1' from "cs" display 'display1'`),
+			define TESTRESULT: null as Code ~ Code 'code1' from "cs" display 'display1'`),
 			wantModel: &model.Equivalent{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -630,6 +630,17 @@ func TestEquivalentCodes(t *testing.T) {
 			cql: dedent.Dedent(`
 			codesystem cs: 'https://example.com/cs/diagnosis' version '1.0'
 			define TESTRESULT: Code 'code1' from "cs" display 'display1' ~  Code 'code1' from "cs" display 'display1'`),
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       `Equivalent codes uses string equivalency for codes`,
+			cql:        dedent.Dedent(`define TESTRESULT: Code { system: 'system1', code: '1\t1' } ~  Code { system: 'system1', code: '1 1' }`),
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name: `Equivalent codes uses string equivalency for system`,
+			cql: dedent.Dedent(`
+			define TESTRESULT: Code { system: 'system 1', code: '1' } ~  Code { system: 'system\t1', code: '1' }`),
 			wantResult: newOrFatal(t, true),
 		},
 		{
@@ -702,6 +713,116 @@ func TestNotEquivalentCodes(t *testing.T) {
 			code c1: 'code1' from "cs"
 			code c2: 'code1' from "cs" display 'display1'
 			define TESTRESULT: c1 !~  c2`),
+			wantResult: newOrFatal(t, false),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), []string{tc.cql}, parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestEquivalentConceptCode(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// (Concept, Code) equivalency tests, per
+		// https://cql.hl7.org/09-b-cqlreference.html#equivalent-3
+		{
+			name: `Equivalent Concept and Code`,
+			cql:  "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1' } } }, Code { system: 'http://example.com', code: '1' })",
+			wantModel: &model.Equivalent{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.Instance{
+							Expression: model.ResultType(types.Concept),
+							ClassType:  types.Concept,
+							Elements: []*model.InstanceElement{
+								&model.InstanceElement{
+									Name: "codes",
+									Value: &model.List{
+										Expression: model.ResultType(&types.List{ElementType: types.Code}),
+										List: []model.IExpression{
+											&model.Instance{
+												Expression: model.ResultType(types.Code),
+												ClassType:  types.Code,
+												Elements: []*model.InstanceElement{
+													&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+													&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						&model.Instance{
+							Expression: model.ResultType(types.Code),
+							ClassType:  types.Code,
+							Elements: []*model.InstanceElement{
+								&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+								&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+							},
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Equivalent with ~ operator",
+			cql:        "define TESTRESULT: Concept { codes: { Code { system: 'http://example.com', code: '1' } } } ~ Code { system: 'http://example.com', code: '1' }",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Equivalent where Concept has multiple codes",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1' }, Code { system: 'http://example.com', code: '2' } } }, Code { system: 'http://example.com', code: '1' })",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Equivalent uses string equivalency for code comparison",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1 1' } } }, Code { system: 'http://example.com', code: '1\t1' })",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Not Equivalent",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1' } } }, Code { system: 'http://example.com', code: '2' })",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Equivalent(null, null)",
+			cql:        "define TESTRESULT: Equivalent(null as Concept, null as Code)",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Equivalent(null, Code)",
+			cql:        "define TESTRESULT: Equivalent(null as Concept, Code { system: 'http://example.com', code: '1' })",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Equivalent(Concept, null)",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1' } } }, null as Code)",
 			wantResult: newOrFatal(t, false),
 		},
 	}

@@ -648,10 +648,6 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalEquivalentString,
 			},
 			{
-				Operands: []types.IType{types.Code, types.Code},
-				Result:   evalEquivalentCode,
-			},
-			{
 				Operands: []types.IType{types.DateTime, types.DateTime},
 				Result:   evalEquivalentDateTime,
 			},
@@ -668,6 +664,14 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{&types.Interval{PointType: types.Any}, &types.Interval{PointType: types.Any}},
 				Result:   i.evalEquivalentInterval,
+			},
+			{
+				Operands: []types.IType{types.Concept, types.Code},
+				Result:   i.evalEquivalentConceptCode,
+			},
+			{
+				Operands: []types.IType{types.Code, types.Code},
+				Result:   i.evalEquivalentCodeCode,
 			},
 		}, nil
 	case *model.Less, *model.LessOrEqual, *model.Greater, *model.GreaterOrEqual:

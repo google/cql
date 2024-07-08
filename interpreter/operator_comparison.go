@@ -100,6 +100,38 @@ func (i *interpreter) evalEquivalentValue(lObj, rObj result.Value) (result.Value
 	return innerEquivalentFunc(nil, lObj, rObj)
 }
 
+// equivalentGolang attempts to apply the CQL equivalent operator to the passed Golang values,
+// and returns a Golang bool.
+// It first attempts to convert them to result.Value by calling result.New, then calls
+// evalEquivalentValue.
+func (i *interpreter) equivalentGolang(lObj, rObj any) (bool, error) {
+	lVal, rVal, err := convertToValues(lObj, rObj)
+	if err != nil {
+		return false, err
+	}
+	equi, err := i.evalEquivalentValue(lVal, rVal)
+	if err != nil {
+		return false, err
+	}
+	equiBool, err := result.ToBool(equi)
+	if err != nil {
+		return false, err
+	}
+	return equiBool, nil
+}
+
+func convertToValues(l, r any) (result.Value, result.Value, error) {
+	lVal, err := result.New(l)
+	if err != nil {
+		return result.Value{}, result.Value{}, err
+	}
+	rVal, err := result.New(r)
+	if err != nil {
+		return result.Value{}, result.Value{}, err
+	}
+	return lVal, rVal, nil
+}
+
 // ~(left List<T>, right List<T>) Boolean
 // All equivalent overloads should be resilient to a nil model.
 // https://cql.hl7.org/09-b-cqlreference.html#equivalent-2
@@ -258,6 +290,81 @@ func evalEquivalentDateTime(_ model.IBinaryExpression, lObj, rObj result.Value) 
 	}
 }
 
+// ~(left Concept, right Code) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#equivalent-3
+// Some Equivalent overloads are categorized in the clinical operator section, like this one, but
+// are included in operator_comparison.go to keep all equivalent overloads together.
+func (i *interpreter) evalEquivalentConceptCode(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) && result.IsNull(rObj) {
+		return result.New(true)
+	}
+	if result.IsNull(lObj) != result.IsNull(rObj) {
+		return result.New(false)
+	}
+
+	con, err := result.ToConcept(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Sanity check right hand type.
+	_, err = result.ToCode(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	for _, conCode := range con.Codes {
+		conCodeObj, err := result.New(conCode)
+		if err != nil {
+			return result.Value{}, err
+		}
+		equi, err := i.evalEquivalentValue(conCodeObj, rObj)
+		if err != nil {
+			return result.Value{}, err
+		}
+		equiBool, err := result.ToBool(equi)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if equiBool {
+			return result.New(true)
+		}
+	}
+	return result.New(false)
+}
+
+func (i *interpreter) evalEquivalentCodeCode(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) && result.IsNull(rObj) {
+		return result.New(true)
+	}
+	if result.IsNull(lObj) != result.IsNull(rObj) {
+		return result.New(false)
+	}
+
+	lCode, rCode, err := applyToValues(lObj, rObj, result.ToCode)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Codes are equivalent if the system and codes are equivalent.
+	codesEqui, err := i.equivalentGolang(lCode.Code, rCode.Code)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if !codesEqui {
+		return result.New(false)
+	}
+
+	systemsEqui, err := i.equivalentGolang(lCode.System, rCode.System)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if !systemsEqui {
+		return result.New(false)
+	}
+	return result.New(true)
+}
+
 // op(left Integer, right Integer) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#less
 // https://cql.hl7.org/09-b-cqlreference.html#less-or-equal
@@ -360,20 +467,4 @@ func compare[n cmp.Ordered](m model.IBinaryExpression, l, r n) (result.Value, er
 		return result.New(l >= r)
 	}
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", m)
-}
-
-// ~(left Code, right Code) Boolean
-// https://cql.hl7.org/09-b-cqlreference.html#equivalent
-func evalEquivalentCode(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
-	if result.IsNull(lObj) && result.IsNull(rObj) {
-		return result.New(true)
-	}
-	if result.IsNull(lObj) != result.IsNull(rObj) {
-		return result.New(false)
-	}
-
-	lc := lObj.GolangValue().(result.Code)
-	rc := rObj.GolangValue().(result.Code)
-	eq := lc.Code == rc.Code && lc.System == rc.System
-	return result.New(eq)
 }

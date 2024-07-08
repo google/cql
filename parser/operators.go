@@ -514,6 +514,9 @@ func (p *Parser) loadSystemOperators() error {
 			name: "Equivalent",
 			operands: [][]types.IType{
 				{convert.GenericType, convert.GenericType},
+				// The following overloads come from
+				// CLINICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#equivalent-3
+				{types.Concept, types.Code},
 			},
 			model: func() model.IExpression {
 				return &model.Equivalent{
