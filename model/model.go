@@ -1013,6 +1013,11 @@ type Coalesce struct{ *NaryExpression }
 // Concatenate is https://cql.hl7.org/04-logicalspecification.html#concatenate.
 type Concatenate struct{ *NaryExpression }
 
+// Combine is https://cql.hl7.org/04-logicalspecification.html#combine.
+// In ELM Combine is an OperatorExpression, but we're modeling it as a NaryExpression since in CQL
+// it takes either 1 or 2 arguments.
+type Combine struct{ *NaryExpression }
+
 // Date is the functional syntax to create a Date https://cql.hl7.org/09-b-cqlreference.html#date-1.
 type Date struct{ *NaryExpression }
 
@@ -1357,3 +1362,6 @@ func (a *Sum) GetName() string { return "Sum" }
 
 // GetName returns the name of the system operator.
 func (a *Split) GetName() string { return "Split" }
+
+// GetName returns the name of the system operator.
+func (a *Combine) GetName() string { return "Combine" }

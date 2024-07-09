@@ -891,6 +891,20 @@ func (p *Parser) loadSystemOperators() error {
 				}
 			},
 		},
+		{
+			name: "Combine",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.String}},
+				{&types.List{ElementType: types.String}, types.String},
+			},
+			model: func() model.IExpression {
+				return &model.Combine{
+					NaryExpression: &model.NaryExpression{
+						Expression: model.ResultType(types.String),
+					},
+				}
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name:     "Add",

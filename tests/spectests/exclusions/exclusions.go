@@ -358,7 +358,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlStringOperatorsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Combine",
 				"EndsWith",
 				"Indexer",
 				"LastPositionOf",
@@ -375,6 +374,9 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
 				"DateTimeToString1",
 				"DateTimeToString2",
+				// The spec test is incorrect, fix pending in
+				// https://github.com/cqframework/cql-tests/pull/35.
+				"CombineEmptyList",
 			},
 		},
 		"CqlTypesTest.xml": XMLTestFileExclusions{

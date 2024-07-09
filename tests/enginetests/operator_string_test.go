@@ -305,3 +305,87 @@ func TestSplit(t *testing.T) {
 		})
 	}
 }
+
+func TestCombine(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Combine without separator",
+			cql:  "Combine({'A', 'B'})",
+			wantModel: &model.Combine{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.String}),
+							List: []model.IExpression{
+								model.NewLiteral("A", types.String),
+								model.NewLiteral("B", types.String),
+							},
+						},
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "AB"),
+		},
+		{
+			name:       "Combine with separator",
+			cql:        "Combine({'A', 'B'}, ':')",
+			wantResult: newOrFatal(t, "A:B"),
+		},
+		{
+			name:       "Combine with empty list is null",
+			cql:        "Combine({})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Combine with empty list and non-empty separator is null",
+			cql:        "Combine({}, ':')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Combine with null list is null",
+			cql:        "Combine(null, ':')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Combine with null separator is null",
+			cql:        "Combine({'A', 'B'}, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Combine skips null elements in input list",
+			cql:        "Combine({'A', 'B', null, 'C'})",
+			wantResult: newOrFatal(t, "ABC"),
+		},
+		{
+			name:       "Combine with list of nulls",
+			cql:        "Combine({null as String, null as String})",
+			wantResult: newOrFatal(t, ""),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}

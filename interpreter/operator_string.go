@@ -166,6 +166,59 @@ func (i *interpreter) evalSplit(m model.IBinaryExpression, left, right result.Va
 	return result.New(l)
 }
 
+// Combine(source List<String>) String
+// Combine(source List<String>, separator String) String
+// https://cql.hl7.org/09-b-cqlreference.html#combine
+func (i *interpreter) evalCombine(m model.INaryExpression, operands []result.Value) (result.Value, error) {
+	if len(operands) == 0 {
+		// Dispatcher and Parser should prevent this from happening.
+		return result.Value{}, fmt.Errorf("internal error - Combine must have at least one operand")
+	}
+
+	if result.IsNull(operands[0]) {
+		return result.New(nil)
+	}
+
+	// Extract string list:
+	strList, err := result.ToSlice(operands[0])
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(strList) == 0 {
+		return result.New(nil)
+	}
+
+	// Extract separator:
+	sep := ""
+	if len(operands) == 2 {
+		if result.IsNull(operands[1]) {
+			return result.New(nil)
+		}
+		sep, err = result.ToString(operands[1])
+		if err != nil {
+			return result.Value{}, err
+		}
+	}
+
+	resultBuilder := strings.Builder{}
+	for idx, str := range strList {
+		if result.IsNull(str) {
+			continue
+		}
+		s, err := result.ToString(str)
+		if err != nil {
+			return result.Value{}, err
+		}
+		resultBuilder.WriteString(s)
+
+		// Write the separator unless we are on the last element.
+		if idx < len(strList)-1 {
+			resultBuilder.WriteString(sep)
+		}
+	}
+	return result.New(resultBuilder.String())
+}
+
 // convert a quantity value to a string
 func quantityToString(q result.Quantity) string {
 	f := strconv.FormatFloat(q.Value, 'f', -1, 64)

@@ -961,6 +961,17 @@ func (i *interpreter) naryOverloads(m model.INaryExpression) ([]convert.Overload
 				Result:   evalConcatenate,
 			},
 		}, nil
+	case *model.Combine:
+		return []convert.Overload[evalNarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.String}},
+				Result:   i.evalCombine,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.String}, types.String},
+				Result:   i.evalCombine,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Nary Expression %v", m.GetName())
 	}

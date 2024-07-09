@@ -642,6 +642,41 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Combine({'1'})",
+			cql:  "Combine({'1'})",
+			want: &model.Combine{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.String}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.String),
+							},
+						},
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+		},
+		{
+			name: "Combine({'1'}, 'sep')",
+			cql:  "Combine({'1'}, 'sep')",
+			want: &model.Combine{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.String}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.String),
+							},
+						},
+						model.NewLiteral("sep", types.String),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",
