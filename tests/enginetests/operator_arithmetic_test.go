@@ -422,6 +422,104 @@ func TestLn(t *testing.T) {
 	}
 }
 
+func TestPrecision(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Decimal",
+			cql:  "Precision(@2014)",
+			wantModel: &model.Precision{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("@2014", types.Date),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 4),
+		},
+		{
+			name:       "Date Year",
+			cql:        "Precision(@2014)",
+			wantResult: newOrFatal(t, 4),
+		},
+		{
+			name:       "Date Month",
+			cql:        "Precision(@2014-02)",
+			wantResult: newOrFatal(t, 6),
+		},
+		{
+			name:       "Date Day",
+			cql:        "Precision(@2014-01-01)",
+			wantResult: newOrFatal(t, 8),
+		},
+		{
+			name:       "DateTime Hour",
+			cql:        "Precision(@2014-01-01T10)",
+			wantResult: newOrFatal(t, 10),
+		},
+		{
+			name:       "DateTime Minute",
+			cql:        "Precision(@2014-01-01T10:10)",
+			wantResult: newOrFatal(t, 12),
+		},
+		{
+			name:       "DateTime Second",
+			cql:        "Precision(@2014-01-01T10:10:30)",
+			wantResult: newOrFatal(t, 14),
+		},
+		{
+			name:       "DateTime Millisecond",
+			cql:        "Precision(@2014-01-01T10:10:30.000Z)",
+			wantResult: newOrFatal(t, 17),
+		},
+		{
+			name:       "Time Hour",
+			cql:        "Precision(@T10)",
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Time Millisecond",
+			cql:        "Precision(@T01:01:00.000)",
+			wantResult: newOrFatal(t, 9),
+		},
+		{
+			name:       "Time Millisecond",
+			cql:        "Precision(@2014-01-02T01:01:00.000Z)",
+			wantResult: newOrFatal(t, 17),
+		},
+		{
+			name:       "Null",
+			cql:        "Precision(null as Date)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestAdd(t *testing.T) {
 	tests := []struct {
 		name       string

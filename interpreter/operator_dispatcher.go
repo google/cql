@@ -157,6 +157,21 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalLn,
 			},
 		}, nil
+	case *model.Precision:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Date},
+				Result:   evalPrecisionDateTime,
+			},
+			{
+				Operands: []types.IType{types.DateTime},
+				Result:   evalPrecisionDateTime,
+			},
+			{
+				Operands: []types.IType{types.Time},
+				Result:   evalPrecisionTime,
+			},
+		}, nil
 	case *model.Exists:
 		return []convert.Overload[evalUnarySignature]{
 			{

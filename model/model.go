@@ -663,6 +663,9 @@ type Floor struct{ *UnaryExpression }
 // Ln  is https://cql.hl7.org/04-logicalspecification.html#ln.
 type Ln struct{ *UnaryExpression }
 
+// Precision  is https://cql.hl7.org/04-logicalspecification.html#precision.
+type Precision struct{ *UnaryExpression }
+
 // SingletonFrom is https://cql.hl7.org/04-logicalspecification.html#singletonfrom.
 type SingletonFrom struct{ *UnaryExpression }
 
@@ -1139,6 +1142,9 @@ func (a *Floor) GetName() string { return "Floor" }
 
 // GetName returns the name of the system operator.
 func (a *Ln) GetName() string { return "Ln" }
+
+// GetName returns the name of the system operator.
+func (a *Precision) GetName() string { return "Precision" }
 
 // GetName returns the name of the system operator.
 func (a *As) GetName() string { return "As" }

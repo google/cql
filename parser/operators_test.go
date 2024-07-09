@@ -516,6 +516,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Arithmetic Precision",
+			cql:  "Precision(@2014)",
+			want: &model.Precision{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("@2014", types.Date),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "Arithmetic Addition",
 			cql:  "Add(1, 2)",
 			want: &model.Add{

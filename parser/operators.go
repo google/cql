@@ -701,6 +701,21 @@ func (p *Parser) loadSystemOperators() error {
 			model:    negateModel(types.Quantity),
 		},
 		{
+			name:     "Precision",
+			operands: [][]types.IType{{types.Date}},
+			model:    precisionModel(),
+		},
+		{
+			name:     "Precision",
+			operands: [][]types.IType{{types.DateTime}},
+			model:    precisionModel(),
+		},
+		{
+			name:     "Precision",
+			operands: [][]types.IType{{types.Time}},
+			model:    precisionModel(),
+		},
+		{
 			name:     "Subtract",
 			operands: [][]types.IType{{types.Integer, types.Integer}},
 			model:    subtractModel(types.Integer),
@@ -2137,6 +2152,16 @@ func powerModel(resultType types.System) func() model.IExpression {
 		return &model.Power{
 			BinaryExpression: &model.BinaryExpression{
 				Expression: model.ResultType(resultType),
+			},
+		}
+	}
+}
+
+func precisionModel() func() model.IExpression {
+	return func() model.IExpression {
+		return &model.Precision{
+			UnaryExpression: &model.UnaryExpression{
+				Expression: model.ResultType(types.Integer),
 			},
 		}
 	}

@@ -300,6 +300,63 @@ func arithmetic[t float64 | int64 | int32](m model.IBinaryExpression, l, r t) (r
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Arithmetic Expression %v", m)
 }
 
+// Precision(arg Date) Integer
+// Precision(arg DateTime) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#precision
+// TODO: b/301606416 - Precision for Decimals is not yet supported due to needing to handle
+// trailing zeros.
+func evalPrecisionDateTime(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	dt, err := result.ToDateTime(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch dt.Precision {
+	case model.YEAR:
+		return result.New(4)
+	case model.MONTH:
+		return result.New(6)
+	case model.DAY:
+		return result.New(8)
+	case model.HOUR:
+		return result.New(10)
+	case model.MINUTE:
+		return result.New(12)
+	case model.SECOND:
+		return result.New(14)
+	case model.MILLISECOND:
+		return result.New(17)
+	default:
+		return result.Value{}, fmt.Errorf("internal error - unsupported DateTime precision %v", dt.Precision)
+	}
+}
+
+// Precision(arg Time) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#precision
+func evalPrecisionTime(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	dt, err := result.ToDateTime(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch dt.Precision {
+	case model.HOUR:
+		return result.New(2)
+	case model.MINUTE:
+		return result.New(4)
+	case model.SECOND:
+		return result.New(6)
+	case model.MILLISECOND:
+		return result.New(9)
+	default:
+		return result.Value{}, fmt.Errorf("internal error - unsupported Time precision %v", dt.Precision)
+	}
+}
+
 // ^(left Integer, right Integer) Integer
 // ^(left Long, right Long) Long
 // ^(left Decimal, right Decimal) Decimal
