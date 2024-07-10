@@ -106,6 +106,9 @@ type lexedLib struct {
 
 // topologicalSortLibraries parses the CQL libraries into ANTLR, topologically sorts their
 // dependencies and returns a sorted list of lexedLib.
+// Note: In cases where a library is included without a version, it attempts to find the latest
+// version of the library with a string value comparison. This is a naive approach and may not work
+// with non numerical versioning systems.
 func (p *Parser) topologicalSortLibraries(cqlLibs []string) ([]lexedLib, error) {
 	// lexedLibraries maps graph ID to library that has been lexed.
 	lexedLibraries := make(map[string]lexedLib, len(cqlLibs))
@@ -149,6 +152,18 @@ func (p *Parser) topologicalSortLibraries(cqlLibs []string) ([]lexedLib, error) 
 	for libID, deps := range includeDependencies {
 		libNode := goraph.NewNode(libID.Key())
 		for _, includedID := range deps {
+			// If the version is not specified, use the latest version. This mimics the behavior found in
+			// the reference resolver.
+			if includedID.Version == "" {
+				for libKey := range includeDependencies {
+					if libKey.Name != includedID.Name {
+						continue
+					}
+					if strings.Compare(includedID.Version, libKey.Version) == -1 {
+						includedID = libKey
+					}
+				}
+			}
 			includedNode := goraph.NewNode(includedID.Key())
 			if err := graph.AddEdge(includedNode.ID(), libNode.ID(), 1); err != nil {
 				return nil, fmt.Errorf("failed to import library %q, dependency graph could not resolve with error: %w", includedID, err)

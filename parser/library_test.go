@@ -17,6 +17,7 @@ package parser
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/lithammer/dedent"
 )
 
@@ -264,16 +264,6 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 	}
 }
 
-func TestNoLibraries(t *testing.T) {
-	_, err := newFHIRParser(t).Libraries(context.Background(), []string{}, Config{})
-	if err == nil {
-		t.Fatal("Parse succeeded, wanted error")
-	}
-	want := "no CQL libraries were provided"
-	if !strings.Contains(err.Error(), want) {
-		t.Errorf("Returned error (%s) did not contain expected string (%s)", err.Error(), want)
-	}
-}
 func TestMalformedCQLMultipleLibraries(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -346,6 +336,20 @@ func TestMalformedIncludeDependenciesMultipleLibraries(t *testing.T) {
 			wantErr: "found circular dependencies",
 		},
 		{
+			name: "library includes non-existent library",
+			cqlLibs: []string{
+				"include lib1",
+			},
+			wantErr: "lib1 does not exist",
+		},
+		{
+			name: "library includes non-existent library with version specified",
+			cqlLibs: []string{
+				"include lib1 version '1.0'",
+			},
+			wantErr: "lib1 1.0 does not exist",
+		},
+		{
 			name: "repeated library identifier",
 			cqlLibs: []string{
 				dedent.Dedent(`
@@ -405,6 +409,17 @@ func TestMalformedIncludeDependenciesMultipleLibraries(t *testing.T) {
 				t.Errorf("Returned error (%s) did not contain expected string (%s)", err.Error(), tc.wantErr)
 			}
 		})
+	}
+}
+
+func TestNoLibraries(t *testing.T) {
+	_, err := newFHIRParser(t).Libraries(context.Background(), []string{}, Config{})
+	if err == nil {
+		t.Fatal("Parse succeeded, wanted error")
+	}
+	want := "no CQL libraries were provided"
+	if !strings.Contains(err.Error(), want) {
+		t.Errorf("Returned error (%s) did not contain expected string (%s)", err.Error(), want)
 	}
 }
 
@@ -507,6 +522,24 @@ func TestParserTopologicalSortMultipleLibraries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Can include a versioned library without specifying the version",
+			cqlLibs: []string{
+				"library lib1 version '1.0'",
+				"include lib1",
+			},
+			want: []*model.Library{
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"},
+				},
+				&model.Library{
+					// Unnamed Library
+					Includes: []*model.Include{
+						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"}},
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -522,36 +555,175 @@ func TestParserTopologicalSortMultipleLibraries(t *testing.T) {
 }
 
 func TestParserTopologicalSortMultipleTopLevelLibraries(t *testing.T) {
-	cqlLibs := []string{
-		dedent.Dedent(`
-			library lib3
-			include lib2
-			include lib1`),
-		dedent.Dedent(`
-			library measure1
-			include lib1
-			include lib2
-			include lib3`),
-		dedent.Dedent(`
-			library measure2
-			include lib3`),
-		"library lib2",
-		"library lib1",
+	tests := []struct {
+		name             string
+		cqlLibs          []string
+		wantTopLevelLibs []model.LibraryIdentifier
+	}{
+		{
+			name: "Simple case with multiple top level libraries",
+			cqlLibs: []string{
+				dedent.Dedent(`
+					library lib3
+					include lib2
+					include lib1`),
+				dedent.Dedent(`
+					library measure1
+					include lib1
+					include lib2
+					include lib3`),
+				dedent.Dedent(`
+					library measure2
+					include lib3`),
+				"library lib2",
+				"library lib1",
+			},
+			wantTopLevelLibs: []model.LibraryIdentifier{
+				{
+					Qualified: "measure1",
+					Local:     "measure1",
+					Version:   "",
+				},
+				{
+					Qualified: "measure2",
+					Local:     "measure2",
+					Version:   "",
+				},
+			},
+		},
 	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			parsedLibs, err := newFHIRParser(t).Libraries(context.Background(), test.cqlLibs, Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
 
-	parsedLibs, err := newFHIRParser(t).Libraries(context.Background(), cqlLibs, Config{})
-	if err != nil {
-		t.Fatalf("Parse returned unexpected error: %v", err)
+			lastTwoIDs := []model.LibraryIdentifier{
+				*parsedLibs[len(parsedLibs)-1].Identifier,
+				*parsedLibs[len(parsedLibs)-2].Identifier,
+			}
+			slices.SortStableFunc(lastTwoIDs, func(a, b model.LibraryIdentifier) int {
+				if a.Qualified != b.Qualified {
+					return strings.Compare(a.Qualified, b.Qualified)
+				}
+				return strings.Compare(a.Version, b.Version)
+			})
+			// Topological sort isn't 100% deterministic so assert the last values are what we want.
+			if diff := cmp.Diff(test.wantTopLevelLibs, lastTwoIDs); diff != "" {
+				t.Errorf("%v\nLibraries(%v) parsing diff (-want +got):\n%v", test.wantTopLevelLibs, lastTwoIDs, diff)
+			}
+		})
 	}
+}
 
-	lastTwoIDs := []string{
-		parsedLibs[len(parsedLibs)-1].Identifier.Qualified,
-		parsedLibs[len(parsedLibs)-2].Identifier.Qualified,
+func TestParserTopologicalSortLibrariesIncludeCorrectVersion(t *testing.T) {
+	tests := []struct {
+		name             string
+		cqlLibs          []string
+		wantTopLevelLibs []*model.Library
+	}{
+		{
+			name: "Can parse includes with no version specified and multiple versions for the same library",
+			cqlLibs: []string{
+				"library lib1 version '1.0'",
+				"library lib1 version '1.2'",
+				dedent.Dedent(`
+					library measure1
+					include lib1`),
+			},
+			wantTopLevelLibs: []*model.Library{
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{
+						Qualified: "lib1",
+						Local:     "lib1",
+						Version:   "1.0",
+					},
+				},
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{
+						Qualified: "lib1",
+						Local:     "lib1",
+						Version:   "1.2",
+					},
+				},
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{
+						Local:     "measure1",
+						Qualified: "measure1",
+						Version:   "",
+					},
+					Includes: []*model.Include{
+						{
+							Identifier: &model.LibraryIdentifier{
+								Local:     "lib1",
+								Qualified: "lib1",
+								Version:   "1.2",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Can parse includes with no version specified and multiple versions for the same library where one has no version.",
+			cqlLibs: []string{
+				"library lib1 version '1.0'",
+				"library lib1",
+				dedent.Dedent(`
+					library measure1
+					include lib1`),
+			},
+			wantTopLevelLibs: []*model.Library{
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{
+						Qualified: "lib1",
+						Local:     "lib1",
+					},
+				},
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{
+						Qualified: "lib1",
+						Local:     "lib1",
+						Version:   "1.0",
+					},
+				},
+				&model.Library{
+					Identifier: &model.LibraryIdentifier{
+						Local:     "measure1",
+						Qualified: "measure1",
+						Version:   "",
+					},
+					Includes: []*model.Include{
+						{
+							Identifier: &model.LibraryIdentifier{
+								Local:     "lib1",
+								Qualified: "lib1",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
-	measureIDs := []string{"measure1", "measure2"}
-	// Topological sort isn't 100% deterministic so assert the last values are what we want.
-	if diff := cmp.Diff(measureIDs, lastTwoIDs, cmpopts.SortSlices(func(a, b string) bool { return a < b })); diff != "" {
-		t.Errorf("%v\nLibraries(%v) parsing diff (-want +got):\n%v", measureIDs, lastTwoIDs, diff)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			parsedLibs, err := newFHIRParser(t).Libraries(context.Background(), test.cqlLibs, Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+
+			// Topological sort isn't 100% deterministic so we need to sort the libraries.
+			slices.SortStableFunc(parsedLibs, func(a, b *model.Library) int {
+				if a.Identifier.Qualified != b.Identifier.Qualified {
+					return strings.Compare(a.Identifier.Qualified, b.Identifier.Qualified)
+				}
+				return strings.Compare(a.Identifier.Version, b.Identifier.Version)
+			})
+			if diff := cmp.Diff(test.wantTopLevelLibs, parsedLibs); diff != "" {
+				t.Errorf("%v\nLibraries(%v) parsing diff (-want +got):\n%v", test.wantTopLevelLibs, parsedLibs, diff)
+			}
+		})
 	}
 }
 

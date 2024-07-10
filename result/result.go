@@ -129,6 +129,9 @@ func LibKeyFromModel(lib *model.LibraryIdentifier) LibKey {
 // Key returns a unique string key representation of the LibKey.
 // A space is added between the name and version to avoid naming clashes.
 func (l LibKey) Key() string {
+	if l.Version == "" {
+		return l.Name
+	}
 	// TODO b/301606416 - Since identifiers can contain spaces, this is not a unique key.
 	return l.Name + " " + l.Version
 }

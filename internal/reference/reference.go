@@ -19,6 +19,7 @@ package reference
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/cql/internal/convert"
 	"github.com/google/cql/internal/modelinfo"
@@ -138,9 +139,24 @@ func (r *Resolver[T, F]) IncludeLibrary(m *model.LibraryIdentifier, validateIsUn
 		}
 	}
 
-	lib := namedLibKey{qualified: m.Qualified, version: m.Version}
-	if _, ok := r.libs[lib]; !ok {
-		return fmt.Errorf("library %s %s was included, but does not exist", m.Qualified, m.Version)
+	libToInclude := namedLibKey{qualified: m.Qualified, version: m.Version}
+	if _, ok := r.libs[libToInclude]; !ok {
+		// If the library is not found, and the version is not specified, attempt to use the latest
+		// version. This mimics the behavior found in the parser's topologicalSortLibraries function.
+		if libToInclude.version == "" {
+			for libKey := range r.libs {
+				if libKey.qualified != libToInclude.qualified {
+					continue
+				}
+				if strings.Compare(libToInclude.version, libKey.version) == -1 {
+					libToInclude.version = libKey.version
+					m.Version = libKey.version
+				}
+			}
+		}
+		if _, ok := r.libs[libToInclude]; !ok {
+			return fmt.Errorf("library %s %s was included, but does not exist", m.Qualified, m.Version)
+		}
 	}
 
 	r.includedLibs[includeKey{localID: m.Local, includedBy: r.currLib}] = m
