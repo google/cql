@@ -467,3 +467,87 @@ func TestListOperatorSingletonFrom_Error(t *testing.T) {
 		})
 	}
 }
+
+func TestIndexerList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Indexer [] syntax for List<Integer>",
+			cql:  "{1, 2}[1]",
+			wantModel: &model.Indexer{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.Integer),
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+				},
+			},
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name: "Indexer [] syntax for List<String>",
+			cql:  "{'a', 'b'}[1]",
+			wantModel: &model.Indexer{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.String),
+					Operands: []model.IExpression{
+						model.NewList([]string{"a", "b"}, types.String),
+						model.NewLiteral("1", types.Integer),
+					},
+				},
+			},
+			wantResult: newOrFatal(t, "b"),
+		},
+		{
+			name:       "Indexer functional form",
+			cql:        "Indexer({1, 2}, 1)",
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Indexer with index too large",
+			cql:        "{1, 2}[100]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Indexer with index smaller than 0",
+			cql:        "{1, 2}[-100]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Indexer on null",
+			cql:        "(null as List<Integer>)[1]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Indexer with null index",
+			cql:        "{1, 2}[null as Integer]",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}

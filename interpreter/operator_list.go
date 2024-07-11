@@ -121,3 +121,25 @@ func evalSingletonFrom(m model.IUnaryExpression, listObj result.Value) (result.V
 		return result.Value{}, fmt.Errorf("singleton from requires a list of length 0 or 1, but got length %d", len(list))
 	}
 }
+
+// Indexer(argument List<T>, index Integer) T
+// [](argument List<T>, index Integer) T
+// https://cql.hl7.org/09-b-cqlreference.html#indexer-1
+// Indexer is also defined for String, see operator_string.go for that implementation.
+func (i *interpreter) evalIndexerList(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	idx, err := result.ToInt32(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if idx < 0 || idx >= int32(len(list)) {
+		return result.New(nil)
+	}
+	return list[idx], nil
+}

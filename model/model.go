@@ -932,6 +932,9 @@ type Union struct{ *BinaryExpression }
 // it always takes two arguments.
 type Split struct{ *BinaryExpression }
 
+// Indexer ELM Expression https://cql.hl7.org/04-logicalspecification.html#indexer.
+type Indexer struct{ *BinaryExpression }
+
 // BinaryExpressionWithPrecision represents a BinaryExpression with a precision property.
 type BinaryExpressionWithPrecision struct {
 	*BinaryExpression
@@ -1371,3 +1374,6 @@ func (a *Split) GetName() string { return "Split" }
 
 // GetName returns the name of the system operator.
 func (a *Combine) GetName() string { return "Combine" }
+
+// GetName returns the name of the system operator.
+func (i *Indexer) GetName() string { return "Indexer" }

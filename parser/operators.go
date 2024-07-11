@@ -116,6 +116,18 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 		// Last(List<T>) T is a special case because the ResultType is not known until invocation.
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Indexer:
+		switch opType := resolved.WrappedOperands[0].GetResultType().(type) {
+		case types.System:
+			if opType != types.String {
+				return nil, fmt.Errorf("internal error - expected Indexer(String, Integer) overload during parsing, but got Indexer(%v, _)", resolved.WrappedOperands[0].GetResultType())
+			}
+			t.Expression = model.ResultType(types.String)
+		case *types.List:
+			t.Expression = model.ResultType(opType.ElementType)
+		default:
+			return nil, fmt.Errorf("internal error -- upsupported Indexer operand types")
+		}
 	case *model.Predecessor:
 		t.Expression = model.ResultType(resolved.WrappedOperands[0].GetResultType())
 	case *model.Successor:
@@ -917,6 +929,19 @@ func (p *Parser) loadSystemOperators() error {
 					NaryExpression: &model.NaryExpression{
 						Expression: model.ResultType(types.String),
 					},
+				}
+			},
+		},
+		{
+			name: "Indexer",
+			operands: [][]types.IType{
+				{types.String, types.Integer},
+				{&types.List{ElementType: types.Any}, types.Integer},
+			},
+			model: func() model.IExpression {
+				return &model.Indexer{
+					// The result type is set in the resolveFunction().
+					BinaryExpression: &model.BinaryExpression{},
 				}
 			},
 		},

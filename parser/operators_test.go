@@ -687,6 +687,32 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Indexer functional form for List<T>",
+			cql:  "Indexer({1}, 0)",
+			want: &model.Indexer{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.Integer),
+					Operands: []model.IExpression{
+						model.NewList([]string{"1"}, types.Integer),
+						model.NewLiteral("0", types.Integer),
+					},
+				},
+			},
+		},
+		{
+			name: "Indexer functional form for String",
+			cql:  "Indexer('abc', 0)",
+			want: &model.Indexer{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.String),
+					Operands: []model.IExpression{
+						model.NewLiteral("abc", types.String),
+						model.NewLiteral("0", types.Integer),
+					},
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",

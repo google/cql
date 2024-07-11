@@ -219,6 +219,27 @@ func (i *interpreter) evalCombine(m model.INaryExpression, operands []result.Val
 	return result.New(resultBuilder.String())
 }
 
+// Indexer(argument String, index Integer) String
+// https://cql.hl7.org/09-b-cqlreference.html#indexer
+// Indexer is also defined for List<T>, see operator_list.go for that implementation.
+func (i *interpreter) evalIndexerString(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	str, err := result.ToString(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	idx, err := result.ToInt32(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if idx < 0 || idx >= int32(len(str)) {
+		return result.New(nil)
+	}
+	return result.New(string([]rune(str)[idx]))
+}
+
 // convert a quantity value to a string
 func quantityToString(q result.Quantity) string {
 	f := strconv.FormatFloat(q.Value, 'f', -1, 64)

@@ -669,3 +669,12 @@ func (v *visitor) VisitSuccessorExpressionTerm(ctx *cql.SuccessorExpressionTermC
 	}
 	return m
 }
+
+func (v *visitor) VisitIndexedExpressionTermContext(ctx *cql.IndexedExpressionTermContext) model.IExpression {
+	baseExpr := ctx.ExpressionTerm()
+	m, err := v.parseFunction("", "Indexer", []antlr.Tree{baseExpr, ctx.Expression()}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+	return m
+}

@@ -999,6 +999,32 @@ func TestOperatorExpressions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Indexer [] syntax for List<T>",
+			cql:  "{1, 2, 3}[0]",
+			want: &model.Indexer{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.Integer),
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewLiteral("0", types.Integer),
+					},
+				},
+			},
+		},
+		{
+			name: "Indexer [] syntax for String",
+			cql:  "'abc'[0]",
+			want: &model.Indexer{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.String),
+					Operands: []model.IExpression{
+						model.NewLiteral("abc", types.String),
+						model.NewLiteral("0", types.Integer),
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

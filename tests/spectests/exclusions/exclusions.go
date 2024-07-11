@@ -318,7 +318,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Flatten",
 				"Includes",
 				"IncludedIn",
-				"Indexer",
 				"IndexOf",
 				"Intersect",
 				"Length",
@@ -359,7 +358,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"EndsWith",
-				"Indexer",
 				"LastPositionOf",
 				"Length",
 				"Lower",
