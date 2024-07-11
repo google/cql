@@ -727,6 +727,18 @@ func TestEvaluationTimestamp(t *testing.T) {
 			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2024, time.January, 1, 0, 0, 0, 1, time.UTC), Precision: model.MILLISECOND}),
 		},
 		{
+			name:                "now() returns passed evaluation timestamp",
+			cql:                 "define TESTRESULT: now()",
+			evaluationTimestamp: time.Date(2024, time.January, 1, 0, 0, 0, 1, time.UTC),
+			wantModel: &model.Now{
+				NaryExpression: &model.NaryExpression{
+					Operands:   []model.IExpression{},
+					Expression: model.ResultType(types.DateTime),
+				},
+			},
+			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2024, time.January, 1, 0, 0, 0, 1, time.UTC), Precision: model.MILLISECOND}),
+		},
+		{
 			name:                "Time returns passed evaluation timestamp time components",
 			cql:                 "define TESTRESULT: TimeOfDay()",
 			evaluationTimestamp: time.Date(0, time.January, 1, 1, 2, 3, 4, time.UTC),

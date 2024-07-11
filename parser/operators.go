@@ -1043,6 +1043,17 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name:     "now",
+			operands: [][]types.IType{{}},
+			model: func() model.IExpression {
+				return &model.Now{
+					NaryExpression: &model.NaryExpression{
+						Expression: model.ResultType(types.DateTime),
+					},
+				}
+			},
+		},
+		{
 			name:     "TimeOfDay",
 			operands: [][]types.IType{{}},
 			model: func() model.IExpression {

@@ -813,6 +813,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "now()",
+			cql:  "now()",
+			want: &model.Now{
+				NaryExpression: &model.NaryExpression{
+					Operands:   []model.IExpression{},
+					Expression: model.ResultType(types.DateTime),
+				},
+			},
+		},
+		{
 			name: "TimeOfDay()",
 			cql:  "TimeOfDay()",
 			want: &model.TimeOfDay{
