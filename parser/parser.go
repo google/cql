@@ -152,9 +152,9 @@ func (p *Parser) topologicalSortLibraries(cqlLibs []string) ([]lexedLib, error) 
 	for libID, deps := range includeDependencies {
 		libNode := goraph.NewNode(libID.Key())
 		for _, includedID := range deps {
-			// If the version is not specified, use the latest version. This mimics the behavior found in
+			// If the version is not specified and doesn't exist, use the latest version. This mimics the behavior found in
 			// the reference resolver.
-			if includedID.Version == "" {
+			if _, ok := includeDependencies[includedID]; !ok && includedID.Version == "" {
 				for libKey := range includeDependencies {
 					if libKey.Name != includedID.Name {
 						continue
