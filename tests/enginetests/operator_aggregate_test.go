@@ -384,6 +384,73 @@ func TestMax(t *testing.T) {
 	}
 }
 
+func TestMin(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Min({@2012, @2010, @2011})",
+			cql:  "Min({@2012, @2010, @2011})",
+			wantModel: &model.Min{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"@2012", "@2010", "@2011"}, types.Date),
+					Expression: model.ResultType(types.Date),
+				},
+			},
+			wantResult: newOrFatal(t, result.Date{Date: time.Date(2010, time.January, 01, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR}),
+		},
+		{
+			name:       "Min with null input",
+			cql:        "Min(null as List<Date>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Min({@2012, @2011, null})",
+			cql:        "Min({@2012, @2011, null})",
+			wantResult: newOrFatal(t, result.Date{Date: time.Date(2011, time.January, 01, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR}),
+		},
+		{
+			name:       "Min with empty list",
+			cql:        "Min(List<Date>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Min with all null list",
+			cql:        "Min({null as Date, null as Date})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Min({@2014-01-01T01:01:00.000Z, @2014-01-01T01:03:00.000Z, @2014-01-01T01:02:00.000Z})",
+			cql:        "Min({@2014-01-01T01:01:00.000Z, @2014-01-01T01:03:00.000Z, @2014-01-01T01:02:00.000Z})",
+			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2014, time.January, 01, 1, 1, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestSum(t *testing.T) {
 	tests := []struct {
 		name       string

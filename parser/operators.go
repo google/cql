@@ -94,6 +94,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	case *model.Max:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Min:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	case *model.Sum:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
@@ -1594,6 +1597,18 @@ func (p *Parser) loadSystemOperators() error {
 			},
 			model: func() model.IExpression {
 				return &model.Max{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Min",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Date}},
+				{&types.List{ElementType: types.DateTime}},
+			},
+			model: func() model.IExpression {
+				return &model.Min{
 					UnaryExpression: &model.UnaryExpression{},
 				}
 			},

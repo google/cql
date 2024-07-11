@@ -1213,6 +1213,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Min",
+			cql:  "Min({@2010, @2011, @2012})",
+			want: &model.Min{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"@2010", "@2011", "@2012"}, types.Date),
+					Expression: model.ResultType(types.Date),
+				},
+			},
+		},
+		{
 			name: "Sum",
 			cql:  "Sum({1, 2, 3})",
 			want: &model.Sum{

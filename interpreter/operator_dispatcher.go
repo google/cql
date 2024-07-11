@@ -528,6 +528,17 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalMaxDateTime,
 			},
 		}, nil
+	case *model.Min:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Date}},
+				Result:   i.evalMinDateTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.DateTime}},
+				Result:   i.evalMinDateTime,
+			},
+		}, nil
 	case *model.Sum:
 		return []convert.Overload[evalUnarySignature]{
 			{

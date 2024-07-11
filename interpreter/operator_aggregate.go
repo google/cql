@@ -212,6 +212,58 @@ func (i *interpreter) evalMaxDateTime(m model.IUnaryExpression, operand result.V
 	return result.New(dt)
 }
 
+// Min(argument List<Date>) Date
+// Min(argument List<DateTime>) DateTime
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinDateTime(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+	maxDtVal, err := maxValue(lType.ElementType, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	dt, err := result.ToDateTime(maxDtVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToDateTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		compareResult, err := compareDateTime(dt, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftAfterRight {
+			dt = v
+		}
+	}
+	if m.GetResultType() == types.Date {
+		return result.New(result.Date(dt))
+	}
+	return result.New(dt)
+}
+
 // Sum(argument List<Decimal>) Decimal
 // Sum(argument List<Integer>) Integer
 // Sum(argument List<Long>) Long
