@@ -30,7 +30,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlAggregateFunctionsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Max",
 				"Median",
 				"Min",
 				"Mode",
@@ -39,7 +38,13 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"StdDev",
 				"Variance",
 			},
-			NamesExcludes: []string{},
+			NamesExcludes: []string{
+				// TODO: b/342061715 - unsupported operators.
+				// Only Date and DateTime overloads are supported.
+				"MaxTestInteger",
+				"MaxTestString",
+				"MaxTestTime",
+			},
 		},
 		"CqlAggregateTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{},

@@ -160,6 +160,58 @@ func (i *interpreter) evalCount(m model.IUnaryExpression, operand result.Value) 
 	return result.New(count)
 }
 
+// Max(argument List<Date>) Date
+// Max(argument List<DateTime>) DateTime
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxDateTime(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+	minDtVal, err := minValue(lType.ElementType, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	dt, err := result.ToDateTime(minDtVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToDateTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		compareResult, err := compareDateTime(dt, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftBeforeRight {
+			dt = v
+		}
+	}
+	if m.GetResultType() == types.Date {
+		return result.New(result.Date(dt))
+	}
+	return result.New(dt)
+}
+
 // Sum(argument List<Decimal>) Decimal
 // Sum(argument List<Integer>) Integer
 // Sum(argument List<Long>) Long

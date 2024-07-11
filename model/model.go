@@ -786,6 +786,12 @@ type Count struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &Count{}
 
+// Max ELM expression from https://cql.hl7.org/09-b-cqlreference.html#max.
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Max struct{ *UnaryExpression }
+
 // Sum ELM expression from https://cql.hl7.org/09-b-cqlreference.html#sum.
 // TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
 // UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
@@ -1365,6 +1371,9 @@ func (a *Avg) GetName() string { return "Avg" }
 
 // GetName returns the name of the system operator.
 func (c *Count) GetName() string { return "Count" }
+
+// GetName returns the name of the system operator.
+func (a *Max) GetName() string { return "Max" }
 
 // GetName returns the name of the system operator.
 func (a *Sum) GetName() string { return "Sum" }

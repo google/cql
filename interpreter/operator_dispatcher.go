@@ -517,6 +517,17 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalCount,
 			},
 		}, nil
+	case *model.Max:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Date}},
+				Result:   i.evalMaxDateTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.DateTime}},
+				Result:   i.evalMaxDateTime,
+			},
+		}, nil
 	case *model.Sum:
 		return []convert.Overload[evalUnarySignature]{
 			{

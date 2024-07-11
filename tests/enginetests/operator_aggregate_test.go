@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/cql/interpreter"
 	"github.com/google/cql/model"
@@ -291,6 +292,73 @@ func TestCount(t *testing.T) {
 			name:       "Count with all null list",
 			cql:        "Count({null, null})",
 			wantResult: newOrFatal(t, 0),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestMax(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Max({@2010, @2012, @2011})",
+			cql:  "Max({@2010, @2012, @2011})",
+			wantModel: &model.Max{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"@2010", "@2012", "@2011"}, types.Date),
+					Expression: model.ResultType(types.Date),
+				},
+			},
+			wantResult: newOrFatal(t, result.Date{Date: time.Date(2012, time.January, 01, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR}),
+		},
+		{
+			name:       "Max with null input",
+			cql:        "Max(null as List<Date>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Max({@2012, @2011, null})",
+			cql:        "Max({@2012, @2011, null})",
+			wantResult: newOrFatal(t, result.Date{Date: time.Date(2012, time.January, 01, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR}),
+		},
+		{
+			name:       "Max with empty list",
+			cql:        "Max(List<Date>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Max with all null list",
+			cql:        "Max({null as Date, null as Date})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Max({@2014-01-01T01:01:00.000Z, @2014-01-01T01:03:00.000Z, @2014-01-01T01:02:00.000Z})",
+			cql:        "Max({@2014-01-01T01:01:00.000Z, @2014-01-01T01:03:00.000Z, @2014-01-01T01:02:00.000Z})",
+			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2014, time.January, 01, 1, 3, 0, 0, time.UTC), Precision: model.MILLISECOND}),
 		},
 	}
 
