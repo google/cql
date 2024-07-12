@@ -996,6 +996,9 @@ type Contains BinaryExpressionWithPrecision
 // CalculateAgeAt ELM expression from https://cql.hl7.org/04-logicalspecification.html#calculateageat.
 type CalculateAgeAt BinaryExpressionWithPrecision
 
+// Overlaps ELM Expression from https://cql.hl7.org/04-logicalspecification.html#overlaps.
+type Overlaps BinaryExpressionWithPrecision
+
 // INaryExpression is an interface that Expressions with any number of operands meet.
 type INaryExpression interface {
 	IExpression
@@ -1330,6 +1333,9 @@ func (a *Contains) GetName() string { return "Contains" }
 
 // GetName returns the name of the system operator.
 func (a *CalculateAgeAt) GetName() string { return "CalculateAgeAt" }
+
+// GetName returns the name of the system operator.
+func (a *Overlaps) GetName() string { return "Overlaps" }
 
 // GetName returns the name of the system operator.
 func (a *Except) GetName() string { return "Except" }

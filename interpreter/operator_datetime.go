@@ -109,6 +109,8 @@ func precisionFromBinaryExpression(b model.IBinaryExpression) (model.DateTimePre
 		p = t.Precision
 	case *model.SameOrBefore:
 		p = t.Precision
+	case *model.Overlaps:
+		p = t.Precision
 	default:
 		return model.DateTimePrecision(""), fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", b)
 	}

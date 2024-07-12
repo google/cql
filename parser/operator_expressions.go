@@ -91,6 +91,17 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 		} else {
 			return v.badExpression("internal error - grammar should not allow this TimeBoundaryExpression", ctx)
 		}
+	case *cql.OverlapsIntervalOperatorPhraseContext:
+		precision = precisionFromContext(operator)
+		fnOperator = "Overlaps"
+		opText := operator.GetText()
+		containsAfter := strings.Contains(opText, "after")
+		containsBefore := strings.Contains(opText, "before")
+		if containsAfter {
+			return v.badExpression("overlaps after operator is not supported", ctx)
+		} else if containsBefore {
+			return v.badExpression("overlaps before operator is not supported", ctx)
+		}
 	default:
 		return v.badExpression("unsupported interval operator in timing expression", ctx)
 	}

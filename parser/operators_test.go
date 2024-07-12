@@ -1073,6 +1073,31 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Overlaps with Date",
+			cql:  "Interval[@2010, @2015] overlaps Interval[@2010, @2020]",
+			want: &model.Overlaps{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.Interval{
+							Low:           model.NewLiteral("@2010", types.Date),
+							High:          model.NewLiteral("@2015", types.Date),
+							Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+							LowInclusive:  true,
+							HighInclusive: true,
+						},
+						&model.Interval{
+							Low:           model.NewLiteral("@2010", types.Date),
+							High:          model.NewLiteral("@2020", types.Date),
+							Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+							LowInclusive:  true,
+							HighInclusive: true,
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
 			name: "Start",
 			cql:  "Start(Interval[1, 4])",
 			want: &model.Start{

@@ -224,19 +224,11 @@ func (i *interpreter) evalEquivalentInterval(_ model.IBinaryExpression, lObj, rO
 	}
 
 	// Check to see if start and end points of the interval are equivalent.
-	startL, err := start(lObj, &i.evaluationTimestamp)
+	startL, endL, err := startAndEnd(lObj, &i.evaluationTimestamp)
 	if err != nil {
 		return result.Value{}, err
 	}
-	startR, err := start(rObj, &i.evaluationTimestamp)
-	if err != nil {
-		return result.Value{}, err
-	}
-	endL, err := end(lObj, &i.evaluationTimestamp)
-	if err != nil {
-		return result.Value{}, err
-	}
-	endR, err := end(rObj, &i.evaluationTimestamp)
+	startR, endR, err := startAndEnd(rObj, &i.evaluationTimestamp)
 	if err != nil {
 		return result.Value{}, err
 	}

@@ -1521,6 +1521,145 @@ func TestIntervalIncludedIn(t *testing.T) {
 	}
 }
 
+func TestIntervalOverlaps(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// Interval<DateTime>, Interval<DateTime> overloads:
+		{
+			name:       "Interval<DateTime> overlaps null as Interval<DateTime>",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-01-29T01:20:30.101-07:00] overlaps null as Interval<DateTime>",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "null as Interval<DateTime> overlaps Interval<DateTime>",
+			cql:        "null as Interval<DateTime> overlaps Interval[@2024-01-25T01:20:30.101-07:00, @2024-01-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Left ends during right",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-03-02T01:20:30.101-07:00] overlaps Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Left starts during right",
+			cql:        "Interval[@2024-03-25T01:20:30.101-07:00, @2024-06-02T01:20:30.101-07:00] overlaps Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Left contains right, or starts before right and ends after right",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-06-02T01:20:30.101-07:00] overlaps Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Right contains left, or starts after right and ends before right",
+			cql:        "Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00] overlaps Interval[@2024-01-25T01:20:30.101-07:00, @2024-06-02T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Left strictly before right",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-01-29T01:20:30.101-07:00] overlaps Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Left strictly after right",
+			cql:        "Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00] overlaps Interval[@2024-01-25T01:20:30.101-07:00, @2024-01-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Left Interval<DateTime> end matches closed right interval start",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-02-29T01:20:30.101-07:00] overlaps Interval[@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Left Interval<DateTime> end matches open right interval start",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-02-29T01:20:30.101-07:00] overlaps Interval(@2024-02-29T01:20:30.101-07:00, @2024-03-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Left Interval<DateTime> overlaps right Interval with null end",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-03-28T01:20:30.101-07:00] overlaps Interval[@2024-02-29T01:20:30.101-07:00, null]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Left Interval<DateTime> overlaps right Interval with null start",
+			cql:        "Interval[@2024-01-25T01:20:30.101-07:00, @2024-02-28T01:20:30.101-07:00] overlaps Interval[null, @2024-02-29T01:20:30.101-07:00]",
+			wantResult: newOrFatal(t, true),
+		},
+		// Sanity check some Interval<Date>, Interval<Date> overloads
+		{
+			name:       "Left strictly before right",
+			cql:        "Interval[@2024-01-25, @2024-02-28] overlaps Interval[@2024-02-29, @2024-03-29]",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Left strictly after right",
+			cql:        "Interval[@2024-02-29, @2024-03-29] overlaps Interval[@2024-01-25, @2024-02-28]",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Left Interval<DateTime> end matches closed right interval start",
+			cql:        "Interval[@2024-01-25, @2024-02-29] overlaps Interval[@2024-02-29, @2024-03-29]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Left Interval<DateTime> end matches open right interval start",
+			cql:        "Interval[@2024-01-25, @2024-02-29] overlaps Interval(@2024-02-29, @2024-03-29]",
+			wantResult: newOrFatal(t, false),
+		},
+		// mixed precision tests
+		{
+			name:       "Left ends during right but insufficient precision to determine overlap",
+			cql:        "Interval[@2024-01-25, @2024-02-28] overlaps Interval[@2024-02, @2024-03-29]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Left starts during right but insufficient precision to determine overlap",
+			cql:        "Interval[@2024-02-28, @2024-03-29] overlaps Interval[@2024-01-25, @2024-02]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Left starts and ends during right uncertain period",
+			cql:        "Interval[@2025-01-25, @2025-02-28] overlaps Interval[@2024-02, @2025]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Right starts during uncertain period and ends before left ends",
+			cql:        "Interval[@2024, @2025-02] overlaps Interval[@2024-02, @2025-01]",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Right starts during left and ends during uncertain period",
+			cql:        "Interval[@2024-02, @2025] overlaps Interval[@2024-03, @2025-02]",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestIntervalContains(t *testing.T) {
 	tests := []struct {
 		name       string

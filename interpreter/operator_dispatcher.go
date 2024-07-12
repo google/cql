@@ -765,6 +765,17 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   i.evalCompareIntervalDateTimeInterval,
 			},
 		}, nil
+	case *model.Overlaps:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				Result:   i.evalOverlapsIntervalDateTimeInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				Result:   i.evalOverlapsIntervalDateTimeInterval,
+			},
+		}, nil
 	case *model.CanConvertQuantity:
 		return []convert.Overload[evalBinarySignature]{
 			{

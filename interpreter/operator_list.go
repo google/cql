@@ -58,12 +58,7 @@ func evalInList(m model.IBinaryExpression, lObj, listObj result.Value) (result.V
 		return result.Value{}, err
 	}
 
-	for _, elemObj := range r {
-		if lObj.Equal(elemObj) {
-			return result.New(true)
-		}
-	}
-	return result.New(false)
+	return result.New(valueInList(lObj, r))
 }
 
 // First(argument List<T>) T
@@ -142,4 +137,14 @@ func (i *interpreter) evalIndexerList(m model.IBinaryExpression, lObj, rObj resu
 		return result.New(nil)
 	}
 	return list[idx], nil
+}
+
+// valueInList returns true if the value is in the list using equality scemantics.
+func valueInList(value result.Value, list []result.Value) bool {
+	for _, elemObj := range list {
+		if value.Equal(elemObj) {
+			return true
+		}
+	}
+	return false
 }

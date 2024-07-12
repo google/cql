@@ -93,6 +93,20 @@ func start(intervalObj result.Value, evaluationTimestamp *time.Time) (result.Val
 	return successor(interval.Low, evaluationTimestamp)
 }
 
+// startAndEnd returns the start and end of the interval.
+// This function is a helper for calling start() and end() in the same function.
+func startAndEnd(intervalObj result.Value, evaluationTimestamp *time.Time) (result.Value, result.Value, error) {
+	start, err := start(intervalObj, evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, result.Value{}, err
+	}
+	end, err := end(intervalObj, evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, result.Value{}, err
+	}
+	return start, end, nil
+}
+
 // op(left DateTime, right Interval<DateTime>) Boolean
 // op(left Date, right Interval<Date>) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#after-1
@@ -170,7 +184,6 @@ func (i *interpreter) evalCompareDateTimeInterval(be model.IBinaryExpression, lO
 // https://cql.hl7.org/09-b-cqlreference.html#before-1
 // https://cql.hl7.org/09-b-cqlreference.html#on-or-after-2
 // https://cql.hl7.org/09-b-cqlreference.html#on-or-before-2
-// TODO(b/308016038): Once Start and End are properly supported, handle low/high inclusivity.
 func (i *interpreter) evalCompareIntervalDateTimeInterval(be model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
 	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
@@ -255,6 +268,99 @@ func (i *interpreter) evalCompareIntervalDateTimeInterval(be model.IBinaryExpres
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression in evalCompareIntervalDateTimeInterval: %v", be)
 }
 
+// Overlaps(left Interval<Date>, right Interval<Date>) Boolean
+// Overlaps(left Interval<DateTime>, right Interval<DateTime>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#overlaps
+func (i *interpreter) evalOverlapsIntervalDateTimeInterval(be model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	p, err := precisionFromBinaryExpression(be)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	iType, ok := be.Left().GetResultType().(*types.Interval)
+	if !ok {
+		return result.Value{}, fmt.Errorf("internal error - evalCompareIntervalDateTimeInterval got Value that is not an interval type")
+	}
+	pointType := iType.PointType
+	allowUnsetPrec := true
+	if err := validatePrecisionByType(p, allowUnsetPrec, pointType); err != nil {
+		return result.Value{}, err
+	}
+	if p != "" {
+		return result.Value{}, fmt.Errorf("internal error - overlaps does not yet support precision")
+	}
+
+	// Get left interval bounds.
+	lObjStart, lObjEnd, err := startAndEnd(lObj, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	leftStart, leftEnd, err := applyToValues(lObjStart, lObjEnd, result.ToDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Get right interval bounds.
+	rObjStart, rObjEnd, err := startAndEnd(rObj, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	rightStart, rightEnd, err := applyToValues(rObjStart, rObjEnd, result.ToDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Due to complexity regarding DateTime precision, we will calculate each case separately and
+	// return the OR of all results. If any of the cases are true, then the result is true, if any
+	// of the cases are null, then the result is null, otherwise the result is false.
+	compResults := []result.Value{}
+	// Case 1. Left starts during right interval.
+	leftStartsDuringRightIntervalValue, err := dateTimeInIntervalWithPrecision(leftStart, rightStart, rightEnd, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	compResults = append(compResults, leftStartsDuringRightIntervalValue)
+
+	// Case 2. Left ends during right interval.
+	leftEndsDuringRightIntervalValue, err := dateTimeInIntervalWithPrecision(leftEnd, rightStart, rightEnd, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	compResults = append(compResults, leftEndsDuringRightIntervalValue)
+
+	// Case 3. Right starts during left interval.
+	rightStartsDuringLeftIntervalValue, err := dateTimeInIntervalWithPrecision(rightStart, leftStart, leftEnd, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	compResults = append(compResults, rightStartsDuringLeftIntervalValue)
+
+	// Case 4. Right ends during left interval.
+	rightEndsDuringLeftIntervalValue, err := dateTimeInIntervalWithPrecision(rightEnd, leftStart, leftEnd, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	compResults = append(compResults, rightEndsDuringLeftIntervalValue)
+
+	trueVal, err := result.New(true)
+	if err != nil {
+		return result.Value{}, err
+	}
+	nullVal, err := result.New(nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if valueInList(trueVal, compResults) {
+		return trueVal, nil
+	} else if valueInList(nullVal, compResults) {
+		return nullVal, nil
+	}
+	return result.New(false)
+}
+
 // in _precision_ (point Decimal, argument Interval<Decimal>) Boolean
 // in _precision_ (point Long, argument Interval<Long>) Boolean
 // in _precision_ (point Integer, argument Interval<Integer>) Boolean
@@ -270,11 +376,7 @@ func evalInIntervalNumeral(b model.IBinaryExpression, pointObj, intervalObj resu
 	}
 
 	// start and end handles null inclusivity as well as non-inclusive logic.
-	s, err := start(intervalObj, nil)
-	if err != nil {
-		return result.Value{}, err
-	}
-	e, err := end(intervalObj, nil)
+	s, e, err := startAndEnd(intervalObj, nil)
 	if err != nil {
 		return result.Value{}, err
 	}
@@ -353,6 +455,29 @@ func compareNumeral[t float64 | int64 | int32](left, right t) comparison {
 		return leftBeforeRight
 	}
 	return leftAfterRight
+}
+
+// duringDateTimeWithPrecision returns whether or not the given DateTimeValue is during the given
+// low high interval. Returns null in cases where values cannot be compared such as right precision being
+// less than left precision.
+// All values are expected to be inclusive bounds.
+// Return a null value if the comparison cannot be made due to insufficient precision.
+func dateTimeInIntervalWithPrecision(a, low, high result.DateTime, p model.DateTimePrecision) (result.Value, error) {
+	lowComp, err := compareDateTimeWithPrecision(a, low, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	highComp, err := compareDateTimeWithPrecision(a, high, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	if lowComp == insufficientPrecision || highComp == insufficientPrecision {
+		return result.New(nil)
+	} else if (lowComp == leftEqualRight || lowComp == leftAfterRight) && (highComp == leftEqualRight || highComp == leftBeforeRight) {
+		return result.New(true)
+	}
+	return result.New(false)
 }
 
 // in _precision_ (point DateTime, argument Interval<DateTime>) Boolean

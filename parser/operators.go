@@ -1433,6 +1433,20 @@ func (p *Parser) loadSystemOperators() error {
 			model: inModel(model.MILLISECOND),
 		},
 		{
+			name: "Overlaps",
+			operands: [][]types.IType{
+				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+			},
+			model: func() model.IExpression {
+				return &model.Overlaps{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name: "SameOrAfter",
 			// See generatePrecisionTimingOverloads() for more overloads.
 			operands: comparableIntervalOverloads,
