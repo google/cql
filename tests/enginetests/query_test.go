@@ -513,6 +513,12 @@ func TestQuery(t *testing.T) {
 				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{"A": types.Integer, "B": types.Integer}}},
 			}),
 		},
+		{
+			// This ensures that properties on null values inside queries are handled correctly.
+			name:       "Property on null alias in query",
+			cql:        "define TESTRESULT: (null as Code) l return l.code",
+			wantResult: newOrFatal(t, nil),
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

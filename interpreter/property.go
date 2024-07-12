@@ -60,6 +60,9 @@ func (i *interpreter) valueProperty(v result.Value, property string, staticResul
 	if property == "" {
 		return v, nil
 	}
+	if result.IsNull(v) {
+		return result.New(nil)
+	}
 
 	switch ot := v.GolangValue().(type) {
 	case result.Tuple:
