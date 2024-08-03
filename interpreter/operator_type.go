@@ -248,15 +248,18 @@ func evalToDecimalString(m model.IUnaryExpression, opObj result.Value) (result.V
 	if err != nil {
 		return result.Value{}, err
 	}
+	return toDecimalFromString(op)
+}
 
+func toDecimalFromString(s string) (result.Value, error) {
 	// Check that the string meets the CQL decimal spec requirements.
-	found := decimalStringRegex.FindString(op)
-	if found == "" || found != op {
+	found := decimalStringRegex.FindString(s)
+	if found == "" || found != s {
 		return result.New(nil)
 	}
 
 	// ParseFloat works for every string that meets the CQL spec.
-	f, err := strconv.ParseFloat(op, 64)
+	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return result.Value{}, err
 	}
