@@ -157,11 +157,23 @@ func (i *interpreter) protoProperty(source result.Named, property string, static
 	// For .value properties on FHIR.dateTime, FHIR.time, FHIR.date, the result type is expected to be
 	// a System.DateTime, System.Time, System.Date. This is not how the data is represented in the
 	// FHIR proto data model, so we must catch this case and apply manual conversion.
-
 	if property == "value" && (source.RuntimeType.Equal(&types.Named{TypeName: "FHIR.dateTime"}) ||
 		source.RuntimeType.Equal(&types.Named{TypeName: "FHIR.time"}) ||
 		source.RuntimeType.Equal(&types.Named{TypeName: "FHIR.date"})) {
 		return handleDateTimeValueProperty(source.Value, property, i.evaluationTimestamp.Location())
+	}
+
+	// For .value properties on FHIR.decimal, the result type is expected to be a System.Decimal, but
+	// this is not how the data is represented in the FHIR proto data model, so we must catch this
+	// case and apply manual conversion. We may wish to consider applying a parser insertion in the
+	// future.
+	if property == "value" && source.RuntimeType.Equal(&types.Named{TypeName: "FHIR.decimal"}) {
+		d, ok := source.Value.(*d4pb.Decimal)
+		if !ok {
+			return result.Value{}, fmt.Errorf("Unable to convert result type of FHIR.decimal to a *d4pb.decimal")
+		}
+		valueStr := d.Value
+		return toDecimalFromString(valueStr)
 	}
 
 	protoProperty, err := protoFieldFromJSONName(source.Value, property)

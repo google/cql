@@ -339,6 +339,16 @@ func TestProperty(t *testing.T) {
 			wantResult: newOrFatal(t, result.Named{Value: &d4pb.String{Value: "obsValue"}, RuntimeType: &types.Named{TypeName: "FHIR.string"}}),
 		},
 		{
+			name: "FHIR.decimal.value returns a System.Decimal",
+			cql: dedent.Dedent(`
+					define FirstObservation: First([Observation])
+					define TESTRESULT: (FirstObservation.value as FHIR.Quantity).value.value`),
+			resources: []*r4pb.ContainedResource{
+				containedFromObservation(&r4observationpb.Observation{Value: &r4observationpb.Observation_ValueX{Choice: &r4observationpb.Observation_ValueX_Quantity{Quantity: &d4pb.Quantity{Value: &d4pb.Decimal{Value: "100.1"}}}}}),
+			},
+			wantResult: newOrFatal(t, 100.1),
+		},
+		{
 			name: "dateTime inside oneof returns dateTime proto",
 			cql: dedent.Dedent(`
 					define FirstObservation: First([Observation])
