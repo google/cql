@@ -58,7 +58,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlArithmeticFunctionsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Exp",
 				"HighBoundary",
 				"Log",
 				"LowBoundary",
@@ -69,6 +68,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Divide103",
 				"Multiply1CMBy2CM",
 				"Power2DToNeg2DEquivalence",
+				"Exp1",    // Require Round support.
+				"ExpNeg1", // Require Round support.
 				"Ln1000",  // Require Round support.
 				"Ln1000D", // Require Round support.
 				// TODO: b/342061606 - Unit conversion is not supported.

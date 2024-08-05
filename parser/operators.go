@@ -677,6 +677,18 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name:     "Exp",
+			operands: [][]types.IType{{types.Decimal}},
+			model: func() model.IExpression {
+				return &model.Exp{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Decimal),
+					},
+				}
+			},
+		},
+		// TODO: b/301606416 - Add support for Exp with Quantities, current behavior is ambiguous.
+		{
 			name:     "Floor",
 			operands: [][]types.IType{{types.Decimal}},
 			model: func() model.IExpression {

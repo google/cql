@@ -617,6 +617,11 @@ type Is struct {
 
 var _ IUnaryExpression = &Is{}
 
+// Exp is https://cql.hl7.org/04-logicalspecification.html#exp.
+type Exp struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &Exp{}
+
 // Negate is https://cql.hl7.org/04-logicalspecification.html#negate.
 type Negate struct{ *UnaryExpression }
 
@@ -1241,6 +1246,9 @@ func (a *ToTime) GetName() string { return "ToTime" }
 
 // GetName returns the name of the system operator.
 func (a *CalculateAge) GetName() string { return "CalculateAge" }
+
+// GetName returns the name of the system operator.
+func (a *Exp) GetName() string { return "Exp" }
 
 // GetName returns the name of the system operator.
 func (a *Negate) GetName() string { return "Negate" }

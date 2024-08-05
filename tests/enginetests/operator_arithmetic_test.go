@@ -241,6 +241,104 @@ func TestCeiling(t *testing.T) {
 	}
 }
 
+func TestExp(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Integer",
+			cql:  "Exp(4)",
+			wantModel: &model.Exp{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.ToDecimal{
+						UnaryExpression: &model.UnaryExpression{
+							Operand:    model.NewLiteral("4", types.Integer),
+							Expression: model.ResultType(types.Decimal),
+						},
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 54.598150033144236),
+		},
+		{
+			name:       "Positive Integer",
+			cql:        "Exp(2)",
+			wantResult: newOrFatal(t, 7.38905609893065),
+		},
+		{
+			name:       "Minimum Integer",
+			cql:        "Exp(-2147483648)",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Long",
+			cql:        "Exp(-4L)",
+			wantResult: newOrFatal(t, 0.01831563888873418),
+		},
+		{
+			name:       "Positive Long",
+			cql:        "Exp(2L)",
+			wantResult: newOrFatal(t, 7.38905609893065),
+		},
+		{
+			name:       "Minimum Long",
+			cql:        "Exp(-9223372036854775808L)",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Decimal zero",
+			cql:        "Exp(0.0)",
+			wantResult: newOrFatal(t, 1.0),
+		},
+		{
+			name:       "Decimal negative one",
+			cql:        "Exp(-1.0)",
+			wantResult: newOrFatal(t, 0.36787944117144233),
+		},
+		{
+			name:       "Positive Decimal one",
+			cql:        "Exp(1.0)",
+			wantResult: newOrFatal(t, 2.718281828459045),
+		},
+		{
+			name:       "Minimum Decimal",
+			cql:        "Exp(-99999999999999999999.99999999)",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Null",
+			cql:        "Exp(null as Decimal)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestFloor(t *testing.T) {
 	tests := []struct {
 		name       string

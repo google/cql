@@ -116,6 +116,20 @@ func evalCeiling(_ model.IUnaryExpression, obj result.Value) (result.Value, erro
 	return result.New(int32(math.Ceil(val)))
 }
 
+// Exp(argument Decimal) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#exp
+// Integer and long overloads are implicitly converted to decimal.
+func evalExpDecimal(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	val, err := result.ToFloat64(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(math.Exp(val))
+}
+
 // Floor(argument Decimal) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#floor
 func evalFloor(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
