@@ -809,6 +809,12 @@ type Min struct{ *UnaryExpression }
 // far as we can tell.
 type Sum struct{ *UnaryExpression }
 
+// Median ELM expression from https://cql.hl7.org/09-b-cqlreference.html#median
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Median struct{ *UnaryExpression }
+
 // CalculateAge CQL expression type
 type CalculateAge struct {
 	*UnaryExpression
@@ -1409,3 +1415,6 @@ func (a *Combine) GetName() string { return "Combine" }
 
 // GetName returns the name of the system operator.
 func (i *Indexer) GetName() string { return "Indexer" }
+
+// GetName returns the name of the system operator.
+func (m *Median) GetName() string { return "Median" }

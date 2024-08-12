@@ -1228,6 +1228,33 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		// AGGREGATE FUNCTIONS - https://cql.hl7.org/09-b-cqlreference.html#aggregate-functions
 		{
+			name: "Median Decimal",
+			cql:  "Median({1.0, 2.0, 3.0})",
+			want: &model.Median{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.0", "2.0", "3.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
+			name: "Median Quantity",
+			cql:  "Median({1.0 'cm', 2.0 'cm', 3.0 'cm'})",
+			want: &model.Median{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						List: []model.IExpression{
+							&model.Quantity{Value: 1.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+							&model.Quantity{Value: 2.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+							&model.Quantity{Value: 3.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+						},
+						Expression: model.ResultType(&types.List{ElementType: types.Quantity}),
+					},
+					Expression: model.ResultType(types.Quantity),
+				},
+			},
+		},
+		{
 			name: "Count",
 			cql:  "Count({1, 2, 3})",
 			want: &model.Count{

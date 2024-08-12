@@ -16,6 +16,7 @@ package interpreter
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
@@ -262,6 +263,86 @@ func (i *interpreter) evalMinDateTime(m model.IUnaryExpression, operand result.V
 		return result.New(result.Date(dt))
 	}
 	return result.New(dt)
+}
+
+// Median(argument List<Decimal>) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#median
+func (i *interpreter) evalMedianDecimal(_ model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	var values []float64
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToFloat64(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		values = append(values, v)
+	}
+	if len(values) == 0 {
+		return result.New(nil)
+	}
+
+	median := calculateMedianFloat64(values)
+	return result.New(median)
+}
+
+// Median(argument List<Quantity>) Quantity
+// https://cql.hl7.org/09-b-cqlreference.html#median
+func (i *interpreter) evalMedianQuantity(_ model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	values := make([]float64, 0, len(l))
+	var unit model.Unit
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToQuantity(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		// We only support List<Quantity> where all the elements have the exact same unit, since we do not support
+		// mixed unit Quantity math in our engine yet.
+		if unit == "" {
+			unit = v.Unit
+		} else if unit != v.Unit {
+			return result.Value{}, fmt.Errorf("Median(List<Quantity>) operand has different units which is not supported, got %v and %v", unit, v.Unit)
+		}
+		values = append(values, v.Value)
+	}
+	if len(values) == 0 {
+		return result.New(nil)
+	}
+	median := calculateMedianFloat64(values)
+	return result.New(result.Quantity{Value: median, Unit: unit})
+}
+
+// calculateMedianFloat64 calculates the median of a slice of float64 values.
+// This modifies the values slice in place while sorting it.
+func calculateMedianFloat64(values []float64) float64 {
+	sort.Float64s(values)
+	mid := len(values) / 2
+	if len(values)%2 == 0 {
+		return (values[mid-1] + values[mid]) / 2
+	}
+	return values[mid]
 }
 
 // Sum(argument List<Decimal>) Decimal
