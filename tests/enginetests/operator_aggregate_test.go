@@ -595,9 +595,24 @@ func TestMedian(t *testing.T) {
 			wantResult: newOrFatal(t, result.Quantity{Value: 3.0, Unit: "g"}),
 		},
 		{
-			name:       "Unordered list: Median({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
+			name:       "Unordered Quantity list: Median({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
 			cql:        "Median({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
 			wantResult: newOrFatal(t, result.Quantity{Value: 3.0, Unit: "g"}),
+		},
+		{
+			name:       "Median({1.0, 2.0, 3.0})",
+			cql:        "Median({1.0, 2.0, 3.0})",
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "Median({1.5, 2.5, 3.5, 4.5})",
+			cql:        "Median({1.5, 2.5, 3.5, 4.5})",
+			wantResult: newOrFatal(t, 3.0),
+		},
+		{
+			name:       "Unordered Decimal list: Median({2.5, 3.5, 1.5, 4.5})",
+			cql:        "Median({2.5, 3.5, 1.5, 4.5})",
+			wantResult: newOrFatal(t, 3.0),
 		},
 		{
 			name:       "Median(List<Decimal>{})",
