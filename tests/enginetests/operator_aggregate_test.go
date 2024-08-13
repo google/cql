@@ -565,3 +565,143 @@ func TestSum_Error(t *testing.T) {
 		})
 	}
 }
+
+func TestMedian(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Median({1.5, 2.5, 3.5, 4.5})",
+			cql:  "Median({1.5, 2.5, 3.5, 4.5})",
+			wantModel: &model.Median{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.5", "2.5", "3.5", "4.5"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 3.0),
+		},
+		{
+			name:       "Median({1 'cm', 2 'cm', 3 'cm'})",
+			cql:        "Median({1 'cm', 2 'cm', 3 'cm'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 2.0, Unit: "cm"}),
+		},
+		{
+			name:       "Median({1.5 'g', 2.5 'g', 3.5 'g', 4.5 'g'})",
+			cql:        "Median({1.5 'g', 2.5 'g', 3.5 'g', 4.5 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 3.0, Unit: "g"}),
+		},
+		{
+			name:       "Unordered Quantity list: Median({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
+			cql:        "Median({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 3.0, Unit: "g"}),
+		},
+		{
+			name:       "Median({1.0, 2.0, 3.0})",
+			cql:        "Median({1.0, 2.0, 3.0})",
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "Median({1.5, 2.5, 3.5, 4.5})",
+			cql:        "Median({1.5, 2.5, 3.5, 4.5})",
+			wantResult: newOrFatal(t, 3.0),
+		},
+		{
+			name:       "Unordered Decimal list: Median({2.5, 3.5, 1.5, 4.5})",
+			cql:        "Median({2.5, 3.5, 1.5, 4.5})",
+			wantResult: newOrFatal(t, 3.0),
+		},
+		{
+			name:       "Median(List<Decimal>{})",
+			cql:        "Median(List<Decimal>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Median({null as Decimal})",
+			cql:        "Median({null as Decimal})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Median(null as List<Decimal>)",
+			cql:        "Median(null as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Median(List<Quantity>{})",
+			cql:        "Median(List<Quantity>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Median({null as Quantity})",
+			cql:        "Median({null as Quantity})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Median(null as List<Quantity>)",
+			cql:        "Median(null as List<Quantity>)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestMedian_Error(t *testing.T) {
+	tests := []struct {
+		name            string
+		cql             string
+		wantModel       model.IExpression
+		wantErrContains string
+	}{
+		{
+			name:            "Median({1 'cm', 2 'g'})",
+			cql:             "Median({1 'cm', 2 'g'})",
+			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
+		},
+		{
+			name:            "Median({1 '', 2 'g'})",
+			cql:             "Median({1 '', 2 'g'})",
+			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err == nil || !strings.Contains(err.Error(), tc.wantErrContains) {
+				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
+			}
+		})
+	}
+}

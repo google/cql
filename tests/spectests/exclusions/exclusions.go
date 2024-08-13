@@ -30,7 +30,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlAggregateFunctionsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Median",
 				"Mode",
 				"PopulationStdDev",
 				"PopulationVariance",

@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/antlr4-go/antlr/v4"
 	"github.com/google/cql/internal/convert"
 	"github.com/google/cql/model"
 	"github.com/google/cql/types"
-	"github.com/antlr4-go/antlr/v4"
 )
 
 // parseFunction uses the reference resolver to resolve the function, visits the operands, and sets
@@ -184,6 +184,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 			// The operands should be AgeInYearsAt(convertedBirthDate)
 			resolved.WrappedOperands = []model.IExpression{res.WrappedOperand, resolved.WrappedOperands[0]}
 		}
+	case *model.Median:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	}
 
 	// Set Operands.
@@ -1897,6 +1900,18 @@ func (p *Parser) loadSystemOperators() error {
 			},
 			model: func() model.IExpression {
 				return &model.Message{}
+			},
+		},
+		{
+			name: "Median",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Median{
+					UnaryExpression: &model.UnaryExpression{},
+				}
 			},
 		},
 	}
