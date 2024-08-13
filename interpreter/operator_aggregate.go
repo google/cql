@@ -277,7 +277,7 @@ func (i *interpreter) evalMedianDecimal(_ model.IUnaryExpression, operand result
 		return result.Value{}, err
 	}
 
-	var values []float64
+	values := make([]float64, 0, len(l))
 	for _, elem := range l {
 		if result.IsNull(elem) {
 			continue
