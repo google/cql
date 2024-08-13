@@ -310,7 +310,7 @@ func (i *interpreter) evalMedianQuantity(_ model.IUnaryExpression, operand resul
 
 	values := make([]float64, 0, len(l))
 	var unit model.Unit
-	for _, elem := range l {
+	for idx, elem := range l {
 		if result.IsNull(elem) {
 			continue
 		}
@@ -318,11 +318,14 @@ func (i *interpreter) evalMedianQuantity(_ model.IUnaryExpression, operand resul
 		if err != nil {
 			return result.Value{}, err
 		}
-		// We only support List<Quantity> where all the elements have the exact same unit, since we do not support
-		// mixed unit Quantity math in our engine yet.
-		if unit == "" {
+		// We only support List<Quantity> where all the elements have the exact same unit, since we
+		// do not support mixed unit Quantity math in our engine yet.
+		if idx == 0 {
 			unit = v.Unit
-		} else if unit != v.Unit {
+		}
+		if unit != v.Unit {
+			// TODO: b/342061715 - technically we should treat '' unit and '1' unit as the same, but
+			// for now we don't (and we should apply this globally).
 			return result.Value{}, fmt.Errorf("Median(List<Quantity>) operand has different units which is not supported, got %v and %v", unit, v.Unit)
 		}
 		values = append(values, v.Value)

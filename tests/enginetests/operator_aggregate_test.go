@@ -680,6 +680,11 @@ func TestMedian_Error(t *testing.T) {
 			cql:             "Median({1 'cm', 2 'g'})",
 			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
 		},
+		{
+			name:            "Median({1 '', 2 'g'})",
+			cql:             "Median({1 '', 2 'g'})",
+			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
+		},
 	}
 
 	for _, tc := range tests {
@@ -694,7 +699,7 @@ func TestMedian_Error(t *testing.T) {
 			}
 
 			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
-			if !strings.Contains(err.Error(), tc.wantErrContains) {
+			if err == nil || !strings.Contains(err.Error(), tc.wantErrContains) {
 				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
 			}
 		})
