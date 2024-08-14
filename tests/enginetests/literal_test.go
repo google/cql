@@ -455,14 +455,21 @@ func TestTupleAndInstanceSelector(t *testing.T) {
 			name: "Concept Instance no codes",
 			cql:  "Concept{codes: {} }",
 			wantResult: newOrFatal(t, result.Concept{
-				Codes: []result.Code{},
+				Codes: []*result.Code{},
+			}),
+		},
+		{
+			name: "Concept Instance with null codes",
+			cql:  "Concept{codes: { null as Code, null as Code } }",
+			wantResult: newOrFatal(t, result.Concept{
+				Codes: []*result.Code{nil, nil},
 			}),
 		},
 		{
 			name: "Concept Instance",
 			cql:  "Concept{codes: {Code{code: 'foo', system: 'bar', version: '1.0' }}, display: 'display' }",
 			wantResult: newOrFatal(t, result.Concept{
-				Codes:   []result.Code{result.Code{Code: "foo", System: "bar", Version: "1.0"}},
+				Codes:   []*result.Code{&result.Code{Code: "foo", System: "bar", Version: "1.0"}},
 				Display: "display",
 			}),
 		},

@@ -26,7 +26,71 @@ import (
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
 	r4patientpb "github.com/google/fhir/go/proto/google/fhir/proto/r4/core/resources/patient_go_proto"
+	"github.com/google/go-cmp/cmp"
 )
+
+func TestEvalPropertyValue(t *testing.T) {
+	tests := []struct {
+		name       string
+		property   string
+		value      result.Value
+		resultType types.IType
+		wantResult result.Value
+	}{
+		{
+			name:       "property on null input value",
+			property:   "apple",
+			value:      newOrFatal(t, nil),
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "code",
+			property:   "code",
+			value:      newOrFatal(t, result.Code{Code: "code1", System: "system1", Version: "version1"}),
+			wantResult: newOrFatal(t, "code1"),
+		},
+		{
+			name:       "code",
+			property:   "system",
+			value:      newOrFatal(t, result.Code{Code: "code1", System: "system1", Version: "version1"}),
+			wantResult: newOrFatal(t, "system1"),
+		},
+		{
+			name:     "concept",
+			property: "codes",
+			value:    newOrFatal(t, result.Concept{Codes: []*result.Code{&result.Code{Code: "code1", System: "system1", Version: "version1"}, nil}, Display: "display"}),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Code{Code: "code1", System: "system1", Version: "version1"}),
+					newOrFatal(t, nil),
+				},
+				StaticType: &types.List{ElementType: types.Code},
+			}),
+		},
+		{
+			name:       "concept",
+			property:   "display",
+			value:      newOrFatal(t, result.Concept{Codes: []*result.Code{&result.Code{Code: "code1", System: "system1", Version: "version1"}, nil}, Display: "display1"}),
+			wantResult: newOrFatal(t, "display1"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &interpreter{
+				refs:                reference.NewResolver[result.Value, *model.FunctionDef](),
+				modelInfo:           newFHIRModelInfo(t),
+				evaluationTimestamp: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			}
+			propVal, err := i.valueProperty(tc.value, tc.property, tc.resultType)
+			if err != nil {
+				t.Errorf("evalPropertyValue(%q) returned unexpected error, %v", tc.property, err)
+			}
+			if diffResult := cmp.Diff(tc.wantResult, propVal); diffResult != "" {
+				t.Errorf("evalPropertyValue(%q) = %v, returned unexpected diff (-want +got):\n%v", tc.property, propVal, diffResult)
+			}
+		})
+	}
+}
 
 func TestEvalPropertyValue_Errors(t *testing.T) {
 	tests := []struct {
@@ -109,39 +173,6 @@ func TestEvalPropertyValue_Errors(t *testing.T) {
 			}
 			if tc.wantErrContains != "" && !strings.Contains(err.Error(), tc.wantErrContains) {
 				t.Errorf("evalPropertyValue(%s) error did not contain expected string. got: %v, want: %v", tc.property, err.Error(), tc.wantErrContains)
-			}
-		})
-	}
-}
-
-func TestEvalPropertyValue(t *testing.T) {
-	tests := []struct {
-		name       string
-		property   string
-		value      result.Value
-		resultType types.IType
-		wantValue  result.Value
-	}{
-		{
-			name:      "property on null input value",
-			property:  "apple",
-			value:     newOrFatal(t, nil),
-			wantValue: newOrFatal(t, nil),
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			i := &interpreter{
-				refs:                reference.NewResolver[result.Value, *model.FunctionDef](),
-				modelInfo:           newFHIRModelInfo(t),
-				evaluationTimestamp: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			}
-			got, err := i.valueProperty(tc.value, tc.property, tc.resultType)
-			if err != nil {
-				t.Errorf("evalPropertyValue(%q) unexpected error: %v", tc.property, err)
-			}
-			if !got.Equal(tc.wantValue) {
-				t.Errorf("evalPropertyValue(%q) = %v, want %v", tc.property, got, tc.wantValue)
 			}
 		})
 	}

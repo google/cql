@@ -352,7 +352,7 @@ func evalToConceptCode(m model.IUnaryExpression, obj result.Value) (result.Value
 	if err != nil {
 		return result.Value{}, err
 	}
-	return result.New(result.Concept{Codes: []result.Code{code}, Display: code.Display})
+	return result.New(result.Concept{Codes: []*result.Code{&code}, Display: code.Display})
 }
 
 // ToConcept(argument List<Code>) Concept
@@ -361,24 +361,24 @@ func evalToConceptList(m model.IUnaryExpression, obj result.Value) (result.Value
 	if result.IsNull(obj) {
 		return result.New(nil)
 	}
-	codes, err := result.ToSlice(obj)
+	codeObjs, err := result.ToSlice(obj)
 	if err != nil {
 		return result.Value{}, err
 	}
 
-	cv := result.Concept{}
-	for _, code := range codes {
+	codes := make([]*result.Code, len(codeObjs))
+	for i, code := range codeObjs {
 		if result.IsNull(code) {
+			codes[i] = nil
 			continue
 		}
 		c, err := result.ToCode(code)
 		if err != nil {
 			return result.Value{}, err
 		}
-		cv.Codes = append(cv.Codes, c)
+		codes[i] = &c
 	}
-
-	return result.New(cv)
+	return result.New(result.Concept{Codes: codes})
 }
 
 // ToQuantity(argument Decimal) Quantity

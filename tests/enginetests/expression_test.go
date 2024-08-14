@@ -231,7 +231,7 @@ func TestLocalReferences(t *testing.T) {
 			concept Foo: {C} display 'Concept Display'
 			define TESTRESULT: Foo`),
 			wantResult: newOrFatal(t, result.Concept{
-				Codes:   []result.Code{result.Code{Code: "1234", System: "https://example.com/cs/diagnosis"}},
+				Codes:   []*result.Code{&result.Code{Code: "1234", System: "https://example.com/cs/diagnosis"}},
 				Display: "Concept Display",
 			}),
 		},
@@ -362,7 +362,7 @@ func TestGlobalReferences(t *testing.T) {
 					define TESTRESULT: helpers.Foo`),
 			},
 			wantResult: newOrFatal(t, result.Concept{
-				Codes:   []result.Code{result.Code{Code: "1234", System: "https://example.com/cs/diagnosis"}},
+				Codes:   []*result.Code{&result.Code{Code: "1234", System: "https://example.com/cs/diagnosis"}},
 				Display: "Concept Display",
 			}),
 		},

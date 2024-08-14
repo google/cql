@@ -657,8 +657,8 @@ func TestToConcept(t *testing.T) {
 			codesystem cs: 'https://example.com/cs/diagnosis' version '1.0'
 			define TESTRESULT: ToConcept(Code '132' from cs)`),
 			wantResult: newOrFatal(t, result.Concept{
-				Codes: []result.Code{
-					result.Code{
+				Codes: []*result.Code{
+					&result.Code{
 						Code:    "132",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
@@ -672,8 +672,8 @@ func TestToConcept(t *testing.T) {
 			define TESTRESULT: ToConcept(Code '132' from cs display 'Severed Leg')`),
 			wantResult: newOrFatal(t, result.Concept{
 				Display: "Severed Leg",
-				Codes: []result.Code{
-					result.Code{
+				Codes: []*result.Code{
+					&result.Code{
 						Code:    "132",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
@@ -687,20 +687,25 @@ func TestToConcept(t *testing.T) {
 			codesystem cs: 'https://example.com/cs/diagnosis' version '1.0'
 			define TESTRESULT: ToConcept({Code '132' from cs display 'Severed Leg', Code '444' from cs display 'Burnt Cranium'})`),
 			wantResult: newOrFatal(t, result.Concept{
-				Codes: []result.Code{
-					result.Code{
+				Codes: []*result.Code{
+					&result.Code{
 						Code:    "132",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
 						Display: "Severed Leg",
 					},
-					result.Code{
+					&result.Code{
 						Code:    "444",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
 						Display: "Burnt Cranium",
 					},
 				}}),
+		},
+		{
+			name:       "ToConcept with null Code",
+			cql:        "define TESTRESULT: ToConcept(List<Code>{null})",
+			wantResult: newOrFatal(t, result.Concept{Codes: []*result.Code{nil}}),
 		},
 	}
 	for _, tc := range tests {
@@ -720,43 +725,6 @@ func TestToConcept(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
 				t.Errorf("Eval diff (-want +got)\n%v", diff)
-			}
-		})
-	}
-}
-
-func TestToConcept_Error(t *testing.T) {
-	tests := []struct {
-		name      string
-		cql       string
-		wantModel model.IExpression
-		wantError string
-	}{
-		{
-			// TODO: b/301606416 - This shouldn't be an error once we support null values in concepts.
-			name:      "Concept must have a Code",
-			cql:       "ToConcept(List<Code>{null})",
-			wantError: "System.Concept must specify the codes field",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			p := newFHIRParser(t)
-			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
-			if err != nil {
-				t.Fatalf("Parse returned unexpected error: %v", err)
-			}
-			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
-				t.Errorf("Parse diff (-want +got):\n%s", diff)
-			}
-
-			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
-			if err == nil {
-				t.Fatalf("Evaluate Expression expected an error to be returned, got nil instead")
-			}
-			if !strings.Contains(err.Error(), tc.wantError) {
-				t.Errorf("Unexpected evaluation error contents got (%v) want (%v)", err.Error(), tc.wantError)
 			}
 		})
 	}

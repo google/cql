@@ -302,13 +302,17 @@ func (i *interpreter) evalInstance(in *model.Instance) (result.Value, error) {
 			if err != nil {
 				return result.Value{}, err
 			}
-			codes := make([]result.Code, len(codeObjs))
+			codes := make([]*result.Code, len(codeObjs))
 			for i, codeObj := range codeObjs {
+				if result.IsNull(codeObj) {
+					codes[i] = nil
+					continue
+				}
 				code, err := result.ToCode(codeObj)
 				if err != nil {
 					return result.Value{}, err
 				}
-				codes[i] = code
+				codes[i] = &code
 			}
 			cv.Codes = codes
 		}

@@ -304,32 +304,38 @@ func TestEqual(t *testing.T) {
 		},
 		{
 			name:      "equal concept",
-			a:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			wantEqual: true,
+		},
+		{
+			name:      "equal concept with null code",
+			a:         newOrFatal(t, Concept{Codes: []*Code{nil, &Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{nil, &Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
 			wantEqual: true,
 		},
 		{
 			name:      "equal concept with unsorted but equal codes",
-			a:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}, Code{System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem2", Code: "Code2"}, Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}, &Code{System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem2", Code: "Code2"}, &Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
 			wantEqual: true,
 		},
 		{
 			name:      "unequal concept different displays",
-			a:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code2"}}, Display: "Deoderant"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code2"}}, Display: "Deoderant"}),
 			wantEqual: false,
 		},
 		{
 			name:      "unequal concept",
-			a:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}, Code{System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}, &Code{System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
 			wantEqual: false,
 		},
 		{
 			name:      "unequal concept",
-			a:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []Code{Code{System: "CS", Code: "Co"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CS", Code: "Co"}}, Display: "BO"}),
 			wantEqual: false,
 		},
 		{
@@ -627,8 +633,8 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name:  "concept",
-			input: Concept{Codes: []Code{Code{System: "System", Code: "Code"}}, Display: "A disease"},
-			want:  Value{goValue: Concept{Codes: []Code{Code{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
+			input: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"},
+			want:  Value{goValue: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
 		},
 		{
 			name: "tuple",
@@ -876,8 +882,13 @@ func TestNewWithSources(t *testing.T) {
 		},
 		{
 			name:  "concept",
-			input: Concept{Codes: []Code{Code{System: "System", Code: "Code"}}, Display: "A disease"},
-			want:  Value{sourceExpr: defaultSourceExpr, sourceVals: defaultSourceObs, goValue: Concept{Codes: []Code{Code{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
+			input: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"},
+			want:  Value{sourceExpr: defaultSourceExpr, sourceVals: defaultSourceObs, goValue: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
+		},
+		{
+			name:  "concept with null codes",
+			input: Concept{Codes: []*Code{nil}},
+			want:  Value{sourceExpr: defaultSourceExpr, sourceVals: defaultSourceObs, goValue: Concept{Codes: []*Code{nil}}, runtimeType: types.Concept},
 		},
 		{
 			name:  "list of integer Values",
@@ -1102,7 +1113,7 @@ func TestMarshalJSON(t *testing.T) {
 		},
 		{
 			name:         "Concept",
-			unmarshalled: newOrFatal(t, Concept{Codes: []Code{Code{System: "foo", Code: "bar", Version: "1.0"}}, Display: "A disease"}),
+			unmarshalled: newOrFatal(t, Concept{Codes: []*Code{&Code{System: "foo", Code: "bar", Version: "1.0"}}, Display: "A disease"}),
 			want:         `{"@type":"System.Concept","codes":[{"@type":"System.Code","code":"bar","system":"foo","version":"1.0"}],"display":"A disease"}`,
 		},
 		{
@@ -1479,7 +1490,7 @@ func TestProtoAndBack(t *testing.T) {
 		},
 		{
 			name:  "Concept",
-			value: newOrFatal(t, Concept{Codes: []Code{Code{System: "System", Code: "Code"}}, Display: "A disease"}),
+			value: newOrFatal(t, Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"}),
 			wantProto: &crpb.Value{
 				Value: &crpb.Value_ConceptValue{
 					ConceptValue: &crpb.Concept{

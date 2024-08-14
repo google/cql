@@ -175,17 +175,23 @@ func (i *interpreter) evalLibrary(lib *model.Library, passedParams map[result.De
 	}
 
 	for _, c := range lib.Concepts {
-		var codes []result.Code
-		for _, code := range c.Codes {
+		codes := make([]*result.Code, len(c.Codes))
+		for index, code := range c.Codes {
 			codeRef, err := i.evalCodeRef(code)
 			if err != nil {
 				return err
+			}
+			// Note: the CQL grammar does not allow null codes in a concept using the `concept foo: {}`
+			// syntax.
+			if result.IsNull(codeRef) {
+				codes[index] = nil
+				continue
 			}
 			codeVal, err := result.ToCode(codeRef)
 			if err != nil {
 				return err
 			}
-			codes = append(codes, codeVal)
+			codes[index] = &codeVal
 		}
 		cObj, err := result.New(result.Concept{Codes: codes, Display: c.Display})
 		if err != nil {

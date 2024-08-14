@@ -334,6 +334,15 @@ func TestInValueSetAndCodeSystem(t *testing.T) {
 			define TESTRESULT: { ConNoValidCode, ConNoValidCode2 } in CS`),
 			wantResult: newOrFatal(t, false),
 		},
+		{
+			name: "One Code from Concept that contains nulls In Code System",
+			cql: dedent.Dedent(`
+			codesystem CS: 'https://example.com/cs/diagnosis' version '1.0.0'
+			code ExistsCode: 'snfl' from CS
+			define Con: Concept{ codes: { null as Code, ExistsCode, null as Code } }
+			define TESTRESULT: Con in CS`),
+			wantResult: newOrFatal(t, true),
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

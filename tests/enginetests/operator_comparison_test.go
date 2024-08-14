@@ -801,6 +801,16 @@ func TestEquivalentConceptCode(t *testing.T) {
 			wantResult: newOrFatal(t, true),
 		},
 		{
+			name:       "Equivalent where Concept has null codes",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { null as Code, null as Code, Code { system: 'http://example.com', code: '1' } } }, Code { system: 'http://example.com', code: '1' })",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Equivalent where Concept has null codes to a null code",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { null as Code, null as Code, Code { system: 'http://example.com', code: '1' } } }, null as Code)",
+			wantResult: newOrFatal(t, true),
+		},
+		{
 			name:       "Equivalent uses string equivalency for code comparison",
 			cql:        "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1 1' } } }, Code { system: 'http://example.com', code: '1\t1' })",
 			wantResult: newOrFatal(t, true),
@@ -811,9 +821,9 @@ func TestEquivalentConceptCode(t *testing.T) {
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name:       "Equivalent(null, null)",
+			name:       "Equivalent(null as Concept, null as Code)",
 			cql:        "define TESTRESULT: Equivalent(null as Concept, null as Code)",
-			wantResult: newOrFatal(t, true),
+			wantResult: newOrFatal(t, false),
 		},
 		{
 			name:       "Equivalent(null, Code)",
@@ -823,6 +833,11 @@ func TestEquivalentConceptCode(t *testing.T) {
 		{
 			name:       "Equivalent(Concept, null)",
 			cql:        "define TESTRESULT: Equivalent(Concept { codes: { Code { system: 'http://example.com', code: '1' } } }, null as Code)",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Equivalent(empty Concept, null)",
+			cql:        "define TESTRESULT: Equivalent(Concept { codes: { } }, null as Code)",
 			wantResult: newOrFatal(t, false),
 		},
 	}

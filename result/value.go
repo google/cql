@@ -1224,9 +1224,10 @@ func CodeSystemFromProto(pb *crpb.CodeSystem) CodeSystem {
 }
 
 // Concept is the Golang representation of a CQL Concept.
+// We use a pointer to Code in order to support null values.
 type Concept struct {
-	Codes   []Code // 1..*
-	Display string // 0..1
+	Codes   []*Code // 0..*
+	Display string  // 0..1
 }
 
 // Equal returns true if this Concept matches the provided one, otherwise false.
@@ -1237,7 +1238,7 @@ func (c Concept) Equal(v Concept) bool {
 	slices.SortFunc(c.Codes, compareCode)
 	slices.SortFunc(v.Codes, compareCode)
 	for i, c := range c.Codes {
-		if c != v.Codes[i] {
+		if compareCode(c, v.Codes[i]) != 0 {
 			return false
 		}
 	}
@@ -1258,11 +1259,23 @@ func (c Concept) Proto() *crpb.Concept {
 
 // ConceptFromProto converts a proto to a Concept.
 func ConceptFromProto(pb *crpb.Concept) Concept {
-	codes := make([]Code, 0, len(pb.Codes))
+	codes := make([]*Code, 0, len(pb.Codes))
 	for _, c := range pb.Codes {
-		codes = append(codes, CodeFromProto(c))
+		code := CodeFromProto(c)
+		codes = append(codes, &code)
 	}
 	return Concept{Codes: codes, Display: pb.GetDisplay()}
+}
+
+// NonNullCodeValues returns all non null Codes from the Concept.
+func (c Concept) NonNullCodeValues() []Code {
+	var codes []Code
+	for _, code := range c.Codes {
+		if code != nil {
+			codes = append(codes, *code)
+		}
+	}
+	return codes
 }
 
 func (c Concept) marshalJSON(runtimeType json.RawMessage) ([]byte, error) {
@@ -1315,9 +1328,16 @@ func (c Code) marshalJSON(runtimeType json.RawMessage) ([]byte, error) {
 }
 
 // compareCode is used for sorting for go Equal() implementation. This is different from CQL
-// equality where display is ignored.
-func compareCode(a, b Code) int {
-	if a.Code != b.Code {
+// equality where display is ignored. It accepts pointers to Codes so that it can support null
+// values.
+func compareCode(a, b *Code) int {
+	if a == nil && b == nil {
+		return 0
+	} else if a == nil {
+		return -1
+	} else if b == nil {
+		return 1
+	} else if a.Code != b.Code {
 		return strings.Compare(a.Code, b.Code)
 	} else if a.System != b.System {
 		return strings.Compare(a.System, b.System)

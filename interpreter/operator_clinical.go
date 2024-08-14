@@ -168,6 +168,7 @@ func (i *interpreter) evalInValueSet(b model.IBinaryExpression, lObj, rObj resul
 // valueToCodes is the helper to convert a value to a list of terminology.Code. Returns an error for
 // value types that are not valid clinical values. Currently only supports Code, Concept,
 // List<Code>, List<Concept>.
+// In cases where null codes can be present, they should be filtered out.
 func valueToCodes(o result.Value) ([]terminology.Code, error) {
 	var termCodes []terminology.Code
 	if rt := o.RuntimeType(); rt.Equal(types.Code) {
@@ -181,7 +182,7 @@ func valueToCodes(o result.Value) ([]terminology.Code, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, c := range concept.Codes {
+		for _, c := range concept.NonNullCodeValues() {
 			termCodes = append(termCodes, terminology.Code{System: c.System, Code: c.Code})
 		}
 		return termCodes, nil
@@ -210,7 +211,7 @@ func valueToCodes(o result.Value) ([]terminology.Code, error) {
 			if err != nil {
 				return nil, err
 			}
-			for _, c := range concept.Codes {
+			for _, c := range concept.NonNullCodeValues() {
 				termCodes = append(termCodes, terminology.Code{System: c.System, Code: c.Code})
 			}
 		}

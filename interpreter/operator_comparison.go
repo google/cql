@@ -287,10 +287,7 @@ func evalEquivalentDateTime(_ model.IBinaryExpression, lObj, rObj result.Value) 
 // Some Equivalent overloads are categorized in the clinical operator section, like this one, but
 // are included in operator_comparison.go to keep all equivalent overloads together.
 func (i *interpreter) evalEquivalentConceptCode(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
-	if result.IsNull(lObj) && result.IsNull(rObj) {
-		return result.New(true)
-	}
-	if result.IsNull(lObj) != result.IsNull(rObj) {
+	if result.IsNull(lObj) {
 		return result.New(false)
 	}
 
@@ -299,14 +296,14 @@ func (i *interpreter) evalEquivalentConceptCode(b model.IBinaryExpression, lObj,
 		return result.Value{}, err
 	}
 
-	// Sanity check right hand type.
-	_, err = result.ToCode(rObj)
-	if err != nil {
-		return result.Value{}, err
-	}
-
 	for _, conCode := range con.Codes {
-		conCodeObj, err := result.New(conCode)
+		if conCode == nil && result.IsNull(rObj) {
+			return result.New(true)
+		} else if conCode == nil {
+			continue
+		}
+
+		conCodeObj, err := result.New(*conCode)
 		if err != nil {
 			return result.Value{}, err
 		}

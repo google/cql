@@ -115,7 +115,23 @@ func (i *interpreter) valueProperty(v result.Value, property string, staticResul
 	case result.Concept:
 		switch property {
 		case "codes":
-			return result.New(ot.Codes)
+			var codeValues []result.Value
+			for _, c := range ot.Codes {
+				if c == nil {
+					nilVal, err := result.New(nil)
+					if err != nil {
+						return result.Value{}, err
+					}
+					codeValues = append(codeValues, nilVal)
+					continue
+				}
+				codeVal, err := result.New(*c)
+				if err != nil {
+					return result.Value{}, err
+				}
+				codeValues = append(codeValues, codeVal)
+			}
+			return result.New(result.List{Value: codeValues, StaticType: &types.List{ElementType: types.Code}})
 		case "display":
 			return result.New(ot.Display)
 		default:
