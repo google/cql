@@ -47,11 +47,11 @@ for getting a good understanding of what behaviors a feature should implement.
 
 A good place to start in the CQL engine repository is by implementing additional
 system operators. Operators we do not yet support can be found in the
-[exclusions list](cql/tests/spectests/exclusions/exclusions.go) for the CQL
+[exclusions list](tests/spectests/exclusions/exclusions.go) for the CQL
 language specification tests. You may also want to check the repository issues
 for any particular feature requests or bugs as well.
 
-The [exclusions list](cql/tests/spectests/exclusions/exclusions.go) contains
+The [exclusions list](tests/spectests/exclusions/exclusions.go) contains
 skip definitions by both test group and test name. Test names marked explicitly
 with TODOs may be a great place to start.
 
@@ -61,11 +61,9 @@ For the feature that you have selected to work on, you will likely need to start
 by implementing some logic to convert parsed ANTLR grammar into an internal
 representation.
 
-The [CQL ANTLR Grammar](internal/embeddata/cqframework/Cql.g4) represents the
-CQL syntax, which is used to compile CQL into
-[Go ANTLR nodes](cql/internal/embeddata/cqframework/cql/). The parser traverses
-these ANTLR nodes to build intermediate model structures for the interpreter to
-process.
+The [CQL ANTLR Grammar](internal/embeddata/third_party/cqframework/Cql.g4) represents the CQL syntax, which is used to compile CQL into [Go ANTLR nodes](internal/embeddata/third_party/cqframework/cql/).
+The parser traverses these ANTLR nodes to build intermediate model structures
+for the interpreter to process.
 
 The engine model structures are based on the
 [ELM definitions](https://cql.hl7.org/elm.html), and represent compiled CQL.
