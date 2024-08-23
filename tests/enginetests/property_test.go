@@ -38,15 +38,13 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
-func TestProperty(t *testing.T) {
+func TestPropertySystemLiterals(t *testing.T) {
 	tests := []struct {
 		name       string
 		cql        string
-		resources  []*r4pb.ContainedResource
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-		// Literals
 		{
 			name: "property on null",
 			cql:  "define TESTRESULT: null.test",
@@ -140,16 +138,6 @@ func TestProperty(t *testing.T) {
 			wantResult: newOrFatal(t, "foo"),
 		},
 		{
-			name: "FHIR Instance",
-			cql: dedent.Dedent(`
-			context Patient
-			define TESTRESULT: Patient { gender: Patient.gender }.gender`),
-			wantResult: newOrFatal(t, result.Named{
-				Value:       &r4patientpb.Patient_GenderCode{Value: c4pb.AdministrativeGenderCode_MALE},
-				RuntimeType: &types.Named{TypeName: "FHIR.AdministrativeGender"},
-			}),
-		},
-		{
 			name:       "Tuple",
 			cql:        "define TESTRESULT: Tuple { apple: 'red', banana: 4 }.apple",
 			wantResult: newOrFatal(t, "red"),
@@ -161,7 +149,54 @@ func TestProperty(t *testing.T) {
 			define TESTRESULT: Tuple { apple : C }.apple`),
 			wantResult: newOrFatal(t, 4),
 		},
-		// FHIR Patient
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testCQL := fmt.Sprintf(dedent.Dedent(`
+			library TESTLIB version '1.0.0'
+			using FHIR version '4.0.1'
+			%v`), tc.cql)
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), []string{testCQL}, parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			config := defaultInterpreterConfig(t, p)
+			results, err := interpreter.Eval(context.Background(), parsedLibs, config)
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
+func TestPropertyFHIRData(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		resources  []*r4pb.ContainedResource
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "FHIR Instance",
+			cql: dedent.Dedent(`
+			context Patient
+			define TESTRESULT: Patient { gender: Patient.gender }.gender`),
+			wantResult: newOrFatal(t, result.Named{
+				Value:       &r4patientpb.Patient_GenderCode{Value: c4pb.AdministrativeGenderCode_MALE},
+				RuntimeType: &types.Named{TypeName: "FHIR.AdministrativeGender"},
+			}),
+		},
 		{
 			name: "protomessage boolean returns boolean proto",
 			cql: dedent.Dedent(`
@@ -307,6 +342,17 @@ func TestProperty(t *testing.T) {
 				},
 			),
 		},
+		{
+			name: "FHIR.date.value returns System.Date",
+			cql: dedent.Dedent(`
+					context Patient
+					define TESTRESULT: Patient.birthDate.value`),
+			resources: []*r4pb.ContainedResource{containedFromPatient(&r4patientpb.Patient{
+				Gender:    &r4patientpb.Patient_GenderCode{Value: c4pb.AdministrativeGenderCode_MALE},
+				BirthDate: &d4pb.Date{ValueUs: 1711929600000000, Precision: d4pb.Date_DAY, Timezone: "UTC"},
+			})},
+			wantResult: newOrFatal(t, result.Date{Date: time.Date(2024, time.April, 1, 0, 0, 0, 0, time.FixedZone("", 4*60*60)), Precision: model.DAY}),
+		},
 		// Properties on Observations
 		{
 			name: "unset oneof returns nil",
@@ -423,17 +469,6 @@ func TestProperty(t *testing.T) {
 			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC), Precision: model.SECOND}),
 		},
 		{
-			name: "FHIR.date.value returns System.Date",
-			cql: dedent.Dedent(`
-					context Patient
-					define TESTRESULT: Patient.birthDate.value`),
-			resources: []*r4pb.ContainedResource{containedFromPatient(&r4patientpb.Patient{
-				Gender:    &r4patientpb.Patient_GenderCode{Value: c4pb.AdministrativeGenderCode_MALE},
-				BirthDate: &d4pb.Date{ValueUs: 1711929600000000, Precision: d4pb.Date_DAY, Timezone: "UTC"},
-			})},
-			wantResult: newOrFatal(t, result.Date{Date: time.Date(2024, time.April, 1, 0, 0, 0, 0, time.FixedZone("", 4*60*60)), Precision: model.DAY}),
-		},
-		{
 			name: "FHIR.dateTime.value returns System.DateTime with microsecond precision mapped to millisecond",
 			cql: dedent.Dedent(`
 					define FirstObservation: First([Observation])
@@ -461,6 +496,7 @@ func TestProperty(t *testing.T) {
 			},
 			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC), Precision: model.UNSETDATETIMEPRECISION}),
 		},
+		// Properties on Encounters
 		{
 			name: "Encounter.class has a different json and proto field name",
 			cql: dedent.Dedent(`
