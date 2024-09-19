@@ -152,6 +152,34 @@ func TestQuery(t *testing.T) {
 			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}}}),
 		},
 		{
+			name: "Where filters by date",
+			cql: dedent.Dedent(`
+			using FHIR version '4.0.1'
+			include FHIRHelpers version '4.0.1' called FHIRHelpers
+
+			define TESTRESULT: [Encounter] E where start of E.period < @2022-01-01
+			`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+				},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
+			}),
+		},
+		{
+			name: "Where filters by all results",
+			cql: dedent.Dedent(`
+			using FHIR version '4.0.1'
+			include FHIRHelpers version '4.0.1' called FHIRHelpers
+
+			define TESTRESULT: [Encounter] E where start of E.period < @1999-01-01
+			`),
+			wantResult: newOrFatal(t, result.List{
+				Value:      []result.Value{},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
+			}),
+		},
+		{
 			name: "Query retrieves empy list",
 			cql: dedent.Dedent(`
 			using FHIR version '4.0.1'

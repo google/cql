@@ -429,7 +429,7 @@ func TestQuery(t *testing.T) {
 		{
 			name: "Relationship and Aggregate have the same alias name",
 			cql: dedent.Dedent(`
-			define TESTRESULT: ({1, 2, 3}) N 
+			define TESTRESULT: ({1, 2, 3}) N
 			with ({4, 5}) R such that R = N
 			aggregate R starting 1: R * N`),
 			want: &model.Query{
@@ -497,6 +497,46 @@ func TestQuery(t *testing.T) {
 					Expression: &model.AliasRef{Name: "o", Expression: model.ResultType(&types.Named{TypeName: "FHIR.Observation"})},
 					Element:    &model.Element{ResultType: &types.Named{TypeName: "FHIR.Observation"}},
 					Distinct:   true,
+				},
+			},
+		},
+		{
+			name: "Query start with implicit interval",
+			cql:  `define TESTRESULT: [Encounter] E return start of E.period`,
+			want: &model.Query{
+				Expression: model.ResultType(&types.List{ElementType: types.DateTime}),
+				Source: []*model.AliasedSource{
+					{
+						Alias: "E",
+						Source: &model.Retrieve{
+							Expression:   model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
+							DataType:     "{http://hl7.org/fhir}Encounter",
+							TemplateID:   "http://hl7.org/fhir/StructureDefinition/Encounter",
+							CodeProperty: "type",
+						},
+						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					},
+				},
+				Return: &model.ReturnClause{
+					Element: &model.Element{ResultType: types.DateTime},
+					Expression: &model.Start{
+						UnaryExpression: &model.UnaryExpression{
+							Expression: model.ResultType(types.DateTime),
+							Operand: &model.FunctionRef{
+								Expression:  model.ResultType(&types.Interval{PointType: types.DateTime}),
+								Name:        "ToInterval",
+								LibraryName: "FHIRHelpers",
+								Operands: []model.IExpression{
+									&model.Property{
+										Expression: model.ResultType(&types.Named{TypeName: "FHIR.Period"}),
+										Source:     &model.AliasRef{Name: "E", Expression: model.ResultType(&types.Named{TypeName: "FHIR.Encounter"})},
+										Path:       "period",
+									},
+								},
+							},
+						},
+					},
+					Distinct: true,
 				},
 			},
 		},
@@ -580,10 +620,13 @@ func TestQuery(t *testing.T) {
 			cqlLib := dedent.Dedent(fmt.Sprintf(`
 			valueset "Blood pressure": 'https://test/file1'
 			using FHIR version '4.0.1'
+			include FHIRHelpers version '4.0.1' called FHIRHelpers
 			context Patient
 			%v`, test.cql))
 
-			parsedLibs, err := newFHIRParser(t).Libraries(context.Background(), []string{cqlLib}, Config{})
+			libs := addFHIRHelpersLib(t, cqlLib)
+
+			parsedLibs, err := newFHIRParser(t).Libraries(context.Background(), libs, Config{})
 			if err != nil {
 				t.Fatalf("Parse returned unexpected error: %v", err)
 			}

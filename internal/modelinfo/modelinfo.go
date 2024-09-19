@@ -250,6 +250,9 @@ type Convertible struct {
 	// ex FHIRHelpers.ToString.
 	Library  string
 	Function string
+	// OutputType defines the result type of the conversion. This can be a compatible subtype of the
+	// declared type, e.g., a declared Interval<Any> can accept an Interval<DateTime>.
+	OutputType types.IType
 }
 
 // IsImplicitlyConvertible uses model info conversionInfo to determine if one type can be converted
@@ -277,7 +280,12 @@ func (m *ModelInfos) IsImplicitlyConvertible(from, to types.IType) (Convertible,
 	if len(splitNames) != 2 {
 		return Convertible{}, fmt.Errorf("invalid conversion function name %v", ci.FunctionName)
 	}
-	return Convertible{IsConvertible: true, Library: splitNames[0], Function: splitNames[1]}, nil
+	return Convertible{
+		IsConvertible: true,
+		Library:       splitNames[0],
+		Function:      splitNames[1],
+		OutputType:    typeSpecifierFromElementType(ci.ToType),
+	}, nil
 }
 
 // BaseTypes returns all of the BaseTypes (aka Parents) of a type excluding Any (or for nested types
@@ -614,6 +622,11 @@ func load(miXML *modelInfoXML) (*modelInfo, error) {
 
 	for _, ci := range miXML.ConversionInfos {
 		mi.conversionMap[conversionKey{fromType: ci.FromType, toType: ci.ToType}] = ci
+
+		// TODO(b/317008490): Find a more robust approach to getting all compatible conversion targets.
+		if strings.HasPrefix(ci.ToType, "Interval") {
+			mi.conversionMap[conversionKey{fromType: ci.FromType, toType: "Interval<System.Any>"}] = ci
+		}
 	}
 
 	return mi, nil
@@ -705,6 +718,11 @@ func typeSpecifierFromElementType(modelInfoType string) types.IType {
 	if strings.HasPrefix(modelInfoType, "System.") {
 		return types.ToSystem(modelInfoType)
 
+	}
+	// TODO(b/317008490): Do we need to handle other container types, e.g. List<>?
+	if strings.HasPrefix(modelInfoType, "Interval<") && strings.HasSuffix(modelInfoType, ">") {
+		pointType := strings.TrimPrefix(strings.TrimSuffix(modelInfoType, ">"), "Interval<")
+		return &types.Interval{PointType: types.ToSystem(pointType)}
 	}
 	return &types.Named{TypeName: modelInfoType}
 }

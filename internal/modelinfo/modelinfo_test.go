@@ -263,6 +263,7 @@ func TestIsImplicitlyConvertible(t *testing.T) {
 				IsConvertible: true,
 				Library:       "SYSTEM",
 				Function:      "ToDecimal",
+				OutputType:    types.Decimal,
 			},
 		},
 		{
@@ -273,6 +274,7 @@ func TestIsImplicitlyConvertible(t *testing.T) {
 				IsConvertible: true,
 				Library:       "SYSTEM",
 				Function:      "ToDateTime",
+				OutputType:    types.DateTime,
 			},
 		},
 		{
@@ -283,6 +285,7 @@ func TestIsImplicitlyConvertible(t *testing.T) {
 				IsConvertible: true,
 				Library:       "FHIRHelpers",
 				Function:      "ToCode",
+				OutputType:    types.Code,
 			},
 		},
 		{
@@ -293,6 +296,18 @@ func TestIsImplicitlyConvertible(t *testing.T) {
 				IsConvertible: true,
 				Library:       "FHIRHelpers",
 				Function:      "ToInterval",
+				OutputType:    &types.Interval{PointType: types.DateTime},
+			},
+		},
+		{
+			name: "FHIR.Period -> Interval<System.Any>",
+			from: &types.Named{TypeName: "FHIR.Period"},
+			to:   &types.Interval{PointType: types.Any},
+			want: Convertible{
+				IsConvertible: true,
+				Library:       "FHIRHelpers",
+				Function:      "ToInterval",
+				OutputType:    &types.Interval{PointType: types.DateTime},
 			},
 		},
 	}
@@ -305,8 +320,8 @@ func TestIsImplicitlyConvertible(t *testing.T) {
 			if err != nil {
 				t.Fatalf("IsImplicitlyConvertible(%s, %s) failed unexpectedly: %v", tc.from, tc.to, err)
 			}
-			if got != tc.want {
-				t.Errorf("IsImplicitlyConvertible(%s, %s) got: %v, want: %v", tc.from, tc.to, got, tc.want)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("IsImplicitlyConvertible(%s, %s): %s", tc.from, tc.to, diff)
 			}
 		})
 	}

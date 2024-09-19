@@ -324,7 +324,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 			LibraryName: res.Library,
 			Name:        res.Function,
 			Operands:    []model.IExpression{opToWrap},
-			Expression:  model.ResultType(declaredType),
+			Expression:  model.ResultType(res.OutputType),
 		}
 
 		score := implicitConversionScore(declaredType)

@@ -567,6 +567,21 @@ func TestOperandImplicitConverter(t *testing.T) {
 			},
 		},
 		{
+			name:         "FHIR ModelInfo Conversion to target that accepts Interval<Any>",
+			invokedType:  &types.Named{TypeName: "FHIR.Period"},
+			declaredType: &types.Interval{PointType: types.Any},
+			want: ConvertedOperand{
+				Matched: true,
+				Score:   5,
+				WrappedOperand: &model.FunctionRef{
+					LibraryName: "FHIRHelpers",
+					Name:        "ToInterval",
+					Expression:  model.ResultType(&types.Interval{PointType: types.DateTime}),
+					Operands:    []model.IExpression{model.NewLiteral("operand", types.String)},
+				},
+			},
+		},
+		{
 			name:         "System ModelInfo Conversion to Class",
 			invokedType:  types.Integer,
 			declaredType: types.Quantity,
