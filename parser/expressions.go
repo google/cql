@@ -412,6 +412,27 @@ func (v *visitor) VisitQuantityContext(ctx cql.IQuantityContext) (model.Quantity
 // visitor.
 func (v *visitor) VisitReferentialIdentifier(ctx cql.IReferentialIdentifierContext) model.IExpression {
 	name := v.parseReferentialIdentifier(ctx)
+
+	if v.refs.HasScopedStruct() {
+		sourceFn, err := v.refs.ScopedStruct()
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+
+		// If the query source has the expected property, return the identifier ref. Otherwise
+		// fall through to the resolution logic below.
+		source := sourceFn()
+		elementType := source.GetResultType().(*types.List).ElementType
+
+		ptype, err := v.modelInfo.PropertyTypeSpecifier(elementType, name)
+		if err == nil {
+			return &model.IdentifierRef{
+				Name:       name,
+				Expression: model.ResultType(ptype),
+			}
+		}
+	}
+
 	if i := v.refs.ResolveInclude(name); i != nil {
 		return v.badExpression(fmt.Sprintf("internal error - referential identifier %v is a local identifier to an included library", name), ctx)
 	}

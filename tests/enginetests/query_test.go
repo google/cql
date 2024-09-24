@@ -61,6 +61,7 @@ func TestQuery(t *testing.T) {
 			wantResult: newOrFatal(t, result.List{
 				Value: []result.Value{
 					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				},
 				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
 			}),
@@ -82,6 +83,7 @@ func TestQuery(t *testing.T) {
 			wantSourceValues: []result.Value{
 				newOrFatal(t, result.List{Value: []result.Value{
 					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				},
 					StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
 				}),
@@ -145,6 +147,15 @@ func TestQuery(t *testing.T) {
 			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}}}),
 		},
 		{
+			name: "Where filters everything by date",
+			cql: dedent.Dedent(`
+			using FHIR version '4.0.1'
+			include FHIRHelpers version '4.0.1' called FHIRHelpers
+
+			define TESTRESULT: [Observation] O where O.effective < @1980-01-01`),
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}}}),
+		},
+		{
 			name: "Where returns null",
 			cql: dedent.Dedent(`
 			using FHIR version '4.0.1'
@@ -157,7 +168,7 @@ func TestQuery(t *testing.T) {
 			using FHIR version '4.0.1'
 			include FHIRHelpers version '4.0.1' called FHIRHelpers
 
-			define TESTRESULT: [Encounter] E where start of E.period < @2022-01-01
+			define TESTRESULT: [Encounter] E where start of E.period < @2020-01-01
 			`),
 			wantResult: newOrFatal(t, result.List{
 				Value: []result.Value{
@@ -287,6 +298,65 @@ func TestQuery(t *testing.T) {
 				newOrFatal(t, "cat"),
 			},
 				StaticType: &types.List{ElementType: types.String}}),
+		},
+		{
+			name: "Sort by field",
+			cql: dedent.Dedent(`
+			  using FHIR version '4.0.1'
+			  include FHIRHelpers version '4.0.1' called FHIRHelpers
+			  define TESTRESULT: [Observation] O sort by effective`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Observation", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Observation"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Observation", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Observation"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Observation", "3"), RuntimeType: &types.Named{TypeName: "FHIR.Observation"}}),
+				},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}},
+			}),
+		},
+		{
+			name: "Sort by field desc",
+			cql: dedent.Dedent(`
+			  using FHIR version '4.0.1'
+			  include FHIRHelpers version '4.0.1' called FHIRHelpers
+			  define TESTRESULT: [Observation] O sort by effective desc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Observation", "3"), RuntimeType: &types.Named{TypeName: "FHIR.Observation"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Observation", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Observation"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Observation", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Observation"}}),
+				},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}},
+			}),
+		},
+		// Online test: https://cql-runner.dataphoria.org/
+		{
+			name: "Sort by expression",
+			cql: dedent.Dedent(`
+			  using FHIR version '4.0.1'
+			  include FHIRHelpers version '4.0.1' called FHIRHelpers
+			  define TESTRESULT: [Encounter] E sort by start of period`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+				},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
+			}),
+		},
+		{
+			name: "Sort by expression expression descending",
+			cql: dedent.Dedent(`
+			  using FHIR version '4.0.1'
+			  include FHIRHelpers version '4.0.1' called FHIRHelpers
+			  define TESTRESULT: [Encounter] E sort by start of period desc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+				},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
+			}),
 		},
 		{
 			name:       "Aggregate",

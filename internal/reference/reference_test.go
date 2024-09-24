@@ -541,6 +541,57 @@ func TestParserAliasAndResolve(t *testing.T) {
 	}
 }
 
+func TestScopedStructs(t *testing.T) {
+	// Test scoping and de-scoping of structs in context.
+	r := NewResolver[result.Value, *model.FunctionDef]()
+
+	if r.HasScopedStruct() {
+		t.Errorf("HasScopedStruct() got true, want false")
+	}
+	_, err := r.ScopedStruct()
+	if err == nil {
+		t.Errorf("ScopedStruct() with no scope expected error but got success")
+	}
+
+	v1 := newOrFatal(1, t)
+	r.EnterStructScope(v1)
+	if !r.HasScopedStruct() {
+		t.Errorf("HasScopedStruct() got false when struct was in scope")
+	}
+
+	got, err := r.ScopedStruct()
+	if err != nil {
+		t.Fatalf("ScopedStruct() unexpected err: %v", err)
+	}
+	if diff := cmp.Diff(v1, got); diff != "" {
+		t.Errorf("ScopedStruct() diff (-want +got):\n%s", diff)
+	}
+
+	v2 := newOrFatal(2, t)
+	r.EnterStructScope(v2)
+	got, err = r.ScopedStruct()
+	if err != nil {
+		t.Fatalf("ScopedStruct() unexpected err: %v", err)
+	}
+	if diff := cmp.Diff(v2, got); diff != "" {
+		t.Errorf("ScopedStruct() diff (-want +got):\n%s", diff)
+	}
+
+	r.ExitStructScope()
+	got, err = r.ScopedStruct()
+	if err != nil {
+		t.Fatalf("ScopedStruct() unexpected err: %v", err)
+	}
+	if diff := cmp.Diff(v1, got); diff != "" {
+		t.Errorf("ScopedStruct() diff (-want +got):\n%s", diff)
+	}
+
+	r.ExitStructScope()
+	if r.HasScopedStruct() {
+		t.Errorf("HasScopedStruct() got true when no struct should be in scope")
+	}
+}
+
 func TestResolveIncludedLibrary(t *testing.T) {
 	// TEST SETUP - PREVIOUS PARSED LIBRARY
 	//

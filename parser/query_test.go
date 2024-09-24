@@ -356,6 +356,50 @@ func TestQuery(t *testing.T) {
 			},
 		},
 		{
+			name: "Sort by expression",
+			cql: dedent.Dedent(`
+			  define TESTRESULT: [Encounter] E sort by start of period`),
+			want: &model.Query{
+				Expression: &model.Expression{
+					Element: &model.Element{ResultType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}},
+				},
+				Source: []*model.AliasedSource{
+					{
+						Expression: &model.Expression{Element: &model.Element{ResultType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}}},
+						Alias:      "E",
+						Source: &model.Retrieve{
+							Expression:   model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
+							DataType:     "{http://hl7.org/fhir}Encounter",
+							TemplateID:   "http://hl7.org/fhir/StructureDefinition/Encounter",
+							CodeProperty: "type",
+						},
+					},
+				},
+				Sort: &model.SortClause{
+					ByItems: []model.ISortByItem{
+						&model.SortByExpression{
+							SortByItem: &model.SortByItem{Direction: model.ASCENDING},
+							SortExpression: &model.Start{
+								UnaryExpression: &model.UnaryExpression{
+									Expression: model.ResultType(types.DateTime),
+									Operand: &model.FunctionRef{
+										Expression:  model.ResultType(&types.Interval{PointType: types.DateTime}),
+										Name:        "ToInterval",
+										LibraryName: "FHIRHelpers",
+										Operands: []model.IExpression{&model.IdentifierRef{
+											Expression: model.ResultType(&types.Named{TypeName: "FHIR.Period"}),
+											Name:       "period",
+										},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "Aggregate",
 			cql:  "define TESTRESULT: ({1, 2, 3}) N aggregate R starting 1: R * N",
 			want: &model.Query{

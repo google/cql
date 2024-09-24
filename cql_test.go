@@ -63,6 +63,7 @@ func TestCQL(t *testing.T) {
 			retriever: enginetests.BuildRetriever(t),
 			wantResult: newOrFatal(t, result.List{Value: []result.Value{
 				newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+				newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
 			},
 				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
 			}),
@@ -84,6 +85,7 @@ func TestCQL(t *testing.T) {
 			wantSourceValues: []result.Value{
 				newOrFatal(t, result.List{Value: []result.Value{
 					newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				},
 					StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
 				}),
@@ -302,6 +304,7 @@ func TestCQL_MultipleEvals(t *testing.T) {
 			wantResult: newOrFatal(t, result.List{
 				Value: []result.Value{
 					newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+					newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				},
 				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
 			}),
@@ -324,6 +327,7 @@ func TestCQL_MultipleEvals(t *testing.T) {
 				newOrFatal(t, result.List{
 					Value: []result.Value{
 						newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+						newOrFatal(t, result.Named{Value: enginetests.RetrieveFHIRResource(t, "Encounter", "2"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
 					},
 					StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
 				}),

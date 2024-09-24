@@ -483,7 +483,7 @@ type ReturnClause struct {
 // Follows format outlined in https://cql.hl7.org/elm/schema/expression.xsd.
 type ISortByItem interface {
 	IElement
-	isSortByItem()
+	SortDirection() SortDirection
 }
 
 // SortByItem is the base abstract type for all query types.
@@ -492,12 +492,13 @@ type SortByItem struct {
 	Direction SortDirection
 }
 
+// SortDirection returns the direction of the sort, e.g. ASCENDING or DESCENDING.
+func (s *SortByItem) SortDirection() SortDirection { return s.Direction }
+
 // SortByDirection enables sorting non-tuple values by direction
 type SortByDirection struct {
 	*SortByItem
 }
-
-func (c *SortByDirection) isSortByItem() {}
 
 // SortByColumn enables sorting by a given column and direction.
 type SortByColumn struct {
@@ -505,7 +506,11 @@ type SortByColumn struct {
 	Path string
 }
 
-func (c *SortByColumn) isSortByItem() {}
+// SortByExpression enables sorting by an expression and direction.
+type SortByExpression struct {
+	*SortByItem
+	SortExpression IExpression
+}
 
 // AliasedSource is a query source with an alias.
 type AliasedSource struct {
@@ -1154,6 +1159,14 @@ type FunctionRef struct {
 
 // OperandRef defines a reference to an operand within a function.
 type OperandRef struct {
+	*Expression
+	Name string
+}
+
+// IdentifierRef defines a reference to an identifier within a defined scope, such as a sort by.
+// This is distinct from other references since it not a defined name, but will typically reference
+// a field for some structure in scope of a sort expression.
+type IdentifierRef struct {
 	*Expression
 	Name string
 }

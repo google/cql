@@ -52,6 +52,25 @@
     {
       "fullUrl": "fullUrl",
       "resource": {
+        "resourceType": "Encounter",
+        "id": "2",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "AMB",
+          "display": "ambulatory"
+        },
+        "serviceType": { "text": "Medicine" },
+        "subject": { "reference": "Patient/1" },
+        "period": {
+          "start": "2020-11-13T11:21:26+00:00",
+          "end": "2020-11-13T12:39:19+00:00"
+        }
+      }
+    },
+    {
+      "fullUrl": "fullUrl",
+      "resource": {
         "resourceType": "Observation",
         "id": "1",
         "status": "amended",
@@ -145,14 +164,16 @@
               "display": "Glucose in Blood"
             }
           ]
-        }
+        },
+        "effectiveDateTime": "2018-11-14T12:30:19+00:00"
       }
     },
     {
       "fullUrl": "fullUrl",
       "resource": {
         "resourceType": "Observation",
-        "id": "3"
+        "id": "3",
+        "effectiveDateTime": "2018-11-15T12:30:19+00:00"
       }
     },
     {

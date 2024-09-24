@@ -56,6 +56,11 @@ type Resolver[T any, F any] struct {
 	// defined. Aliases live in the same namespace as definitions.
 	aliases []map[aliasKey]T
 
+	// scopedStructs hold the struct that are currently in scope for evaluation. For instance,
+	// an an expression like `[Encounter] O sort by start of period` places each encounter in scope,
+	// for the sorting criteria, and `period` is resolved against that encounter struct.
+	scopedStructs []T
+
 	// libs holds the qualified identifier of all named libraries that have been parsed.
 	libs map[namedLibKey]struct{}
 
@@ -403,6 +408,31 @@ func (r *Resolver[T, F]) ExitScope() {
 	if len(r.aliases) > 0 {
 		r.aliases = r.aliases[:len(r.aliases)-1]
 	}
+}
+
+// EnterStructScope starts a new scope for a struct.
+func (r *Resolver[T, F]) EnterStructScope(q T) {
+	r.scopedStructs = append(r.scopedStructs, q)
+}
+
+// ExitStructScope clears the current struct scope.
+func (r *Resolver[T, F]) ExitStructScope() {
+	if len(r.scopedStructs) > 0 {
+		r.scopedStructs = r.scopedStructs[:len(r.scopedStructs)-1]
+	}
+}
+
+// HasScopedStruct returns true if there is a struct in the current scope.
+func (r *Resolver[T, F]) HasScopedStruct() bool {
+	return len(r.scopedStructs) > 0
+}
+
+// ScopedStruct returns the current struct scope.
+func (r *Resolver[T, F]) ScopedStruct() (T, error) {
+	if len(r.scopedStructs) == 0 {
+		return zero[T](), fmt.Errorf("no scoped structs were set")
+	}
+	return r.scopedStructs[len(r.scopedStructs)-1], nil
 }
 
 // Alias creates a new alias within the current scope. When EndScope is called all aliases in the

@@ -59,6 +59,8 @@ func (i *interpreter) evalExpression(elem model.IExpression) (result.Value, erro
 		return i.evalQueryLetRef(elem)
 	case *model.AliasRef:
 		return i.evalAliasRef(elem)
+	case *model.IdentifierRef:
+		return i.evalIdentifierRef(elem)
 	case *model.CodeSystemRef:
 		return i.evalCodeSystemRef(elem)
 	case *model.ValuesetRef:
@@ -303,6 +305,24 @@ func (i *interpreter) evalQueryLetRef(a *model.QueryLetRef) (result.Value, error
 
 func (i *interpreter) evalAliasRef(a *model.AliasRef) (result.Value, error) {
 	return i.refs.ResolveLocal(a.Name)
+}
+
+func (i *interpreter) evalIdentifierRef(r *model.IdentifierRef) (result.Value, error) {
+	obj, err := i.refs.ScopedStruct()
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Passing the static types here is likely unimportant, but we compute it for completeness.
+	aType, err := i.modelInfo.PropertyTypeSpecifier(obj.RuntimeType(), r.Name)
+	if err != nil {
+		return result.Value{}, err
+	}
+	ap, err := i.valueProperty(obj, r.Name, aType)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return ap, nil
 }
 
 func (i *interpreter) evalOperandRef(a *model.OperandRef) (result.Value, error) {

@@ -199,7 +199,6 @@ func (v *visitor) parseWhereClause(wc cql.IWhereClauseContext, q *model.Query) (
 
 func (v *visitor) parseSortClause(sc cql.ISortClauseContext, q *model.Query) (*model.Query, error) {
 	// TODO(b/316961394): Add check for sortability for CQL query sort columns.
-	// TODO(b/317008490): Implement sort by expression.
 	if sc == nil {
 		return q, nil
 	}
@@ -218,20 +217,43 @@ func (v *visitor) parseSortClause(sc cql.ISortClauseContext, q *model.Query) (*m
 			},
 		}
 	} else if sbi, found := maybeGetChildNode[*cql.SortByItemContext](sc.GetChildren(), nil); found {
-		sortDir, err := parseSortDirection(sbi.SortDirection().GetText())
+		// Sort direction is optional in the "sort by" clause, and defaults to ascending.
+		var sortText string = "ascending"
+		if sbi.SortDirection() != nil {
+			sortText = sbi.SortDirection().GetText()
+		}
+		sortDir, err := parseSortDirection(sortText)
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO(b/317402356): Add static type checking for column paths.
-		sortByItems = []model.ISortByItem{
-			&model.SortByColumn{
-				SortByItem: &model.SortByItem{
-					Direction: sortDir,
+		v.refs.EnterStructScope(func() model.IExpression { return q.Source[0] })
+		defer v.refs.ExitStructScope()
+
+		sortExpr := v.VisitExpression(sbi.ExpressionTerm())
+
+		switch t := sortExpr.(type) {
+		case *model.IdentifierRef:
+			sortByItems = []model.ISortByItem{
+				&model.SortByColumn{
+					SortByItem: &model.SortByItem{
+						Direction: sortDir,
+					},
+					Path: t.Name,
 				},
-				Path: sbi.ExpressionTerm().GetText(),
-			},
+			}
+		default:
+			sortByItems = []model.ISortByItem{
+				&model.SortByExpression{
+					SortByItem: &model.SortByItem{
+						Direction: sortDir,
+					},
+					SortExpression: t,
+				},
+			}
 		}
+
+		// TODO(b/317402356): Add static type checking for column paths.
 	} else {
 		return nil, errors.New("item or direction to sort by was not found")
 	}

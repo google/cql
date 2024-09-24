@@ -121,7 +121,7 @@ func (i *interpreter) evalQuery(q *model.Query) (result.Value, error) {
 				return result.Value{}, err
 			}
 		} else {
-			i.sortByColumn(finalVals, q.Sort.ByItems)
+			err := i.sortByColumnOrExpression(finalVals, q.Sort.ByItems)
 			if err != nil {
 				return result.Value{}, err
 			}
@@ -490,49 +490,58 @@ func compareNumeralInt[t float64 | int64 | int32](left, right t) int {
 	}
 }
 
-func (i *interpreter) sortByColumn(objs []result.Value, sbis []model.ISortByItem) error {
-	// Validate sort column types.
-	for _, sortItems := range sbis {
-		// TODO(b/316984809): Is this validation in advance necessary? What if other values (beyond
-		// objs[0]) have a different runtime type for the property (e.g. if they're a choice type)?
-		// Consider validating types inline during the sort instead.
-		path := sortItems.(*model.SortByColumn).Path
-		propertyType, err := i.modelInfo.PropertyTypeSpecifier(objs[0].RuntimeType(), path)
-		if err != nil {
-			return err
-		}
-		columnVal, err := i.valueProperty(objs[0], path, propertyType)
-		if err != nil {
-			return err
-		}
-		// Strictly only allow DateTimes for now.
-		// TODO(b/316984809): add sorting support for other types.
-		if !columnVal.RuntimeType().Equal(types.DateTime) {
-			return fmt.Errorf("sort column of a query must evaluate to a date time, instead got %v", columnVal.RuntimeType())
+func (i *interpreter) dateTimeOrError(v result.Value) (result.Value, error) {
+	switch sr := v.GolangValue().(type) {
+	case result.DateTime:
+		return v, nil
+	case result.Named:
+		if sr.RuntimeType.Equal(&types.Named{TypeName: "FHIR.dateTime"}) {
+			return i.protoProperty(sr, "value", types.DateTime)
 		}
 	}
+	return result.Value{}, fmt.Errorf("sorting only currently supported on DateTime columns")
+}
 
+// getSortValue returns the value to be used for the comparison-based sort. This
+// is typically a field or expression on the structure being sorted.
+func (i *interpreter) getSortValue(it model.ISortByItem, v result.Value) (result.Value, error) {
+	var rv result.Value
+	var err error
+	switch iv := it.(type) {
+	case *model.SortByColumn:
+		// Passing the static types here is likely unimportant, but we compute it for completeness.
+		t, err := i.modelInfo.PropertyTypeSpecifier(v.RuntimeType(), iv.Path)
+		if err != nil {
+			return result.Value{}, err
+		}
+		rv, err = i.valueProperty(v, iv.Path, t)
+		if err != nil {
+			return result.Value{}, err
+		}
+	case *model.SortByExpression:
+		i.refs.EnterStructScope(v)
+		defer i.refs.ExitStructScope()
+		rv, err = i.evalExpression(iv.SortExpression)
+		if err != nil {
+			return result.Value{}, err
+		}
+	default:
+		return result.Value{}, fmt.Errorf("internal error - unsupported sort by item type: %T", iv)
+	}
+
+	return i.dateTimeOrError(rv)
+}
+
+func (i *interpreter) sortByColumnOrExpression(objs []result.Value, sbis []model.ISortByItem) error {
 	var sortErr error = nil
 	slices.SortFunc(objs[:], func(a, b result.Value) int {
-		for _, sortItems := range sbis {
-			sortCol := sortItems.(*model.SortByColumn)
-			// Passing the static types here is likely unimportant, but we compute it for completeness.
-			aType, err := i.modelInfo.PropertyTypeSpecifier(a.RuntimeType(), sortCol.Path)
+		for _, sortItem := range sbis {
+			ap, err := i.getSortValue(sortItem, a)
 			if err != nil {
 				sortErr = err
 				continue
 			}
-			ap, err := i.valueProperty(a, sortCol.Path, aType)
-			if err != nil {
-				sortErr = err
-				continue
-			}
-			bType, err := i.modelInfo.PropertyTypeSpecifier(b.RuntimeType(), sortCol.Path)
-			if err != nil {
-				sortErr = err
-				continue
-			}
-			bp, err := i.valueProperty(b, sortCol.Path, bType)
+			bp, err := i.getSortValue(sortItem, b)
 			if err != nil {
 				sortErr = err
 				continue
@@ -544,7 +553,7 @@ func (i *interpreter) sortByColumn(objs []result.Value, sbis []model.ISortByItem
 			// TODO(b/308012659): Implement dateTime comparison that doesn't take a precision.
 			if av.Equal(bv) {
 				continue
-			} else if sortCol.SortByItem.Direction == model.DESCENDING {
+			} else if sortItem.SortDirection() == model.DESCENDING {
 				return bv.Compare(av)
 			}
 			return av.Compare(bv)
