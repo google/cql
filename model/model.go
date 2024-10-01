@@ -1067,6 +1067,9 @@ type DateTime struct{ *NaryExpression }
 // one of those at that point.
 type Now struct{ *NaryExpression }
 
+// Round ELM Expression https://cql.hl7.org/04-logicalspecification.html#round
+type Round struct{ *NaryExpression }
+
 // TimeOfDay is https://cql.hl7.org/04-logicalspecification.html#timeofday
 // Note: in the future we may implement the OperatorExpression, and should convert this to
 // one of those at that point.
@@ -1324,6 +1327,9 @@ func (a *Modulo) GetName() string { return "Modulo" }
 
 // GetName returns the name of the system operator.
 func (a *Power) GetName() string { return "Power" }
+
+// GetName returns the name of the system operator.
+func (a *Round) GetName() string { return "Round" }
 
 // GetName returns the name of the system operator.
 func (a *TruncatedDivide) GetName() string { return "TruncatedDivide" }

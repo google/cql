@@ -1049,6 +1049,17 @@ func (i *interpreter) naryOverloads(m model.INaryExpression) ([]convert.Overload
 				Result:   i.evalCombine,
 			},
 		}, nil
+	case *model.Round:
+		return []convert.Overload[evalNarySignature]{
+			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalRound,
+			},
+			{
+				Operands: []types.IType{types.Decimal, types.Integer},
+				Result:   evalRound,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Nary Expression %v", m.GetName())
 	}

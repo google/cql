@@ -616,6 +616,31 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Round 1.42",
+			cql:  "Round(1.42)",
+			want: &model.Round{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1.42", types.Decimal),
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
+			name: "Round 3.14159 to 3 decimal places",
+			cql:  "Round(3.14159, 3)",
+			want: &model.Round{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("3.14159", types.Decimal),
+						model.NewLiteral("3", types.Integer),
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
 			name: "Predecessor for Date",
 			cql:  "Predecessor(@2023)",
 			want: &model.Predecessor{

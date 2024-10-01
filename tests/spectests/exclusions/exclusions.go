@@ -60,17 +60,11 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"HighBoundary",
 				"Log",
 				"LowBoundary",
-				"Round",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
-				"Divide103",
 				"Multiply1CMBy2CM",
 				"Power2DToNeg2DEquivalence",
-				"Exp1",    // Require Round support.
-				"ExpNeg1", // Require Round support.
-				"Ln1000",  // Require Round support.
-				"Ln1000D", // Require Round support.
 				// TODO: b/342061606 - Unit conversion is not supported.
 				"Divide1Q1",
 				"Divide10Q5I",

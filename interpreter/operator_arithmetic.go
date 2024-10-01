@@ -603,6 +603,55 @@ func evalNegateQuantity(m model.IUnaryExpression, obj result.Value) (result.Valu
 	return result.New(val)
 }
 
+// Round(argument Decimal) Decimal
+// Round(argument Decimal, argument Integer) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#round
+// If a precision is specified but is null then the default precision is 0.
+// If a precision is specified but is negative then an error is returned. This is technically
+// undefined behavior in the CQL spec, but we choose to throw an error here.
+func evalRound(_ model.INaryExpression, operands []result.Value) (result.Value, error) {
+	// if len(operands) == 1 {
+	// 	return roundValue(operands[0])
+	// }
+	decimalVal := operands[0]
+	var precisionVal result.Value
+	var err error
+	// retrieve the precision if it exists, otherwise default to 0.
+	if len(operands) == 2 {
+		precisionVal = operands[1]
+	} else {
+		precisionVal, err = result.New(0)
+		if err != nil {
+			return result.Value{}, err
+		}
+	}
+	if result.IsNull(decimalVal) {
+		return result.New(nil)
+	}
+
+	p, err := result.ToInt32(precisionVal)
+	if err != nil {
+		p = 0
+	}
+	if p < 0 {
+		return result.Value{}, fmt.Errorf("internal error - precision must be non-negative, got %v", p)
+	}
+	d, err := result.ToFloat64(decimalVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	ratio := math.Pow10(int(p))
+	// CQL currently implements its own special version of rounding for now (which will be changed in
+	// the future). For now if the value is negative we round towards zero.
+	ratioedDecimal := d * ratio
+	_, frac := math.Modf(ratioedDecimal)
+	if frac == -0.5 {
+		// force go to round towards zero
+		ratioedDecimal += 0.1
+	}
+	return result.New(math.Round(ratioedDecimal) / ratio)
+}
+
 // predecessor of<T>(obj T) T
 // https://cql.hl7.org/09-b-cqlreference.html#predecessor
 func (i *interpreter) evalPredecessor(m model.IUnaryExpression, obj result.Value) (result.Value, error) {

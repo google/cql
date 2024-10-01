@@ -973,6 +973,147 @@ func TestMultiply(t *testing.T) {
 	}
 }
 
+func TestRound(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name:       "Simple",
+			cql:        "Round(42.101)",
+			wantResult: newOrFatal(t, 42.0),
+		},
+		{
+			name:       "Negative decimal",
+			cql:        "Round(-101.42)",
+			wantResult: newOrFatal(t, -101.0),
+		},
+		{
+			name: "Integers",
+			cql:  "Round(2)",
+			wantModel: &model.Round{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						&model.ToDecimal{
+							UnaryExpression: &model.UnaryExpression{
+								Operand:    model.NewLiteral("2", types.Integer),
+								Expression: model.ResultType(types.Decimal),
+							},
+						},
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "Negative, round up",
+			cql:        "Round(-0.5)",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Negative, round down",
+			cql:        "Round(-0.6)",
+			wantResult: newOrFatal(t, -1.0),
+		},
+		{
+			name:       "Zero",
+			cql:        "Round(0.0)",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Null",
+			cql:        "Round(null as Decimal)",
+			wantResult: newOrFatal(t, nil),
+		},
+		// With precision
+		{
+			name:       "Simple with precision",
+			cql:        "Round(42.101, 1)",
+			wantResult: newOrFatal(t, 42.1),
+		},
+		{
+			name:       "Negative decimal with precision round up",
+			cql:        "Round(-101.45, 1)",
+			wantResult: newOrFatal(t, -101.4),
+		},
+		{
+			name:       "Negative decimal with precision round down",
+			cql:        "Round(-101.46, 1)",
+			wantResult: newOrFatal(t, -101.5),
+		},
+		{
+			name:       "Precision is 0",
+			cql:        "Round(2.123, 0)",
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "Precision is null",
+			cql:        "Round(2.123, null)",
+			wantResult: newOrFatal(t, 2.0),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestRound_EvalErrors(t *testing.T) {
+	tests := []struct {
+		name                string
+		cql                 string
+		wantModel           model.IExpression
+		wantEvalErrContains string
+	}{
+		{
+			name:                "Round with a negative precision",
+			cql:                 "Round(2.123, -1)",
+			wantEvalErrContains: "precision must be non-negative",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err == nil {
+				t.Fatalf("Evaluate Expression expected an error to be returned, got nil instead")
+			}
+			if !strings.Contains(err.Error(), tc.wantEvalErrContains) {
+				t.Errorf("Unexpected evaluation error contents got (%v) want (%v)", err.Error(), tc.wantEvalErrContains)
+			}
+		})
+	}
+}
+
 func TestTruncate(t *testing.T) {
 	tests := []struct {
 		name       string
