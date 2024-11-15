@@ -717,6 +717,17 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name:     "Log",
+			operands: [][]types.IType{{types.Decimal, types.Decimal}},
+			model: func() model.IExpression {
+				return &model.Log{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Decimal),
+					},
+				}
+			},
+		},
+		{
 			name:     "Negate",
 			operands: [][]types.IType{{types.Integer}},
 			model:    negateModel(types.Integer),

@@ -520,6 +520,102 @@ func TestLn(t *testing.T) {
 	}
 }
 
+func TestLog(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Decimal",
+			cql:  "Log(1.0, 10.0)",
+			wantModel: &model.Log{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1.0", types.Decimal),
+						model.NewLiteral("10.0", types.Decimal),
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Negative value",
+			cql:        "Log(-2.1, 10.0)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Negative base",
+			cql:        "Log(2.1, -10.0)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Zero value",
+			cql:        "Log(0.0, 10.0)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Zero base",
+			cql:        "Log(2.1, 0.0)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Logarithm of 0.125 with base 2",
+			cql:        "Log(0.125, 2.0)",
+			wantResult: newOrFatal(t, -3.0),
+		},
+		{
+			name:       "Integer of 16 with base 2",
+			cql:        "Log(16, 2)",
+			wantResult: newOrFatal(t, 4.0),
+		},
+		{
+			name:       "Minimum Integer value",
+			cql:        "Log(-2147483648, 10)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Maximum Integer value",
+			cql:        "Round(Log(2147483647, 10), 3)",
+			wantResult: newOrFatal(t, 9.332),
+		},
+		{
+			name:       "Null value",
+			cql:        "Log(null as Decimal, 10)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Null base",
+			cql:        "Log(1.0, null as Decimal)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestPrecision(t *testing.T) {
 	tests := []struct {
 		name       string

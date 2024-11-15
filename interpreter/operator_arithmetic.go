@@ -162,6 +162,34 @@ func evalLn(_ model.IUnaryExpression, obj result.Value) (result.Value, error) {
 	return result.New(math.Log(val))
 }
 
+// Log(argument Decimal) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#log
+func evalLog(_ model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	x, base, err := applyToValues(lObj, rObj, result.ToFloat64)
+	if err != nil {
+		return result.Value{}, err
+	}
+	val, err := log(x, base)
+	if err != nil {
+		return result.New(nil)
+	}
+	return result.New(val)
+}
+
+// log returns the logarithm of val with given base.
+func log(val, base float64) (float64, error) {
+	if val <= 0 || base <= 0 {
+		return 0.0, fmt.Errorf("internal error - log base %v for val %v, all values	must be greater than 0", base, val)
+	}
+	if base == 1 {
+		return 0.0, fmt.Errorf("internal error - log base %v is undefined", base)
+	}
+	return math.Log(val) / math.Log(base), nil
+}
+
 // op(left Integer, right Integer) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#add
 // https://cql.hl7.org/09-b-cqlreference.html#subtract

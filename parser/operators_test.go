@@ -526,6 +526,19 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Arithmetic Log",
+			cql:  "Log(1.0, 10.0)",
+			want: &model.Log{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1.0", types.Decimal),
+						model.NewLiteral("10.0", types.Decimal),
+					},
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
 			name: "Arithmetic Precision",
 			cql:  "Precision(@2014)",
 			want: &model.Precision{

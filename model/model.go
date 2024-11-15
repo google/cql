@@ -946,6 +946,9 @@ type Modulo struct{ *BinaryExpression }
 // Power ELM Expression https://cql.hl7.org/04-logicalspecification.html#power
 type Power struct{ *BinaryExpression }
 
+// Log ELM Expression https://cql.hl7.org/04-logicalspecification.html#log.
+type Log struct{ *BinaryExpression }
+
 // TruncatedDivide ELM Expression https://cql.hl7.org/04-logicalspecification.html#truncateddivide
 type TruncatedDivide struct{ *BinaryExpression }
 
@@ -1193,6 +1196,9 @@ func (a *Floor) GetName() string { return "Floor" }
 
 // GetName returns the name of the system operator.
 func (a *Ln) GetName() string { return "Ln" }
+
+// GetName returns the name of the system operator.
+func (a *Log) GetName() string { return "Log" }
 
 // GetName returns the name of the system operator.
 func (a *Precision) GetName() string { return "Precision" }

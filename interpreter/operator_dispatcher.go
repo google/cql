@@ -671,6 +671,13 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalArithmeticQuantity,
 			},
 		}, nil
+	case *model.Log:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Decimal, types.Decimal},
+				Result:   evalLog,
+			},
+		}, nil
 	case *model.And, *model.Or, *model.XOr, *model.Implies:
 		return []convert.Overload[evalBinarySignature]{
 			{
