@@ -31,7 +31,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Mode",
-				"PopulationStdDev",
 				"PopulationVariance",
 				"StdDev",
 				"Variance",
@@ -45,6 +44,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"MinTestInteger",
 				"MinTestString",
 				"MinTestTime",
+				// TODO: b/342061783 - Operator is supported but the test assertion uses a rounded value.
+				"PopStdDevTest1",
 			},
 		},
 		"CqlAggregateTest.xml": XMLTestFileExclusions{

@@ -16,6 +16,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/google/cql/model"
@@ -144,7 +145,7 @@ func (i *interpreter) evalAvg(m model.IUnaryExpression, operand result.Value) (r
 
 // Count(argument List<T>) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#count
-func (i *interpreter) evalCount(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+func (i *interpreter) evalCount(_ model.IUnaryExpression, operand result.Value) (result.Value, error) {
 	if result.IsNull(operand) {
 		return result.New(0)
 	}
@@ -346,6 +347,111 @@ func calculateMedianFloat64(values []float64) float64 {
 		return (values[mid-1] + values[mid]) / 2
 	}
 	return values[mid]
+}
+
+// PopulationStdDev(argument List<Decimal>) Decimal
+// sqrt(sum((v - mean)^2) / count)
+// https://cql.hl7.org/09-b-cqlreference.html#population-stddev
+func (i *interpreter) evalPopulationStdDevDecimal(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	countValue, err := i.evalCount(m, operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(countValue) {
+		return result.New(nil)
+	}
+	count, err := result.ToInt32(countValue)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if count == 0 {
+		return result.New(nil)
+	}
+	meanValue, err := i.evalAvg(m, operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(meanValue) {
+		return result.New(nil)
+	}
+	mean, err := result.ToFloat64(meanValue)
+	if err != nil {
+		return result.Value{}, err
+	}
+	var sum float64
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToFloat64(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		sum += (v - mean) * (v - mean)
+	}
+	return result.New(math.Sqrt(sum / float64(count)))
+}
+
+// PopulationStdDev(argument List<Quantity>) Quantity
+// sqrt(sum((v - mean)^2) / count)
+// https://cql.hl7.org/09-b-cqlreference.html#population-stddev
+func (i *interpreter) evalPopulationStdDevQuantity(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	countValue, err := i.evalCount(m, operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(countValue) {
+		return result.New(nil)
+	}
+	count, err := result.ToInt32(countValue)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if count == 0 {
+		return result.New(nil)
+	}
+	meanValue, err := i.evalAvg(m, operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(meanValue) {
+		return result.New(nil)
+	}
+	mean, err := result.ToQuantity(meanValue)
+	if err != nil {
+		return result.Value{}, err
+	}
+	var sum float64
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToQuantity(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if v.Unit != mean.Unit {
+			return result.Value{}, fmt.Errorf("PopulationStdDev(List<Quantity>) operand has different units which is not supported, got %v and %v", v.Unit, mean.Unit)
+		}
+		sum += (v.Value - mean.Value) * (v.Value - mean.Value)
+	}
+	return result.New(result.Quantity{Value: math.Sqrt(sum / float64(count)), Unit: mean.Unit})
 }
 
 // Sum(argument List<Decimal>) Decimal

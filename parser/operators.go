@@ -187,6 +187,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	case *model.Median:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.PopulationStdDev:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	}
 
 	// Set Operands.
@@ -1932,6 +1935,18 @@ func (p *Parser) loadSystemOperators() error {
 			},
 			model: func() model.IExpression {
 				return &model.Median{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "PopulationStdDev",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.PopulationStdDev{
 					UnaryExpression: &model.UnaryExpression{},
 				}
 			},

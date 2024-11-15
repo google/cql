@@ -576,6 +576,17 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalMedianQuantity,
 			},
 		}, nil
+	case *model.PopulationStdDev:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalPopulationStdDevDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalPopulationStdDevQuantity,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}

@@ -1280,6 +1280,33 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "PopulationStdDev Decimal",
+			cql:  "PopulationStdDev({1.0, 2.0, 3.0})",
+			want: &model.PopulationStdDev{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.0", "2.0", "3.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
+			name: "PopulationStdDev Quantity",
+			cql:  "PopulationStdDev({1.0 'cm', 2.0 'cm', 3.0 'cm'})",
+			want: &model.PopulationStdDev{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						List: []model.IExpression{
+							&model.Quantity{Value: 1.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+							&model.Quantity{Value: 2.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+							&model.Quantity{Value: 3.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+						},
+						Expression: model.ResultType(&types.List{ElementType: types.Quantity}),
+					},
+					Expression: model.ResultType(types.Quantity),
+				},
+			},
+		},
+		{
 			name: "Count",
 			cql:  "Count({1, 2, 3})",
 			want: &model.Count{
