@@ -1588,6 +1588,19 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "IndexOf",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}, types.Any},
+			},
+			model: func() model.IExpression {
+				return &model.IndexOf{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		{
 			name: "Last",
 			operands: [][]types.IType{
 				{&types.List{ElementType: types.Any}}},

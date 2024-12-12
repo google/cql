@@ -433,6 +433,84 @@ func TestLast(t *testing.T) {
 	}
 }
 
+func TestIndexOf(t *testing.T) {
+	tests := []struct {
+		name                 string
+		cql                  string
+		wantModel            model.IExpression
+		wantResult           result.Value
+		wantSourceExpression model.IExpression
+		wantSourceValues     []result.Value
+	}{
+		{
+			name: "IndexOf({1, 2}, 2) = 1",
+			cql:  "IndexOf({1, 2}, 2)",
+			wantModel: &model.IndexOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewLiteral("2", types.Integer),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, int32(1)),
+		},
+		{
+			name:       "IndexOf(List<Integer>{}, 1) = -1",
+			cql:        "IndexOf(List<Integer>{}, 1)",
+			wantResult: newOrFatal(t, -1),
+		},
+		{
+			name:       "IndexOf(null as List<Integer>, 1) = null",
+			cql:        "IndexOf(null as List<Integer>, 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "IndexOf({1, 2}, null as Integer) = null",
+			cql:        "IndexOf({1, 2}, null as Integer)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "IndexOf({1, 2}, 3) = -1",
+			cql:        "IndexOf({1, 2}, 3)",
+			wantResult: newOrFatal(t, -1),
+		},
+		{
+			name:       "IndexOf({@2010, @2011, @2012}, @2011) = 1",
+			cql:        "IndexOf({@2010, @2011, @2012}, @2011)",
+			wantResult: newOrFatal(t, 1),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			gotResult := getTESTRESULTWithSources(t, results)
+			if diff := cmp.Diff(tc.wantResult, gotResult, protocmp.Transform()); diff != "" {
+				t.Errorf("Eval returned diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceExpression, gotResult.SourceExpression(), protocmp.Transform()); tc.wantSourceExpression != nil && diff != "" {
+				t.Errorf("Eval SourceExpression diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceValues, gotResult.SourceValues(), protocmp.Transform()); tc.wantSourceValues != nil && diff != "" {
+				t.Errorf("Eval SourceValues diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestSingletonFrom(t *testing.T) {
 	tests := []struct {
 		name       string

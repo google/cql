@@ -120,6 +120,28 @@ func evalLast(m model.IUnaryExpression, listObj result.Value) (result.Value, err
 	return list[len(list)-1], nil
 }
 
+// IndexOf(argument List<T>, element T) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#indexof
+func evalIndexOf(m model.IBinaryExpression, listObj, valueObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) || result.IsNull(valueObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(list) == 0 {
+		return result.New(int32(-1))
+	}
+
+	for i, elemObj := range list {
+		if valueObj.Equal(elemObj) {
+			return result.New(int32(i))
+		}
+	}
+	return result.New(int32(-1))
+}
+
 // singleton from(argument List<T>) T
 // https://cql.hl7.org/09-b-cqlreference.html#singleton-from
 func evalSingletonFrom(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {

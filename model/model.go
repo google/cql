@@ -975,6 +975,11 @@ type Split struct{ *BinaryExpression }
 // Indexer ELM Expression https://cql.hl7.org/04-logicalspecification.html#indexer.
 type Indexer struct{ *BinaryExpression }
 
+// IndexOf ELM Expression https://cql.hl7.org/04-logicalspecification.html#indexof.
+// IndexOf is an OperatorExpression in ELM, but we're modeling it as a BinaryExpression since in CQL
+// it always takes two arguments.
+type IndexOf struct{ *BinaryExpression }
+
 // BinaryExpressionWithPrecision represents a BinaryExpression with a precision property.
 type BinaryExpressionWithPrecision struct {
 	*BinaryExpression
@@ -1452,6 +1457,9 @@ func (a *Combine) GetName() string { return "Combine" }
 
 // GetName returns the name of the system operator.
 func (i *Indexer) GetName() string { return "Indexer" }
+
+// GetName returns the name of the system operator.
+func (a *IndexOf) GetName() string { return "IndexOf" }
 
 // GetName returns the name of the system operator.
 func (m *Median) GetName() string { return "Median" }

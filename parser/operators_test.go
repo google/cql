@@ -1239,6 +1239,19 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "IndexOf",
+			cql:  "IndexOf({1, 2, 3}, 1)",
+			want: &model.IndexOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "Last",
 			cql:  "Last({1})",
 			want: &model.Last{
