@@ -182,6 +182,95 @@ func TestInList(t *testing.T) {
 	}
 }
 
+func TestDistinctList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Distinct list",
+			cql:  "distinct {1, 2, 1}",
+			wantModel: &model.Distinct{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+						List: []model.IExpression{
+							model.NewLiteral("1", types.Integer),
+							model.NewLiteral("2", types.Integer),
+							model.NewLiteral("1", types.Integer),
+						},
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			name: "Distinct list with null",
+			cql:  "distinct {1, null}",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, nil),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			name: "distinct list with no duplicates",
+			cql:  "distinct {1, 2, 3}",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+					newOrFatal(t, int32(3)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			name: "Functional syntax: In list",
+			cql:  "Distinct({1, 2})",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
 func TestFirst(t *testing.T) {
 	tests := []struct {
 		name                 string

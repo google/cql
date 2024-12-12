@@ -122,6 +122,10 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 		// Last(List<T>) T is a special case because the ResultType is not known until invocation.
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Distinct:
+		// Distinct(List<T>) List<T> is a special case because the ResultType is not known until invocation.
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(&types.List{ElementType: listType.ElementType})
 	case *model.Indexer:
 		switch opType := resolved.WrappedOperands[0].GetResultType().(type) {
 		case types.System:
@@ -1560,6 +1564,16 @@ func (p *Parser) loadSystemOperators() error {
 				{&types.List{ElementType: types.Any}}},
 			model: func() model.IExpression {
 				return &model.First{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Distinct",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}}},
+			model: func() model.IExpression {
+				return &model.Distinct{
 					UnaryExpression: &model.UnaryExpression{},
 				}
 			},

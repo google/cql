@@ -661,6 +661,9 @@ type Last struct {
 
 var _ IUnaryExpression = &Last{}
 
+// Distinct is https://cql.hl7.org/04-logicalspecification.html#distinct.
+type Distinct struct{ *UnaryExpression }
+
 // Abs is https://cql.hl7.org/04-logicalspecification.html#abs.
 type Abs struct{ *UnaryExpression }
 
@@ -1217,6 +1220,9 @@ func (n *Not) GetName() string { return "Not" }
 
 // GetName returns the name of the system operator.
 func (a *Truncate) GetName() string { return "Truncate" }
+
+// GetName returns the name of the system operator.
+func (a *Distinct) GetName() string { return "Distinct" }
 
 // GetName returns the name of the system operator.
 func (f *First) GetName() string { return "First" }

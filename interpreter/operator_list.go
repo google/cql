@@ -61,6 +61,31 @@ func evalInList(m model.IBinaryExpression, lObj, listObj result.Value) (result.V
 	return result.New(valueInList(lObj, r))
 }
 
+// Distinct(argument List<T>) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#distinct
+// In the future we should make result.Value hashable so we can use a map instead of a list to
+// check for duplicates.
+func evalDistinct(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	var distinctList []result.Value
+	for _, elemObj := range list {
+		if !valueInList(elemObj, distinctList) {
+			distinctList = append(distinctList, elemObj)
+		}
+	}
+	return result.New(result.List{
+		Value:      distinctList,
+		StaticType: listObj.GolangValue().(result.List).StaticType,
+	})
+}
+
 // First(argument List<T>) T
 // https://cql.hl7.org/09-b-cqlreference.html#first
 func evalFirst(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {

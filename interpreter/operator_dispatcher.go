@@ -186,6 +186,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalExists,
 			},
 		}, nil
+	case *model.Distinct:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}},
+				Result:   evalDistinct,
+			},
+		}, nil
 	case *model.First:
 		return []convert.Overload[evalUnarySignature]{
 			{

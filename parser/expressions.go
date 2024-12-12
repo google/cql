@@ -124,6 +124,8 @@ func (v *visitor) VisitExpression(tree antlr.Tree) model.IExpression {
 		m = v.VisitElementExtractorExpressionTerm(t)
 	case *cql.IndexedExpressionTermContext:
 		m = v.VisitIndexedExpressionTermContext(t)
+	case *cql.AggregateExpressionTermContext:
+		m = v.VisitAggregateExpressionTerm(t)
 
 		// All cases that have a single child and recurse to the child are handled below. For example in
 		// the CQL grammar the only child of QueryExpression is Query, so QueryExpression can be handled

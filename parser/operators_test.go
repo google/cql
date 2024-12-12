@@ -1200,6 +1200,23 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Distinct",
+			cql:  "Distinct({1, 2, 1})",
+			want: &model.Distinct{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+						List: []model.IExpression{
+							model.NewLiteral("1", types.Integer),
+							model.NewLiteral("2", types.Integer),
+							model.NewLiteral("1", types.Integer),
+						},
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
 			name: "Intersect",
 			cql:  "Intersect({1}, {1})",
 			want: &model.Intersect{

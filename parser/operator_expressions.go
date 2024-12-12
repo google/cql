@@ -689,3 +689,15 @@ func (v *visitor) VisitIndexedExpressionTermContext(ctx *cql.IndexedExpressionTe
 	}
 	return m
 }
+
+func (v *visitor) VisitAggregateExpressionTerm(ctx *cql.AggregateExpressionTermContext) model.IExpression {
+	name := ctx.GetChild(0).(antlr.TerminalNode).GetText()
+	if name != "distinct" {
+		return v.badExpression(fmt.Sprintf("unsupported aggregate expression: %s", name), ctx)
+	}
+	m, err := v.parseFunction("", "Distinct", []antlr.Tree{ctx.Expression()}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+	return m
+}
