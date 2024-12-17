@@ -797,6 +797,9 @@ type Avg struct{ *UnaryExpression }
 // far as we can tell.
 type Count struct{ *UnaryExpression }
 
+// Length ELM expression from https://cql.hl7.org/09-b-cqlreference.html#length-1.
+type Length struct{ *UnaryExpression }
+
 var _ IUnaryExpression = &Count{}
 
 // Max ELM expression from https://cql.hl7.org/09-b-cqlreference.html#max.
@@ -1439,6 +1442,9 @@ func (a *Avg) GetName() string { return "Avg" }
 
 // GetName returns the name of the system operator.
 func (c *Count) GetName() string { return "Count" }
+
+// GetName returns the name of the system operator.
+func (l *Length) GetName() string { return "Length" }
 
 // GetName returns the name of the system operator.
 func (a *Max) GetName() string { return "Max" }

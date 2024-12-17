@@ -1267,6 +1267,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Length",
+			cql:  "Length({1, 2, 3})",
+			want: &model.Length{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "SingletonFrom",
 			cql:  "SingletonFrom({1})",
 			want: &model.SingletonFrom{

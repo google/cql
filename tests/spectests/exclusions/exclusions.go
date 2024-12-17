@@ -345,7 +345,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Includes",
 				"IncludedIn",
 				"Intersect",
-				"Length",
 				"ProperContains",
 				"ProperIn",
 				"ProperlyIncludes",

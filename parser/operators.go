@@ -1611,6 +1611,18 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "Length",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}}},
+			model: func() model.IExpression {
+				return &model.Length{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		{
 			name: "SingletonFrom",
 			operands: [][]types.IType{
 				{&types.List{ElementType: types.Any}}},

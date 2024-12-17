@@ -142,6 +142,19 @@ func evalIndexOf(m model.IBinaryExpression, listObj, valueObj result.Value) (res
 	return result.New(int32(-1))
 }
 
+// Length(argument List<T>) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#length-1
+func evalLength(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) {
+		return result.New(int32(0))
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(int32(len(list)))
+}
+
 // singleton from(argument List<T>) T
 // https://cql.hl7.org/09-b-cqlreference.html#singleton-from
 func evalSingletonFrom(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {

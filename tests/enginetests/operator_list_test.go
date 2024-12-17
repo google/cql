@@ -433,6 +433,92 @@ func TestLast(t *testing.T) {
 	}
 }
 
+func TestLength(t *testing.T) {
+	tests := []struct {
+		name                 string
+		cql                  string
+		wantModel            model.IExpression
+		wantResult           result.Value
+		wantSourceExpression model.IExpression
+		wantSourceValues     []result.Value
+	}{
+		{
+			name: "Length({1, 2}) = 2",
+			cql:  "Length({1, 2})",
+			wantModel: &model.Length{
+				UnaryExpression: &model.UnaryExpression{
+					Expression: model.ResultType(types.Integer),
+					Operand: &model.List{
+						Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+						List: []model.IExpression{
+							model.NewLiteral("1", types.Integer),
+							model.NewLiteral("2", types.Integer),
+						},
+					},
+				},
+			},
+			wantResult: newOrFatal(t, int32(2)),
+			wantSourceExpression: &model.Length{
+				UnaryExpression: &model.UnaryExpression{
+					Expression: model.ResultType(types.Integer),
+					Operand: &model.List{
+						Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+						List: []model.IExpression{
+							model.NewLiteral("1", types.Integer),
+							model.NewLiteral("2", types.Integer),
+						},
+					},
+				},
+			},
+			wantSourceValues: []result.Value{
+				newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+			},
+		},
+		{
+			name:       "Length({1, 2, null}) = 3",
+			cql:        "Length({1, 2, null})",
+			wantResult: newOrFatal(t, int32(3)),
+		},
+		{
+			name:       "Length({}) = 0",
+			cql:        "Length({})",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "Length(null as List<Integer>) = 0",
+			cql:        "Length(null as List<Integer>)",
+			wantResult: newOrFatal(t, 0),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			gotResult := getTESTRESULTWithSources(t, results)
+			if diff := cmp.Diff(tc.wantResult, gotResult, protocmp.Transform()); diff != "" {
+				t.Errorf("Eval returned diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceExpression, gotResult.SourceExpression(), protocmp.Transform()); tc.wantSourceExpression != nil && diff != "" {
+				t.Errorf("Eval SourceExpression diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceValues, gotResult.SourceValues(), protocmp.Transform()); tc.wantSourceValues != nil && diff != "" {
+				t.Errorf("Eval SourceValues diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestIndexOf(t *testing.T) {
 	tests := []struct {
 		name                 string
