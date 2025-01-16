@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/cql/interpreter"
 	"github.com/google/cql/model"
@@ -716,6 +717,103 @@ func TestListOperatorSingletonFrom_Error(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), tc.wantEvalErrContains) {
 				t.Errorf("Unexpected evaluation error contents. got: %v, want contains: %v", err.Error(), tc.wantEvalErrContains)
+			}
+		})
+	}
+}
+
+func TestSkip(t *testing.T) {
+	tests := []struct {
+		name                 string
+		cql                  string
+		wantModel            model.IExpression
+		wantResult           result.Value
+		wantSourceExpression model.IExpression
+		wantSourceValues     []result.Value
+	}{
+		{
+			name: "Skip({1, 2}, 1) = {2}",
+			cql:  "Skip({1, 2}, 1)",
+			wantModel: &model.Skip{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+			wantSourceExpression: &model.Skip{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
+			name:       "Skip({1, 2, 3}, 3) = {}",
+			cql:        "Skip({1, 2, 3}, 3)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Skip({1, 2, 3}, 4) = {}",
+			cql:        "Skip({1, 2, 3}, 4)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Skip({1, 2, 3}, -1) = {}",
+			cql:        "Skip({1, 2, 3}, -1)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Skip({1, 2, null}, 1) = {2, null}",
+			cql:        "Skip({1, 2, null}, 1)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(2)), newOrFatal(t, nil)}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Skip(List<Integer>{}, 1) = {}",
+			cql:        "Skip(List<Integer>{}, 1)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Skip(null as List<Integer>, 1) = null",
+			cql:        "Skip(null as List<Integer>, 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Skip({@2010, @2011, @2012}, 2) = {@2010, @2011}",
+			cql:        "Skip({@2010, @2011, @2012}, 2)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, result.Date{Date: time.Date(2012, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR})}, StaticType: &types.List{ElementType: types.Date}}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			gotResult := getTESTRESULTWithSources(t, results)
+			if diff := cmp.Diff(tc.wantResult, gotResult, protocmp.Transform()); diff != "" {
+				t.Errorf("Eval returned diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceExpression, gotResult.SourceExpression(), protocmp.Transform()); tc.wantSourceExpression != nil && diff != "" {
+				t.Errorf("Eval SourceExpression diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceValues, gotResult.SourceValues(), protocmp.Transform()); tc.wantSourceValues != nil && diff != "" {
+				t.Errorf("Eval SourceValues diff (-want +got)\n%v", diff)
 			}
 		})
 	}

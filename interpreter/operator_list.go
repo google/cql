@@ -177,6 +177,32 @@ func evalSingletonFrom(m model.IUnaryExpression, listObj result.Value) (result.V
 	}
 }
 
+// Skip(argument List<T>, index Integer) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#skip
+func evalSkip(m model.IBinaryExpression, listObj, indexObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) {
+		return result.New(nil)
+	}
+	if result.IsNull(indexObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	index, err := result.ToInt32(indexObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	staticType := listObj.GolangValue().(result.List).StaticType
+	// If the index is out of bounds, return an empty list.
+	if index < 0 || index >= int32(len(list)) {
+		return result.New(result.List{StaticType: staticType})
+	}
+	return result.New(result.List{Value: list[index:], StaticType: staticType})
+}
+
 // Indexer(argument List<T>, index Integer) T
 // [](argument List<T>, index Integer) T
 // https://cql.hl7.org/09-b-cqlreference.html#indexer-1

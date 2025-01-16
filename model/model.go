@@ -983,6 +983,9 @@ type Indexer struct{ *BinaryExpression }
 // it always takes two arguments.
 type IndexOf struct{ *BinaryExpression }
 
+// Skip ELM Expression https://cql.hl7.org/09-b-cqlreference.html#skip.
+type Skip struct{ *BinaryExpression }
+
 // BinaryExpressionWithPrecision represents a BinaryExpression with a precision property.
 type BinaryExpressionWithPrecision struct {
 	*BinaryExpression
@@ -1469,6 +1472,9 @@ func (a *IndexOf) GetName() string { return "IndexOf" }
 
 // GetName returns the name of the system operator.
 func (m *Median) GetName() string { return "Median" }
+
+// GetName returns the name of the system operator.
+func (s *Skip) GetName() string { return "Skip" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationStdDev) GetName() string { return "PopulationStdDev" }

@@ -1292,6 +1292,19 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Skip",
+			cql:  "Skip({1, 2, 3}, 1)",
+			want: &model.Skip{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
 			name: "Union",
 			cql:  "Union({1}, {'hi'})",
 			want: &model.Union{
