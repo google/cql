@@ -61,6 +61,38 @@ func evalInList(m model.IBinaryExpression, lObj, listObj result.Value) (result.V
 	return result.New(valueInList(lObj, r))
 }
 
+// intersect(argument List<T>, argument List<T>) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#intersect
+func evalIntersect(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	r, err := result.ToSlice(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	// create a list of the intersection of the two lists using the equality operator where
+	// each element in the result must be unique.
+	var intersection []result.Value
+	for _, elemObj := range l {
+		if !valueInList(elemObj, r) {
+			continue
+		}
+		if valueInList(elemObj, intersection) {
+			continue
+		}
+		intersection = append(intersection, elemObj)
+	}
+	return result.New(result.List{
+		Value:      intersection,
+		StaticType: lObj.GolangValue().(result.List).StaticType,
+	})
+}
+
 // Distinct(argument List<T>) List<T>
 // https://cql.hl7.org/09-b-cqlreference.html#distinct
 // In the future we should make result.Value hashable so we can use a map instead of a list to
