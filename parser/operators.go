@@ -103,6 +103,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	case *model.Skip:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(&types.List{ElementType: listType.ElementType})
+	case *model.Tail:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(&types.List{ElementType: listType.ElementType})
 	case *model.Union:
 		listTypeLeft := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		listTypeRight := resolved.WrappedOperands[1].GetResultType().(*types.List)
@@ -1643,6 +1646,16 @@ func (p *Parser) loadSystemOperators() error {
 			model: func() model.IExpression {
 				return &model.Skip{
 					BinaryExpression: &model.BinaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Tail",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}}},
+			model: func() model.IExpression {
+				return &model.Tail{
+					UnaryExpression: &model.UnaryExpression{},
 				}
 			},
 		},

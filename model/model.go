@@ -838,6 +838,9 @@ type CalculateAge struct {
 	Precision DateTimePrecision
 }
 
+// Tail ELM Expression https://cql.hl7.org/09-b-cqlreference.html#tail.
+type Tail struct{ *UnaryExpression }
+
 // BinaryExpression is a CQL expression that has two operands. The ELM representation may have
 // additional operands (ex BinaryExpressionWithPrecision).
 type BinaryExpression struct {
@@ -1475,6 +1478,9 @@ func (m *Median) GetName() string { return "Median" }
 
 // GetName returns the name of the system operator.
 func (s *Skip) GetName() string { return "Skip" }
+
+// GetName returns the name of the system operator.
+func (t *Tail) GetName() string { return "Tail" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationStdDev) GetName() string { return "PopulationStdDev" }

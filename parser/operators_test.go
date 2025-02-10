@@ -1305,6 +1305,16 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Tail",
+			cql:  "Tail({1, 2, 3})",
+			want: &model.Tail{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3"}, types.Integer),
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
 			name: "Union",
 			cql:  "Union({1}, {'hi'})",
 			want: &model.Union{

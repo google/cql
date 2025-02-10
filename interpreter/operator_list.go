@@ -203,6 +203,24 @@ func evalSkip(m model.IBinaryExpression, listObj, indexObj result.Value) (result
 	return result.New(result.List{Value: list[index:], StaticType: staticType})
 }
 
+// Tail(argument List<T>) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#tail
+func evalTail(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	staticType := listObj.GolangValue().(result.List).StaticType
+	// If the list is empty, return an empty list.
+	if len(list) == 0 {
+		return result.New(result.List{StaticType: staticType})
+	}
+	return result.New(result.List{Value: list[1:], StaticType: staticType})
+}
+
 // Indexer(argument List<T>, index Integer) T
 // [](argument List<T>, index Integer) T
 // https://cql.hl7.org/09-b-cqlreference.html#indexer-1

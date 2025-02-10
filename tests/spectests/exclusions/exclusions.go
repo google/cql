@@ -349,7 +349,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"ProperIn",
 				"ProperlyIncludes",
 				"ProperlyIncludedIn",
-				"Tail",
 				"Take",
 				"Union",
 			},
@@ -369,6 +368,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"EqualNullNull",
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
 				"SkipAll",
+				"TailOneElement",
 			},
 		},
 		"CqlQueryTests.xml": XMLTestFileExclusions{
