@@ -906,6 +906,108 @@ func TestTail(t *testing.T) {
 	}
 }
 
+func TestTake(t *testing.T) {
+	tests := []struct {
+		name                 string
+		cql                  string
+		wantModel            model.IExpression
+		wantResult           result.Value
+		wantSourceExpression model.IExpression
+		wantSourceValues     []result.Value
+	}{
+		{
+			name: "Take({1, 2}, 1) = {1}",
+			cql:  "Take({1, 2}, 1)",
+			wantModel: &model.Take{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1))}, StaticType: &types.List{ElementType: types.Integer}}),
+			wantSourceExpression: &model.Take{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
+			name:       "Take({1, 2, 3}, 3) = {1, 2, 3}",
+			cql:        "Take({1, 2, 3}, 3)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2)), newOrFatal(t, int32(3))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Take({1, 2, 3}, 4) = {1, 2, 3}",
+			cql:        "Take({1, 2, 3}, 4)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2)), newOrFatal(t, int32(3))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Take({1, 2, 3}, -1) = {}",
+			cql:        "Take({1, 2, 3}, -1)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Take({1, 2, 3}, 0) = {}",
+			cql:        "Take({1, 2, 3}, 0)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Take({null, 2, 3}, 2) = {null, 2}",
+			cql:        "Take({null, 2, 3}, 2)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, nil), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Take(List<Integer>{}, 1) = {}",
+			cql:        "Take(List<Integer>{}, 1)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Take(null as List<Integer>, 1) = null",
+			cql:        "Take(null as List<Integer>, 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Take({@2010, @2011, @2012}, 1) = {@2010}",
+			cql:        "Take({@2010, @2011, @2012}, 1)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, result.Date{Date: time.Date(2010, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR})}, StaticType: &types.List{ElementType: types.Date}}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			gotResult := getTESTRESULTWithSources(t, results)
+			if diff := cmp.Diff(tc.wantResult, gotResult, protocmp.Transform()); diff != "" {
+				t.Errorf("Eval returned diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceExpression, gotResult.SourceExpression(), protocmp.Transform()); tc.wantSourceExpression != nil && diff != "" {
+				t.Errorf("Eval SourceExpression diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceValues, gotResult.SourceValues(), protocmp.Transform()); tc.wantSourceValues != nil && diff != "" {
+				t.Errorf("Eval SourceValues diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestIndexerList(t *testing.T) {
 	tests := []struct {
 		name       string

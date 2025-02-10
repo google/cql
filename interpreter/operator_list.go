@@ -221,6 +221,34 @@ func evalTail(m model.IUnaryExpression, listObj result.Value) (result.Value, err
 	return result.New(result.List{Value: list[1:], StaticType: staticType})
 }
 
+// Take(argument List<T>, number Integer) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#take
+// Removes the last n elements from the list.
+func evalTake(m model.IBinaryExpression, listObj, numberObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	staticType := listObj.GolangValue().(result.List).StaticType
+	if result.IsNull(numberObj) {
+		return result.New(result.List{StaticType: staticType})
+	}
+	number, err := result.ToInt32(numberObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if number <= 0 {
+		return result.New(result.List{StaticType: staticType})
+	}
+	if number > int32(len(list)) {
+		return result.New(result.List{Value: list, StaticType: staticType})
+	}
+	return result.New(result.List{Value: list[:number], StaticType: staticType})
+}
+
 // Indexer(argument List<T>, index Integer) T
 // [](argument List<T>, index Integer) T
 // https://cql.hl7.org/09-b-cqlreference.html#indexer-1
