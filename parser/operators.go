@@ -976,6 +976,19 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "EndsWith",
+			operands: [][]types.IType{
+				{types.String, types.String},
+			},
+			model: func() model.IExpression {
+				return &model.EndsWith{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name: "Split",
 			operands: [][]types.IType{
 				{types.String, types.String},

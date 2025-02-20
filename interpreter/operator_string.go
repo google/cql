@@ -245,3 +245,23 @@ func quantityToString(q result.Quantity) string {
 	f := strconv.FormatFloat(q.Value, 'f', -1, 64)
 	return fmt.Sprintf("%s '%s'", f, q.Unit)
 }
+
+// EndsWith(argument String, suffix String) Boolean
+// https://cql.hl7.org/2018May/09-b-cqlreference.html#endswith
+func evalEndsWith(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	str, err := result.ToString(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	suffix, err := result.ToString(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if int32(len(suffix)) == 0 {
+		return result.New(true)
+	}
+	return result.New(strings.HasSuffix(str, suffix))
+}
