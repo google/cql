@@ -761,6 +761,19 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "EndsWith",
+			cql: "EndsWith('ABC','C')",
+			want: &model.EndsWith{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("ABC", types.String),
+						model.NewLiteral("C", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",

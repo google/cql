@@ -978,6 +978,13 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalTake,
 			},
 		}, nil
+	case *model.EndsWith:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String},
+				Result:   evalEndsWith,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Binary Expression %v", m.GetName())
 	}

@@ -467,3 +467,83 @@ func TestIndexerString(t *testing.T) {
 		})
 	}
 }
+
+func TestEndsWith(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "EndsWithTrue",
+			cql:  "EndsWith('apple', 'ple')",
+			wantModel: &model.EndsWith{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("apple", types.String),
+						model.NewLiteral("ple", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name: "EndsWithFalse",
+			cql: "EndsWith('apple', 'pel')",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name: "EndsWithBothNull",
+			cql: "EndsWith(null, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "EndsWithRightNull",
+			cql: "EndsWith('apple',null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "EndsWithLeftNull",
+			cql: "EndsWith(null,'ple')",
+			wantResult: newOrFatal(t,nil),
+		},
+		{
+			name: "EndsWithLeftEmpty",
+			cql: "EndsWith('','ple')",
+			wantResult: newOrFatal(t,false),
+		},
+		{
+			name: "EndsWithRightEmpty",
+			cql: "EndsWith('apple','')",
+			wantResult: newOrFatal(t,true),
+		},
+		{
+			name: "EndsWithBothEmpty",
+			cql: "EndsWith('','')",
+			wantResult: newOrFatal(t,true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
