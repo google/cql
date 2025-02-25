@@ -265,3 +265,20 @@ func evalEndsWith(m model.IBinaryExpression, lObj, rObj result.Value) (result.Va
 	}
 	return result.New(strings.HasSuffix(str, suffix))
 }
+
+// LastPositionOf(pattern String, argument String) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#lastpositionof
+func evalLastPositionOf(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	pattern, err := result.ToString(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	argument, err := result.ToString(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(strings.LastIndex(argument, pattern))
+}

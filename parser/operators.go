@@ -989,6 +989,19 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "LastPositionOf",
+			operands: [][]types.IType{
+				{types.String, types.String},
+			},
+			model: func() model.IExpression {
+				return &model.LastPositionOf{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		{
 			name: "Split",
 			operands: [][]types.IType{
 				{types.String, types.String},

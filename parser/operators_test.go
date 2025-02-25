@@ -774,6 +774,19 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "LastPositionOf",
+			cql: "LastPositionOf('B','ABC')",
+			want: &model.LastPositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",
