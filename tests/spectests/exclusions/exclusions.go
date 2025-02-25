@@ -382,7 +382,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlStringOperatorsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"LastPositionOf",
 				"Length",
 				"Lower",
 				"Matches",
