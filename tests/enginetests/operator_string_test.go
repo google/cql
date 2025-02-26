@@ -547,3 +547,81 @@ func TestEndsWith(t *testing.T) {
 	}
 }
 
+func TestLastPositionOf(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "LastPositionOfFound",
+			cql: "LastPositionOf('B','ABC')",
+			wantModel: &model.LastPositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name: "LastPositionOfNotFound",
+			cql: "LastPositionOf('X', 'ABC')",
+			wantResult: newOrFatal(t, -1),
+		},
+		{
+			name: "LastPositionOfFound2",
+			cql: "LastPositionOf('B', 'ABCDEDCBA')",
+			wantResult: newOrFatal(t, 7),
+		},
+		{
+			name: "LastPositionOfLeftNull",
+			cql: "LastPositionOf(null, 'ABC')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "LastPositionOfRightNull",
+			cql: "LastPositionOf('A', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "LastPositionOfLong",
+			cql: "LastPositionOf('abra','abracadabra')",
+			wantResult: newOrFatal(t,7),
+		},
+		{
+			name: "LastPositionEmptyLeft",
+			cql: "LastPositionOf('','ABC')",
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name: "LastPositionOfEmptyRight",
+			cql: "LastPositionOf('A','')",
+			wantResult: newOrFatal(t, -1),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
