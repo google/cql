@@ -340,7 +340,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Descendents",
-				"Except",
 				"Flatten",
 				"Includes",
 				"IncludedIn",
@@ -365,6 +364,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/342061783 - Got unexpected result.
 				"EqualNullNull",
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
+				"Except23And1234",
 				"SkipAll",
 				"TailOneElement",
 				"TakeNullEmpty",

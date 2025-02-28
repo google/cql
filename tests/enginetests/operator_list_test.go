@@ -598,6 +598,113 @@ func TestIndexOf(t *testing.T) {
 	}
 }
 
+func TestExcept(t *testing.T) {
+	tests := []struct {
+		name                 string
+		cql                  string
+		wantModel            model.IExpression
+		wantResult           result.Value
+		wantSourceExpression model.IExpression
+		wantSourceValues     []result.Value
+	}{
+		{
+			name: "Except({1, 2}, {2, 3}) = {1}",
+			cql:  "Except({1, 2}, {2, 3})",
+			wantModel: &model.Except{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewList([]string{"2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1))}, StaticType: &types.List{ElementType: types.Integer}}),
+			wantSourceExpression: &model.Except{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2"}, types.Integer),
+						model.NewList([]string{"2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
+			name:       "Except({1, 1}, {1, 1}) = {}",
+			cql:        "Except({1, 1}, {1, 1})",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Except({1}, {2, 3}) = {1}",
+			cql:        "Except({1}, {2, 3})",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Except({1, null}, {2, 3, null}) = {1}",
+			cql:        "Except({1, null}, {2, 3, null})",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Except(List<Integer>{}, List<Integer>{}) = {}",
+			cql:        "Except(List<Integer>{}, List<Integer>{})",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Except(null as List<Integer>, List<Integer>{}) = null",
+			cql:        "Except(null as List<Integer>, List<Integer>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Except(List<Integer>{}, null as List<Integer>) = {}",
+			cql:        "Except(List<Integer>{}, null as List<Integer>)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Except({1, 1}, null as List<Integer>) = {1}",
+			cql:        "Except({1, 1}, null as List<Integer>)",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name: "Except({@2010, @2011, @2012}, {@2011, @2012}) = {@2010}",
+			cql:  "Except({@2010, @2011, @2012}, {@2011, @2012})",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Date{Date: time.Date(2010, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.YEAR}),
+				},
+				StaticType: &types.List{ElementType: types.Date},
+			}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			gotResult := getTESTRESULTWithSources(t, results)
+			if diff := cmp.Diff(tc.wantResult, gotResult, protocmp.Transform()); diff != "" {
+				t.Errorf("Eval returned diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceExpression, gotResult.SourceExpression(), protocmp.Transform()); tc.wantSourceExpression != nil && diff != "" {
+				t.Errorf("Eval SourceExpression diff (-want +got)\n%v", diff)
+			}
+			if diff := cmp.Diff(tc.wantSourceValues, gotResult.SourceValues(), protocmp.Transform()); tc.wantSourceValues != nil && diff != "" {
+				t.Errorf("Eval SourceValues diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestIntersect(t *testing.T) {
 	tests := []struct {
 		name                 string

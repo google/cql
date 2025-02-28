@@ -47,6 +47,42 @@ func evalExists(m model.IUnaryExpression, listObj result.Value) (result.Value, e
 	return result.New(true)
 }
 
+// except(argument List<T>, argument List<T>) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#except-1
+func evalExcept(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	// If the right value is null treat it as an empty list.
+	var r []result.Value
+	if !result.IsNull(rObj) {
+		r, err = result.ToSlice(rObj)
+		if err != nil {
+			return result.Value{}, err
+		}
+	}
+	// create a list of the elements that are in the first list and are not in the second list using
+	// the equality operator where each element in the result must be unique.
+	var exceptList []result.Value
+	for _, elemObj := range l {
+		if valueInList(elemObj, r) {
+			continue
+		}
+		if valueInList(elemObj, exceptList) {
+			continue
+		}
+		exceptList = append(exceptList, elemObj)
+	}
+	return result.New(result.List{
+		Value:      exceptList,
+		StaticType: lObj.GolangValue().(result.List).StaticType,
+	})
+}
+
 // in(element T, argument List<T>) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#in-1
 func evalInList(m model.IBinaryExpression, lObj, listObj result.Value) (result.Value, error) {
