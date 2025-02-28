@@ -220,6 +220,53 @@ func TestOverloadMatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Generic list wraps inferred type",
+			// Asserts that a type List<Any> can correctly overload match as both a type T and List<T> in
+			// the same function definition.
+			// Note: the parser skips OverloadMatch and calls operandsImplicitConverter directly which
+			// doesn't wrap the inferred type in a Query.
+			invoked: []model.IExpression{
+				model.NewList([]string{}, types.Any),
+				model.NewList([]string{}, types.Any),
+			},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{GenericList, GenericType},
+				},
+			},
+			wantRes: MatchedOverload[string]{
+				Result: "Exact Match",
+				WrappedOperands: []model.IExpression{
+					&model.Query{
+						Source: []*model.AliasedSource{
+							&model.AliasedSource{
+								Alias:      "X",
+								Source:     model.NewList([]string{}, types.Any),
+								Expression: model.ResultType(&types.List{ElementType: types.Any}),
+							},
+						},
+						Return: &model.ReturnClause{
+							Expression: &model.As{
+								AsTypeSpecifier: &types.List{ElementType: types.Any},
+								UnaryExpression: &model.UnaryExpression{
+									Operand: &model.AliasRef{
+										Name:       "X",
+										Expression: model.ResultType(types.Any),
+									},
+									Expression: model.ResultType(&types.List{ElementType: types.Any}),
+								},
+							},
+							Distinct: false,
+							Element:  &model.Element{ResultType: &types.List{ElementType: types.Any}},
+						},
+						Expression: model.ResultType(&types.List{ElementType: &types.List{ElementType: types.Any}}),
+					},
+					model.NewList([]string{}, types.Any),
+				},
+			},
+		},
 		// TODO(b/312172420): Add tests where generics need a list promotion and interval promotion once
 		// supported in the conversion precedence.
 	}

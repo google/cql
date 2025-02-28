@@ -569,11 +569,8 @@ func convertGeneric[F any](invoked []model.IExpression, genericDeclared Overload
 				concreteOverload[i] = inferred.UniformType
 			}
 		case GenericList:
-			if _, ok := inferred.UniformType.(*types.List); !ok {
-				concreteOverload[i] = &types.List{ElementType: inferred.UniformType}
-			} else {
-				concreteOverload[i] = inferred.UniformType
-			}
+			// Wrap the inferred type T in a List.
+			concreteOverload[i] = &types.List{ElementType: inferred.UniformType}
 		default:
 			concreteOverload[i] = genericDeclared.Operands[i]
 		}
