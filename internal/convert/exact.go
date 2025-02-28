@@ -24,7 +24,11 @@ import (
 
 // ExactOverloadMatch returns F on a match, and an error if there is no match or if the match is
 // ambiguous. Matches must be exact meaning the invoked operands are equal or a subtype of the
-// matched overload. If there are two exact matches an ambiguous error is returned.
+// matched overload. If there are two exact matches an ambiguous error is returned. The goal of this
+// functions is to apply the precidence rules outlines in the CQL spec. Simply put, "When
+// determining a conversion path from an invocation signature to a declared signature, the least
+// converting overall conversion path is used."
+// https://cql.hl7.org/03-developersguide.html#conversion-precedence
 func ExactOverloadMatch[F any](invoked []types.IType, overloads []Overload[F], modelinfo *modelinfo.ModelInfos, name string) (F, error) {
 	if len(overloads) == 0 {
 		return zero[F](), fmt.Errorf("could not resolve %v(%v): %w", name, types.ToStrings(invoked), ErrNoMatch)
@@ -85,17 +89,73 @@ func operandsExactOrSubtypeMatch(invoked []types.IType, declared []types.IType, 
 		}
 
 		// SUBTYPE
-		isSub, err := modelinfo.IsSubType(invoked[i], declared[i])
+		isSub, scoreIncrease, err := scoreSubType(invoked[i], declared[i], modelinfo)
 		if err != nil {
 			return false, score, err
 		}
 		if !isSub {
 			return false, score, nil
 		}
-		score++ // is a subtype match, so we increment
+		score += scoreIncrease // is a subtype match, so we increment
 	}
 
 	return true, score, nil
+}
+
+// scoreSubType returns true if the invoked type is a subtype of the declared type, and the score
+// for the conversion. For types that contain other types, we increase the score by 1 for each
+// conversion required. In the future we may want to consider the type of conversion, but for now
+// we just increase the score by 1 for each conversion.
+func scoreSubType(invoked types.IType, declared types.IType, modelinfo *modelinfo.ModelInfos) (bool, int, error) {
+	isSub, err := modelinfo.IsSubType(invoked, declared)
+	if err != nil {
+		return false, 0, err
+	}
+	if !isSub {
+		return false, 0, nil
+	}
+	switch dt := declared.(type) {
+	case *types.Interval:
+		switch it := invoked.(type) {
+		case *types.Interval:
+			if it.PointType.Equal(dt.PointType) {
+				return true, 0, nil
+			} else {
+				return true, 1, nil
+			}
+		default:
+			return true, 2, nil
+		}
+	case *types.List:
+		// determine if the outer types are the same, then the inner types.
+		switch t := invoked.(type) {
+		case *types.List:
+			_, innerScore, err := scoreSubType(t.ElementType, dt.ElementType, modelinfo)
+			if err != nil {
+				return false, 0, err
+			}
+			return isSub, innerScore, nil
+		default:
+			// invoked type is not a list, so we need to find the remaining nested types.
+			return isSub, maxConversionLevels(declared), nil
+		}
+	}
+	// The declared type is a simple type so figure out how many conversion layers the invoked type
+	// has.
+	return isSub, maxConversionLevels(invoked), err
+}
+
+// maxConversionLevels returns the maximum number of layers of conversion required to convert from
+// one type to this type.
+func maxConversionLevels(t types.IType) int {
+	switch t := t.(type) {
+	case *types.Interval:
+		return 2
+	case *types.List:
+		return 1 + maxConversionLevels(t.ElementType)
+	default:
+		return 1
+	}
 }
 
 // zero is a helper function to return the Zero value of a generic type T.

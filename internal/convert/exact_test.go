@@ -135,6 +135,98 @@ func TestExactOverloadMatch(t *testing.T) {
 			},
 			want: "Exact Match",
 		},
+		// List SubType tests
+		{
+			name:    "Can disambiguate Any between List<Any> and Any",
+			invoked: []types.IType{&types.List{ElementType: types.Any}, types.Any},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{&types.List{ElementType: types.Any}, types.Any},
+				},
+				Overload[string]{
+					Result:   "SubType",
+					Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				},
+			},
+			want: "Exact Match",
+		},
+		{
+			name:    "Can disambiguate List<Any> between List<Any> and Any",
+			invoked: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				},
+				Overload[string]{
+					Result:   "SubType",
+					Operands: []types.IType{&types.List{ElementType: types.Any}, types.Any},
+				},
+			},
+			want: "Exact Match",
+		},
+		{
+			name:    "Can disambiguate three layer deep list of Any from Any",
+			invoked: []types.IType{&types.List{ElementType: &types.List{ElementType: &types.List{ElementType: types.Any}}}},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{&types.List{ElementType: &types.List{ElementType: &types.List{ElementType: types.Any}}}},
+				},
+				Overload[string]{
+					Result:   "SubType",
+					Operands: []types.IType{types.Any},
+				},
+			},
+			want: "Exact Match",
+		},
+		{
+			name:    "Chooses the most specific match between two sub types",
+			invoked: []types.IType{&types.List{ElementType: types.Integer}},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{&types.List{ElementType: types.Any}},
+				},
+				Overload[string]{
+					Result:   "SubType",
+					Operands: []types.IType{types.Any},
+				},
+			},
+			want: "Exact Match",
+		},
+		// Interval SubType tests
+		{
+			name:    "Can disambiguate Any between Interval<Integer> and Any",
+			invoked: []types.IType{&types.Interval{PointType: types.Integer}, types.Any},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{&types.Interval{PointType: types.Integer}, types.Any},
+				},
+				Overload[string]{
+					Result:   "SubType",
+					Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				},
+			},
+			want: "Exact Match",
+		},
+		{
+			name:    "Can disambiguate Interval<Integer> between Interval<Integer> and Any",
+			invoked: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Exact Match",
+					Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				},
+				Overload[string]{
+					Result:   "SubType",
+					Operands: []types.IType{&types.Interval{PointType: types.Integer}, types.Any},
+				},
+			},
+			want: "Exact Match",
+		},
 	}
 
 	for _, tc := range tests {
