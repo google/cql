@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
+	"github.com/google/cql/types"
 )
 
 // LIST OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#list-operators-2
@@ -80,6 +81,33 @@ func evalExcept(m model.IBinaryExpression, lObj, rObj result.Value) (result.Valu
 	return result.New(result.List{
 		Value:      exceptList,
 		StaticType: lObj.GolangValue().(result.List).StaticType,
+	})
+}
+
+// flatten(argument List<List<T>>) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#flatten
+func evalFlatten(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {
+	if result.IsNull(listObj) {
+		return result.New(nil)
+	}
+	list, err := result.ToSlice(listObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	var flattenedList []result.Value
+	for _, elemObj := range list {
+		if result.IsNull(elemObj) {
+			continue
+		}
+		elemList, err := result.ToSlice(elemObj)
+		if err != nil {
+			return result.Value{}, err
+		}
+		flattenedList = append(flattenedList, elemList...)
+	}
+	return result.New(result.List{
+		Value:      flattenedList,
+		StaticType: listObj.GolangValue().(result.List).StaticType.ElementType.(*types.List),
 	})
 }
 

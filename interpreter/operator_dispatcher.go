@@ -601,6 +601,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalPopulationStdDevQuantity,
 			},
 		}, nil
+	case *model.Flatten:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.List{ElementType: types.Any}}},
+				Result:   evalFlatten,
+			},
+		}, nil
 	case *model.Tail:
 		return []convert.Overload[evalUnarySignature]{
 			{

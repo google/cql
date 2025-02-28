@@ -91,6 +91,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	case *model.Avg:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Flatten:
+		nestedListType := resolved.WrappedOperands[0].GetResultType().(*types.List).ElementType.(*types.List)
+		t.Expression = model.ResultType(nestedListType)
 	case *model.Max:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
@@ -1586,6 +1589,16 @@ func (p *Parser) loadSystemOperators() error {
 				{&types.List{ElementType: types.Any}}},
 			model: func() model.IExpression {
 				return &model.First{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Flatten",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}}},
+			model: func() model.IExpression {
+				return &model.Flatten{
 					UnaryExpression: &model.UnaryExpression{},
 				}
 			},

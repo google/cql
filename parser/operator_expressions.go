@@ -692,12 +692,20 @@ func (v *visitor) VisitIndexedExpressionTermContext(ctx *cql.IndexedExpressionTe
 
 func (v *visitor) VisitAggregateExpressionTerm(ctx *cql.AggregateExpressionTermContext) model.IExpression {
 	name := ctx.GetChild(0).(antlr.TerminalNode).GetText()
-	if name != "distinct" {
+	switch name {
+	case "distinct":
+		m, err := v.parseFunction("", "Distinct", []antlr.Tree{ctx.Expression()}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	case "flatten":
+		m, err := v.parseFunction("", "Flatten", []antlr.Tree{ctx.Expression()}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	default:
 		return v.badExpression(fmt.Sprintf("unsupported aggregate expression: %s", name), ctx)
 	}
-	m, err := v.parseFunction("", "Distinct", []antlr.Tree{ctx.Expression()}, false)
-	if err != nil {
-		return v.badExpression(err.Error(), ctx)
-	}
-	return m
 }

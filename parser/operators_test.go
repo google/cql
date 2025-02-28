@@ -1198,6 +1198,22 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Flatten",
+			cql:  "flatten {{1, 2}, {3, 4}}",
+			want: &model.Flatten{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						Expression: model.ResultType(&types.List{ElementType: &types.List{ElementType: types.Integer}}),
+						List: []model.IExpression{
+							model.NewList([]string{"1", "2"}, types.Integer),
+							model.NewList([]string{"3", "4"}, types.Integer),
+						},
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+		},
+		{
 			name: "First",
 			cql:  "First({1})",
 			want: &model.First{

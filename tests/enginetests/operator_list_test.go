@@ -272,6 +272,113 @@ func TestDistinctList(t *testing.T) {
 	}
 }
 
+func TestFlattenList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Flatten list",
+			cql:  "flatten {{1, 2}, {3, 4}}",
+			wantModel: &model.Flatten{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						Expression: model.ResultType(&types.List{ElementType: &types.List{ElementType: types.Integer}}),
+						List: []model.IExpression{
+							model.NewList([]string{"1", "2"}, types.Integer),
+							model.NewList([]string{"3", "4"}, types.Integer),
+						},
+					},
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+				},
+			},
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+					newOrFatal(t, int32(3)),
+					newOrFatal(t, int32(4)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			name: "Flatten list with null",
+			cql:  "flatten {{1, null}, {3, 4}}",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, nil),
+					newOrFatal(t, int32(3)),
+					newOrFatal(t, int32(4)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			name: "flatten list where a list is empty",
+			cql:  "flatten {{1, 2}, {}}",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+				},
+				StaticType: &types.List{ElementType: types.Any},
+			}),
+		},
+		{
+			name: "flatten list where a list is null",
+			cql:  "flatten {{1, 2}, null}",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			name:       "flatten where argument is null",
+			cql:        "flatten null as List<List<Any>>",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "Functional syntax: In list",
+			cql:  "Flatten({{1, 2}})",
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, int32(1)),
+					newOrFatal(t, int32(2)),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
 func TestFirst(t *testing.T) {
 	tests := []struct {
 		name                 string
