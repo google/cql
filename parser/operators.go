@@ -1661,7 +1661,8 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Length",
 			operands: [][]types.IType{
-				{&types.List{ElementType: types.Any}}},
+				{&types.List{ElementType: types.Any}},
+				{types.String}},
 			model: func() model.IExpression {
 				return &model.Length{
 					UnaryExpression: &model.UnaryExpression{

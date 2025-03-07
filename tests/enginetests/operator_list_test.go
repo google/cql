@@ -541,7 +541,7 @@ func TestLast(t *testing.T) {
 	}
 }
 
-func TestLength(t *testing.T) {
+func TestLengthList(t *testing.T) {
 	tests := []struct {
 		name                 string
 		cql                  string
