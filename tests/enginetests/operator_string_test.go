@@ -547,6 +547,62 @@ func TestEndsWith(t *testing.T) {
 	}
 }
 
+func TestLengthString(t *testing.T) {
+  tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+    {
+      name: "Length('ABC') = 3",
+      cql: "Length('ABC')",
+      wantModel: &model.Length{
+        UnaryExpression: &model.UnaryExpression{
+          Operand: model.NewLiteral("ABC", types.String),
+          Expression: model.ResultType(types.Integer),
+        },
+      },
+      wantResult: newOrFatal(t, 3),
+    },
+    {
+      name: "LengthNullasString",
+      cql: "Length(null as String)",
+      wantResult: newOrFatal(t, nil),
+    },
+    {
+      name: "LengthBig",
+      cql: "Length('How is the weather today')",
+      wantResult: newOrFatal(t, 24),
+    },
+    {
+      name: "LengthEmpty",
+      cql: "Length('')",
+      wantResult: newOrFatal(t,0),
+    },
+  }
+  for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestLastPositionOf(t *testing.T) {
 	tests := []struct {
 		name       string

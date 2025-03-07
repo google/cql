@@ -282,3 +282,17 @@ func evalLastPositionOf(m model.IBinaryExpression, lObj, rObj result.Value) (res
 	}
 	return result.New(strings.LastIndex(argument, pattern))
 }
+
+// Length(argument String) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#length
+func evalLengthString(m model.IUnaryExpression, stringObj result.Value) (result.Value, error) {
+	if result.IsNull(stringObj) {
+		return result.New(nil)
+	}
+	string, err := result.ToString(stringObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	return result.New(int32(len(string)))
+}

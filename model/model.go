@@ -801,6 +801,7 @@ type Count struct{ *UnaryExpression }
 type Flatten struct{ *UnaryExpression }
 
 // Length ELM expression from https://cql.hl7.org/09-b-cqlreference.html#length-1.
+// Length String Expression from https://cql.hl7.org/09-b-cqlreference.html#length
 type Length struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &Count{}

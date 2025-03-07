@@ -787,6 +787,16 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Length",
+			cql: "Length('ABC')",
+			want: &model.Length{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("ABC", types.String),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",
