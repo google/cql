@@ -240,7 +240,7 @@ func evalIndexOf(m model.IBinaryExpression, listObj, valueObj result.Value) (res
 
 // Length(argument List<T>) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#length-1
-func evalLength(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {
+func evalLengthList(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {
 	if result.IsNull(listObj) {
 		return result.New(int32(0))
 	}
