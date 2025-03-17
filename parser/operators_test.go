@@ -797,6 +797,16 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Upper",
+			cql: "Upper('abc')",
+			want: &model.Upper{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: model.NewLiteral("abc", types.String),
+					Expression: model.ResultType(types.String),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",

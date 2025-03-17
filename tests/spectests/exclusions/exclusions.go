@@ -387,7 +387,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"ReplaceMatches",
 				"StartsWith",
 				"Substring",
-				"Upper",
 			},
 			NamesExcludes: []string{
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
