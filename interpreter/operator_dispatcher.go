@@ -210,8 +210,12 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 	case *model.Length:
 		return []convert.Overload[evalUnarySignature]{
 			{
+				Operands: []types.IType{types.String},
+				Result: evalLengthString,
+			},
+			{
 				Operands: []types.IType{&types.List{ElementType: types.Any}},
-				Result:   evalLength,
+				Result:   evalLengthList,
 			},
 		}, nil
 	case *model.As:
