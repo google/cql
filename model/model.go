@@ -754,6 +754,16 @@ type ToQuantity struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &ToQuantity{}
 
+// ToRatio ELM expression from https://cql.hl7.org/09-b-cqlreference.html#toratio.
+type ToRatio struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &ToRatio{}
+
+// ToChars ELM expression from https://cql.hl7.org/09-b-cqlreference.html#tochars.
+type ToChars struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &ToChars{}
+
 // ToConcept ELM expression from https://cql.hl7.org/09-b-cqlreference.html#toconcept.
 type ToConcept struct{ *UnaryExpression }
 
@@ -834,6 +844,42 @@ type Median struct{ *UnaryExpression }
 // UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
 // far as we can tell.
 type PopulationStdDev struct{ *UnaryExpression }
+
+// PopulationVariance ELM expression from https://cql.hl7.org/09-b-cqlreference.html#population-variance
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type PopulationVariance struct{ *UnaryExpression }
+
+// StdDev ELM expression from https://cql.hl7.org/09-b-cqlreference.html#stddev
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type StdDev struct{ *UnaryExpression }
+
+// Variance ELM expression from https://cql.hl7.org/09-b-cqlreference.html#variance
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Variance struct{ *UnaryExpression }
+
+// Mode ELM expression from https://cql.hl7.org/09-b-cqlreference.html#mode
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Mode struct{ *UnaryExpression }
+
+// GeometricMean ELM expression from https://cql.hl7.org/09-b-cqlreference.html#geometricmean
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type GeometricMean struct{ *UnaryExpression }
+
+// Product ELM expression from https://cql.hl7.org/09-b-cqlreference.html#product
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Product struct{ *UnaryExpression }
 
 // CalculateAge CQL expression type
 type CalculateAge struct {
@@ -981,6 +1027,12 @@ type Union struct{ *BinaryExpression }
 // it always takes two arguments.
 type Split struct{ *BinaryExpression }
 
+// Indexer ELM Expression https://cql.hl7.org/0
+// Substring ELM Expression https://cql.hl7.org/09-b-cqlreference.html#substring
+// Substring is an OperatorExpression in ELM, but we're modeling it as a BinaryExpression since in CQL
+// it takes two or three arguments (string, start, length).
+type Substring struct{ *BinaryExpression }
+
 // Indexer ELM Expression https://cql.hl7.org/04-logicalspecification.html#indexer.
 type Indexer struct{ *BinaryExpression }
 
@@ -1083,10 +1135,10 @@ type Coalesce struct{ *NaryExpression }
 type Concatenate struct{ *NaryExpression }
 
 // EndsWith is https://cql.hl7.org/09-b-cqlreference.html#endswith
-type EndsWith struct{ *BinaryExpression}
+type EndsWith struct{ *BinaryExpression }
 
 // LastPositionOf is https://cql.hl7.org/09-b-cqlreference.html#lastpositionof
-type LastPositionOf struct{ *BinaryExpression}
+type LastPositionOf struct{ *BinaryExpression }
 
 // Combine is https://cql.hl7.org/04-logicalspecification.html#combine.
 // In ELM Combine is an OperatorExpression, but we're modeling it as a NaryExpression since in CQL
@@ -1302,6 +1354,12 @@ func (a *ToInteger) GetName() string { return "ToInteger" }
 func (a *ToQuantity) GetName() string { return "ToQuantity" }
 
 // GetName returns the name of the system operator.
+func (a *ToRatio) GetName() string { return "ToRatio" }
+
+// GetName returns the name of the system operator.
+func (a *ToChars) GetName() string { return "ToChars" }
+
+// GetName returns the name of the system operator.
 func (a *ToConcept) GetName() string { return "ToConcept" }
 
 // GetName returns the name of the system operator.
@@ -1432,10 +1490,10 @@ func (a *Coalesce) GetName() string { return "Coalesce" }
 func (a *Concatenate) GetName() string { return "Concatenate" }
 
 // GetName returns the name of the system operator.
-func (a *EndsWith) GetName() string { return "EndsWith"}
+func (a *EndsWith) GetName() string { return "EndsWith" }
 
 // GetName returns the name of the system operator.
-func (a *LastPositionOf) GetName() string { return "LastPositionOf"}
+func (a *LastPositionOf) GetName() string { return "LastPositionOf" }
 
 // GetName returns the name of the system operator.
 func (a *Date) GetName() string { return "Date" }
@@ -1508,3 +1566,21 @@ func (t *Take) GetName() string { return "Take" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationStdDev) GetName() string { return "PopulationStdDev" }
+
+// GetName returns the name of the system operator.
+func (m *PopulationVariance) GetName() string { return "PopulationVariance" }
+
+// GetName returns the name of the system operator.
+func (s *StdDev) GetName() string { return "StdDev" }
+
+// GetName returns the name of the system operator.
+func (v *Variance) GetName() string { return "Variance" }
+
+// GetName returns the name of the system operator.
+func (m *Mode) GetName() string { return "Mode" }
+
+// GetName returns the name of the system operator.
+func (g *GeometricMean) GetName() string { return "GeometricMean" }
+
+// GetName returns the name of the system operator.
+func (p *Product) GetName() string { return "Product" }

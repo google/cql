@@ -206,6 +206,24 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	case *model.PopulationStdDev:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.PopulationVariance:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.StdDev:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Variance:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Mode:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.GeometricMean:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Product:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	}
 
 	// Set Operands.
@@ -1776,8 +1794,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Max",
 			operands: [][]types.IType{
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+				{&types.List{ElementType: types.String}},
 				{&types.List{ElementType: types.Date}},
 				{&types.List{ElementType: types.DateTime}},
+				{&types.List{ElementType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.Max{
@@ -1788,8 +1812,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Min",
 			operands: [][]types.IType{
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+				{&types.List{ElementType: types.String}},
 				{&types.List{ElementType: types.Date}},
 				{&types.List{ElementType: types.DateTime}},
+				{&types.List{ElementType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.Min{
@@ -2077,6 +2107,86 @@ func (p *Parser) loadSystemOperators() error {
 			},
 			model: func() model.IExpression {
 				return &model.PopulationStdDev{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "PopulationVariance",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.PopulationVariance{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "StdDev",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.StdDev{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Variance",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Variance{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Mode",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+				{&types.List{ElementType: types.String}},
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Date}},
+				{&types.List{ElementType: types.DateTime}},
+				{&types.List{ElementType: types.Time}},
+			},
+			model: func() model.IExpression {
+				return &model.Mode{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "GeometricMean",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.GeometricMean{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Product",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Product{
 					UnaryExpression: &model.UnaryExpression{},
 				}
 			},

@@ -47,6 +47,18 @@ func ToString(v Value) (string, error) {
 	return s, nil
 }
 
+// ToTime takes a CQL Time or DateTime and returns the underlying golang value, a Time.
+func ToTime(v Value) (Time, error) {
+	switch t := v.GolangValue().(type) {
+	case Time:
+		return t, nil
+	case DateTime:
+		return Time(t), nil
+	default:
+		return Time{}, fmt.Errorf("%w %v to a Time", ErrCannotConvert, v.RuntimeType())
+	}
+}
+
 // ToInt32 takes a CQL Integer and returns the underlying golang value, an int32.
 func ToInt32(v Value) (int32, error) {
 	i, ok := v.GolangValue().(int32)
@@ -63,6 +75,12 @@ func ToInt64(o Value) (int64, error) {
 		return 0, fmt.Errorf("%w %v to a int64", ErrCannotConvert, o.RuntimeType())
 	}
 	return l, nil
+}
+
+// ToLong takes a CQL Long and returns the underlying golang value, an int64.
+// This is an alias for ToInt64 for more explicit type handling.
+func ToLong(v Value) (int64, error) {
+	return ToInt64(v)
 }
 
 // ToFloat64 takes a CQL Float and returns the underlying golang value, a float64.
@@ -105,6 +123,18 @@ func ToDateTime(v Value) (DateTime, error) {
 		return DateTime(t), nil
 	default:
 		return DateTime{}, fmt.Errorf("%w %v to a DateTime", ErrCannotConvert, v.RuntimeType())
+	}
+}
+
+// ToDate takes a CQL Date and returns the underlying golang value, a Date.
+func ToDate(v Value) (Date, error) {
+	switch t := v.GolangValue().(type) {
+	case Date:
+		return t, nil
+	case DateTime:
+		return Date(t), nil
+	default:
+		return Date{}, fmt.Errorf("%w %v to a Date", ErrCannotConvert, v.RuntimeType())
 	}
 }
 
