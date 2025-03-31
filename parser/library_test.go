@@ -204,7 +204,7 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			using FHIR version '4.0.1'
 			define "Param": expand 4
 				`),
-			errContains: []string{"unsupported expression"},
+			errContains: []string{" could not resolve Expand(System.Integer)"},
 			errCount:    1,
 		},
 		{

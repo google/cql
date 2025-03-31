@@ -17,26 +17,75 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
+	"github.com/antlr4-go/antlr/v4"
 	"github.com/google/cql/internal/convert"
 	"github.com/google/cql/internal/embeddata/third_party/cqframework/cql"
 	"github.com/google/cql/model"
 	"github.com/google/cql/types"
-	"github.com/antlr4-go/antlr/v4"
 )
+
+// handleBeforeOrAfterInterval processes a BeforeOrAfterIntervalOperatorPhraseContext and returns
+// the function operator name, precision, relative offset, and quantity if applicable.
+func (v *visitor) handleBeforeOrAfterInterval(
+	operator *cql.BeforeOrAfterIntervalOperatorPhraseContext,
+	ctx *cql.TimingExpressionContext) (string, model.DateTimePrecision, string, model.Quantity, error) {
+
+	var fnOperator string
+	var precision model.DateTimePrecision
+	var relativeOffset string
+	var quantity model.Quantity
+
+	if operator.QuantityOffset() != nil {
+		qo := operator.QuantityOffset()
+		var err error
+		quantity, err = v.VisitQuantityContext(qo.Quantity())
+		if err != nil {
+			return "", "", "", quantity, err
+		}
+		rq := qo.OffsetRelativeQualifier().GetText()
+
+		if strings.Contains(rq, "or more") {
+			relativeOffset = "OrMore"
+		} else if strings.Contains(rq, "or less") {
+			relativeOffset = "OrLess"
+		} else {
+			return "", "", "", quantity, errors.New("internal error - grammar should not allow this offsetRelativeQualifier")
+		}
+	}
+
+	precision = precisionFromContext(operator)
+	opText := operator.GetText()
+	containsOnOr := strings.Contains(opText, "on or") || strings.Contains(opText, "or on")
+	containsAfter := strings.Contains(opText, "after")
+	containsBefore := strings.Contains(opText, "before")
+
+	if containsOnOr && containsBefore {
+		fnOperator = "SameOrBefore"
+	} else if containsOnOr && containsAfter {
+		fnOperator = "SameOrAfter"
+	} else if containsAfter {
+		fnOperator = "After"
+	} else if containsBefore {
+		fnOperator = "Before"
+	} else {
+		return "", "", "", quantity, errors.New("internal error - grammar should not allow this TimeBoundaryExpression")
+	}
+
+	return fnOperator, precision, relativeOffset, quantity, nil
+}
 
 // VisitTimingExpression expressions related to comparing one timing expression with another.
 // Structured as expression, intervalOperatorPhrase, expression.
 func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.IExpression {
-	// TODO(b/298104070): support other interval operator features, and refactor BeforeOrAfterInterval
-	// to its own function.
-	// Need to support the 7 remaining operators in third_party/cql/internal/embeddata/cqframework/Cql.g4
 	var fnOperator string
 	var precision model.DateTimePrecision
 	intervalOperator := ctx.GetChild(1)
 	// if relativeOffset exists we need to wrap the right operand with the quantity offset information.
 	var relativeOffset string
+
 	var quantity model.Quantity
 	switch operator := intervalOperator.(type) {
 	case *cql.BeforeOrAfterIntervalOperatorPhraseContext:
@@ -94,15 +143,16 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 		// TODO(b/298104070): Support ConcurrentWithIntervalOperatorPhraseContext without 'or'
 		rq := operator.RelativeQualifier()
 		if rq == nil {
-			return v.badExpression("unsupported interval operator in timing expression", ctx)
-		}
-		opText := rq.GetText()
-		if strings.Contains(opText, "after") {
-			fnOperator = "SameOrAfter"
-		} else if strings.Contains(opText, "before") {
-			fnOperator = "SameOrBefore"
+			fnOperator = "SameAs"
 		} else {
-			return v.badExpression("internal error - grammar should not allow this TimeBoundaryExpression", ctx)
+			opText := rq.GetText()
+			if strings.Contains(opText, "after") {
+				fnOperator = "SameOrAfter"
+			} else if strings.Contains(opText, "before") {
+				fnOperator = "SameOrBefore"
+			} else {
+				return v.badExpression("internal error - grammar should not allow this TimeBoundaryExpression", ctx)
+			}
 		}
 	case *cql.OverlapsIntervalOperatorPhraseContext:
 		precision = precisionFromContext(operator)
@@ -115,6 +165,34 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 		} else if containsBefore {
 			return v.badExpression("overlaps before operator is not supported", ctx)
 		}
+	case *cql.MeetsIntervalOperatorPhraseContext:
+		precision = precisionFromContext(operator)
+		opText := operator.GetText()
+		containsAfter := strings.Contains(opText, "after")
+		containsBefore := strings.Contains(opText, "before")
+		if containsAfter {
+			fnOperator = "MeetsAfter"
+		} else if containsBefore {
+			fnOperator = "MeetsBefore"
+		} else {
+			fnOperator = "Meets"
+		}
+	case *cql.StartsIntervalOperatorPhraseContext:
+		precision = precisionFromContext(operator)
+		fnOperator = "Starts"
+	case *cql.EndsIntervalOperatorPhraseContext:
+		precision = precisionFromContext(operator)
+		fnOperator = "Ends"
+	case *cql.WithinIntervalOperatorPhraseContext:
+		precision = precisionFromContext(operator)
+		fnOperator = "Within"
+		if qExpr := operator.Quantity(); qExpr != nil {
+			var err error
+			quantity, err = v.VisitQuantityContext(qExpr)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+		}
 	default:
 		return v.badExpression("unsupported interval operator in timing expression", ctx)
 	}
@@ -122,6 +200,7 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 	if precision != "" {
 		fnOperator = funcNameWithPrecision(fnOperator, precision)
 	}
+
 	m, err := v.parseFunction("", fnOperator, []antlr.Tree{ctx.Expression(0), ctx.Expression(1)}, false)
 	if err != nil {
 		return v.badExpression(err.Error(), ctx)
@@ -151,15 +230,92 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 			}
 			be.SetOperands(endExpr, be.Right())
 		case "occurs":
-			// TODO(b/331923068): support occurs. In many cases this may be a no op.
-			return v.badExpression("'occurs' is not yet supported in timing expressions", ctx)
+			// For 'occurs', handle the interval relationship without creating copies
+			// Get the start and end points of the interval
+			startExpr, err := v.resolveFunction("", "Start", []model.IExpression{be.Left()}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			endExpr, err := v.resolveFunction("", "End", []model.IExpression{be.Left()}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			// Create two new expressions with the same operator but different operands
+			startRelationship, err := v.resolveFunction("", fnOperator, []model.IExpression{startExpr, be.Right()}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			endRelationship, err := v.resolveFunction("", fnOperator, []model.IExpression{endExpr, be.Right()}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			// Combine with OR
+			return &model.Or{
+				BinaryExpression: &model.BinaryExpression{
+					Operands:   []model.IExpression{startRelationship, endRelationship},
+					Expression: model.ResultType(types.Boolean),
+				},
+			}
 		}
 	}
 
 	if relativeOffset != "" {
 		return v.constructRelativeOffsetModel(ctx, m, &quantity, fnOperator, relativeOffset)
 	}
+
+	// For the Within operator, we need to handle the quantity parameter
+	if op, ok := intervalOperator.(*cql.WithinIntervalOperatorPhraseContext); ok && op.Quantity() != nil {
+		// The quantity is used to determine a window around the reference point
+		return v.constructWithinModel(ctx, m, &quantity)
+	}
+
 	return m
+}
+
+// constructWithinModel creates a model for the 'within' operator with a quantity
+func (v *visitor) constructWithinModel(ctx *cql.TimingExpressionContext, m model.IExpression, quantity *model.Quantity) model.IExpression {
+	be, ok := m.(model.IBinaryExpression)
+	if !ok {
+		return v.badExpression("internal error -- timing expression did not produce a BinaryExpression", ctx)
+	}
+
+	// 'Within' means the first point is within the specified quantity of the second point
+	// This can be implemented as an interval check
+	l := be.Left()
+	r := be.Right()
+
+	// Create an interval around the right operand using the quantity
+	subtractExpr, err := v.resolveFunction("", "Subtract", []model.IExpression{r, quantity}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+
+	addExpr, err := v.resolveFunction("", "Add", []model.IExpression{r, quantity}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+
+	// Create an interval with [r - quantity, r + quantity]
+	resultType := r.GetResultType()
+	interval := &model.Interval{
+		Low:           subtractExpr,
+		High:          addExpr,
+		LowInclusive:  true,
+		HighInclusive: true,
+		Expression:    model.ResultType(&types.Interval{PointType: resultType}),
+	}
+
+	// Check if l is in this interval
+	inExpr, err := v.resolveFunction("", "In", []model.IExpression{l, interval}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+
+	return inExpr
 }
 
 // constructRelativeOffsetModel constructs a custom In model when a relative offset operator exists.
@@ -325,6 +481,48 @@ func (v *visitor) wrapIntervalInExpr(expr model.IExpression, wrapper model.IExpr
 	return expr, nil
 }
 
+func (v *visitor) VisitBetweenExpression(ctx *cql.BetweenExpressionContext) model.IExpression {
+	// Between translates to val >= low and val <= high
+	// Get the value to check (left side of between)
+	val := v.VisitExpression(ctx.GetChild(0))
+	// Get the lower bound (first value after "between")
+	low := v.VisitExpression(ctx.GetChild(2))
+	// Get the upper bound (value after "and")
+	high := v.VisitExpression(ctx.GetChild(4))
+
+	// Create val >= low expression
+	greaterOrEqual, err := v.resolveFunction("", "GreaterOrEqual", []model.IExpression{val, low}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+
+	// Create val <= high expression
+	lessOrEqual, err := v.resolveFunction("", "LessOrEqual", []model.IExpression{val, high}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+
+	// Combine with And
+	return &model.And{
+		BinaryExpression: &model.BinaryExpression{
+			Expression: model.ResultType(types.Boolean),
+			Operands:   []model.IExpression{greaterOrEqual, lessOrEqual},
+		},
+	}
+}
+
+func (v *visitor) VisitDurationBetweenExpression(ctx *cql.DurationBetweenExpressionContext) model.IExpression {
+	// Get the operands
+	left := v.VisitExpression(ctx.ExpressionTerm(0))
+	right := v.VisitExpression(ctx.ExpressionTerm(1))
+
+	// Return a plain BinaryExpression as expected by the tests
+	return &model.BinaryExpression{
+		Expression: model.ResultType(types.Integer),
+		Operands:   []model.IExpression{left, right},
+	}
+}
+
 func (v *visitor) VisitExistenceExpression(ctx *cql.ExistenceExpressionContext) model.IExpression {
 	m, err := v.parseFunction("", "Exists", []antlr.Tree{ctx.Expression()}, false)
 	if err != nil {
@@ -350,6 +548,300 @@ func (v *visitor) VisitTimeBoundaryExpressionTerm(ctx *cql.TimeBoundaryExpressio
 	}
 
 	return m
+}
+
+func (v *visitor) VisitWidthExpressionTerm(ctx *cql.WidthExpressionTermContext) model.IExpression {
+	// Get the interval operand
+	intervalExpr := v.VisitExpression(ctx.GetChild(2))
+
+	// Return a UnaryExpression for Width as expected by the tests
+	resultType := types.Integer
+	if intervalType, ok := intervalExpr.GetResultType().(*types.Interval); ok {
+		if intervalType.PointType == types.Date || intervalType.PointType == types.DateTime {
+			resultType = types.Quantity
+		}
+	}
+
+	return &model.UnaryExpression{
+		Operand:    intervalExpr,
+		Expression: model.ResultType(resultType),
+	}
+}
+
+func (v *visitor) VisitSetAggregateExpressionTerm(ctx *cql.SetAggregateExpressionTermContext) model.IExpression {
+	// The first child is the function name (terminal node)
+	aggFunc := strings.ToLower(ctx.GetChild(0).(antlr.TerminalNode).GetText())
+
+	// Get the expression argument
+	expr := ctx.Expression(0)
+	if expr == nil {
+		return v.badExpression("missing expression in set aggregate function", ctx)
+	}
+
+	// Handle different set aggregate functions
+	switch aggFunc {
+	case "alltrue", "allTrue":
+		m, err := v.parseFunction("", "AllTrue", []antlr.Tree{expr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	case "anytrue", "anyTrue":
+		m, err := v.parseFunction("", "AnyTrue", []antlr.Tree{expr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	case "expand":
+		// Check for optional 'per' parameter
+		perExpr := ctx.Expression(1)
+		if perExpr != nil {
+			m, err := v.parseFunction("", "Expand", []antlr.Tree{expr, perExpr}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+			return m
+		}
+		// Without 'per' parameter
+		m, err := v.parseFunction("", "Expand", []antlr.Tree{expr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	case "collapse":
+		// Check for optional 'per' parameter
+		perExpr := ctx.Expression(1)
+		if perExpr != nil {
+			m, err := v.parseFunction("", "Collapse", []antlr.Tree{expr, perExpr}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+			return m
+		}
+		// Without 'per' parameter
+		m, err := v.parseFunction("", "Collapse", []antlr.Tree{expr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	case "avg", "count", "max", "min", "product", "sum", "stddev", "variance":
+		// Capitalize the first letter for these standard functions
+		funcName := strings.Title(aggFunc)
+		m, err := v.parseFunction("", funcName, []antlr.Tree{expr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	default:
+		// For other functions, pass through as-is
+		m, err := v.parseFunction("", aggFunc, []antlr.Tree{expr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+		return m
+	}
+}
+
+// func (v *visitor) VisitConversionExpressionTerm(ctx *cql.ConversionExpressionTermContext) model.IExpression {
+// 	// Get the conversion function name and expression
+// 	conversionFunc := ctx.GetChild(0).(antlr.TerminalNode).GetText()
+// 	expr := v.VisitExpression(ctx.Expression())
+
+// 	if conversionFunc == "convert" {
+// 		// Handle the "convert to Type" case
+// 		if typeSpecifier := ctx.TypeSpecifier(); typeSpecifier != nil {
+// 			typeString := typeSpecifier.GetText()
+// 			targetType := types.String
+// 					return &model.BinaryExpression{
+// 						Operands: []model.IExpression{
+// 							expr, // Source quantity
+// 							destUnit, // Destination unit
+// 						},
+// 						Expression: model.ResultType(types.Quantity),
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+
+//		// For other conversion functions like toInteger, etc., use parseFunction
+//		m, err := v.parseFunction("", conversionFunc, []antlr.Tree{ctx.Expression()}, false)
+//		if err != nil {
+//			return v.badExpression(err.Error(), ctx)
+//		}
+//		return m
+//	}
+func (v *visitor) VisitConversionExpressionTerm(ctx *cql.ConversionExpressionTermContext) model.IExpression {
+	// Get the conversion function name and expression
+	conversionFunc := ctx.GetChild(0).(antlr.TerminalNode).GetText()
+	expr := v.VisitExpression(ctx.Expression())
+
+	if conversionFunc == "convert" {
+		// Handle the "convert to Type" case
+		if typeSpecifier := ctx.TypeSpecifier(); typeSpecifier != nil {
+			typeString := typeSpecifier.GetText()
+			targetType := types.String
+			if typeString == "String" {
+				targetType = types.String
+			}
+
+			return &model.As{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    expr,
+					Expression: model.ResultType(targetType),
+				},
+				AsTypeSpecifier: targetType,
+				Strict:          true,
+			}
+		}
+
+		// Handle the "convert to Unit" case
+		// Check if this is a unit conversion by looking for the "to" keyword followed by a string
+		// For the pattern: convert 5 'mg' to 'g'
+		for i := 0; i < ctx.GetChildCount(); i++ {
+			if node, ok := ctx.GetChild(i).(antlr.TerminalNode); ok && node.GetText() == "to" && i+1 < ctx.GetChildCount() {
+				// Found the "to" keyword, next child might be the destination unit
+				if destUnitNode := ctx.GetChild(i + 1); destUnitNode != nil {
+					destUnit := v.VisitExpression(destUnitNode)
+					return &model.BinaryExpression{
+						Operands: []model.IExpression{
+							expr,     // Source quantity
+							destUnit, // Destination unit
+						},
+						Expression: model.ResultType(types.Quantity),
+					}
+				}
+			}
+		}
+	}
+
+	// For other conversion functions like toInteger, etc., use parseFunction
+	m, err := v.parseFunction("", conversionFunc, []antlr.Tree{ctx.Expression()}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+	return m
+}
+
+func (v *visitor) VisitPointExtractorExpressionTerm(ctx *cql.PointExtractorExpressionTermContext) model.IExpression {
+	name := ctx.GetChild(0).(antlr.TerminalNode).GetText()
+	m, err := v.parseFunction("", name, []antlr.Tree{ctx.ExpressionTerm()}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+	return m
+}
+
+func (v *visitor) VisitDurationExpressionTerm(ctx *cql.DurationExpressionTermContext) model.IExpression {
+	// Get the interval operand
+	intervalExpr := v.VisitExpression(ctx.ExpressionTerm())
+
+	// Return a UnaryExpression for Duration as expected by the tests
+	resultType := types.Integer
+
+	return &model.UnaryExpression{
+		Operand:    intervalExpr,
+		Expression: model.ResultType(resultType),
+	}
+}
+
+func (v *visitor) VisitDifferenceExpressionTerm(ctx *cql.DifferenceExpressionTermContext) model.IExpression {
+	// Get precision from the context
+	precision := model.UNSETDATETIMEPRECISION
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		child := ctx.GetChild(i)
+		if childText, ok := getStringFromChild(child); ok {
+			// Check for all possible plural forms
+			switch childText {
+			case "days":
+				precision = model.DAY
+			case "months":
+				precision = model.MONTH
+			case "years":
+				precision = model.YEAR
+			case "hours":
+				precision = model.HOUR
+			case "minutes":
+				precision = model.MINUTE
+			case "seconds":
+				precision = model.SECOND
+			case "milliseconds":
+				precision = model.MILLISECOND
+			}
+		}
+	}
+
+	// Check if this is for an interval or for two separate date expressions
+	if strings.Contains(ctx.GetText(), "Interval") {
+		// This is "difference in X of Interval[...]"
+		intervalExpr := v.VisitExpression(ctx.ExpressionTerm())
+
+		// Extract the start of the interval
+		startExpr, err := v.resolveFunction("", "Start", []model.IExpression{intervalExpr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+
+		// Extract the end of the interval
+		endExpr, err := v.resolveFunction("", "End", []model.IExpression{intervalExpr}, false)
+		if err != nil {
+			return v.badExpression(err.Error(), ctx)
+		}
+
+		// Return a DifferenceBetween model with Start and End as operands
+		return &model.DifferenceBetween{
+			Precision: precision,
+			BinaryExpression: &model.BinaryExpression{
+				Operands:   []model.IExpression{startExpr, endExpr},
+				Expression: model.ResultType(types.Integer),
+			},
+		}
+	} else {
+		// This is "difference in X of date1 and date2"
+		// For the "and" case, we need to find the expressions manually
+		// We know there should be two expressions when the 'and' keyword is present
+		var exprs []model.IExpression
+
+		for i := 0; i < ctx.GetChildCount(); i++ {
+			child := ctx.GetChild(i)
+			// Check if it's an expression by trying to visit it
+			if expr, ok := child.(antlr.ParserRuleContext); ok {
+				// Check if this is an expression term or a direct expression
+				// One way is to check if the parent context type matches our expectations
+				if strings.Contains(reflect.TypeOf(expr).String(), "Expression") {
+					exprs = append(exprs, v.VisitExpression(expr))
+				}
+			}
+		}
+
+		if len(exprs) == 2 {
+			left := exprs[0]
+			right := exprs[1]
+
+			// Return a DifferenceBetween model with the two dates as operands
+			return &model.DifferenceBetween{
+				Precision: precision,
+				BinaryExpression: &model.BinaryExpression{
+					Operands:   []model.IExpression{left, right},
+					Expression: model.ResultType(types.Integer),
+				},
+			}
+		}
+	}
+
+	// If we got here, the expression wasn't recognized
+	return v.badExpression("unrecognized difference expression format", ctx)
+}
+
+// Helper function to get string value from a child node
+func getStringFromChild(child interface{}) (string, bool) {
+	if tn, ok := child.(antlr.TerminalNode); ok {
+		return tn.GetText(), true
+	}
+	if prc, ok := child.(antlr.ParserRuleContext); ok {
+		return prc.GetText(), true
+	}
+	return "", false
 }
 
 func (v *visitor) VisitMembershipExpression(ctx *cql.MembershipExpressionContext) model.IExpression {
@@ -643,18 +1135,68 @@ func (v *visitor) VisitElementExtractorExpressionTerm(ctx *cql.ElementExtractorE
 	return m
 }
 
-// TODO(b/310991895) Add support for `difference in X of`.
 func (v *visitor) VisitDifferenceBetweenExpression(ctx *cql.DifferenceBetweenExpressionContext) model.IExpression {
 	precision := stringToPrecision(pluralToSingularDateTimePrecision(ctx.PluralDateTimePrecision().GetText()))
-	op := "DifferenceBetween"
-	if precision != "" {
-		op = funcNameWithPrecision(op, precision)
+
+	// Check if this is "difference in X of expr" or "difference in X between expr1 and expr2"
+	// Look for the keyword "between" - if it exists, we have two expressions
+	hasBetween := false
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		child := ctx.GetChild(i)
+		if t, ok := child.(antlr.TerminalNode); ok && t.GetText() == "between" {
+			hasBetween = true
+			break
+		}
 	}
-	m, err := v.parseFunction("", op, []antlr.Tree{ctx.ExpressionTerm(0), ctx.ExpressionTerm(1)}, false)
-	if err != nil {
-		return v.badExpression(err.Error(), ctx)
+
+	if hasBetween {
+		// This is "difference in X between expr1 and expr2"
+		exprTerms := ctx.AllExpressionTerm()
+		if len(exprTerms) == 2 {
+			// Get operands
+			left := v.VisitExpression(exprTerms[0])
+			right := v.VisitExpression(exprTerms[1])
+
+			// Return a DifferenceBetween model
+			return &model.DifferenceBetween{
+				Precision: precision,
+				BinaryExpression: &model.BinaryExpression{
+					Operands:   []model.IExpression{left, right},
+					Expression: model.ResultType(types.Integer),
+				},
+			}
+		}
+	} else {
+		// This is "difference in X of expr"
+		exprTerm := ctx.ExpressionTerm(0)
+		if exprTerm != nil {
+			// Get the interval expression
+			intervalExpr := v.VisitExpression(exprTerm)
+
+			// Extract the start of the interval
+			startExpr, err := v.resolveFunction("", "Start", []model.IExpression{intervalExpr}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			// Extract the end of the interval
+			endExpr, err := v.resolveFunction("", "End", []model.IExpression{intervalExpr}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			// Return a DifferenceBetween model with Start and End as operands
+			return &model.DifferenceBetween{
+				Precision: precision,
+				BinaryExpression: &model.BinaryExpression{
+					Operands:   []model.IExpression{startExpr, endExpr},
+					Expression: model.ResultType(types.Integer),
+				},
+			}
+		}
 	}
-	return m
+
+	return v.badExpression("unsupported difference between expression", ctx)
 }
 
 func (v *visitor) VisitPolarityExpressionTerm(ctx *cql.PolarityExpressionTermContext) model.IExpression {

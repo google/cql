@@ -545,23 +545,71 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 	case *model.Max:
 		return []convert.Overload[evalUnarySignature]{
 			{
+				Operands: []types.IType{&types.List{ElementType: types.Integer}},
+				Result:   i.evalMax,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Long}},
+				Result:   i.evalMax,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalMax,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalMax,
+			},
+			{
 				Operands: []types.IType{&types.List{ElementType: types.Date}},
-				Result:   i.evalMaxDateTime,
+				Result:   i.evalMax,
 			},
 			{
 				Operands: []types.IType{&types.List{ElementType: types.DateTime}},
-				Result:   i.evalMaxDateTime,
+				Result:   i.evalMax,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Time}},
+				Result:   i.evalMax,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.String}},
+				Result:   i.evalMax,
 			},
 		}, nil
 	case *model.Min:
 		return []convert.Overload[evalUnarySignature]{
 			{
+				Operands: []types.IType{&types.List{ElementType: types.Integer}},
+				Result:   i.evalMin,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Long}},
+				Result:   i.evalMin,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalMin,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalMin,
+			},
+			{
 				Operands: []types.IType{&types.List{ElementType: types.Date}},
-				Result:   i.evalMinDateTime,
+				Result:   i.evalMin,
 			},
 			{
 				Operands: []types.IType{&types.List{ElementType: types.DateTime}},
-				Result:   i.evalMinDateTime,
+				Result:   i.evalMin,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Time}},
+				Result:   i.evalMin,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.String}},
+				Result:   i.evalMin,
 			},
 		}, nil
 	case *model.Sum:
@@ -603,6 +651,115 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 			{
 				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
 				Result:   i.evalPopulationStdDevQuantity,
+			},
+		}, nil
+	case *model.PopulationVariance:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalPopulationVarianceDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalPopulationVarianceQuantity,
+			},
+		}, nil
+	case *model.StdDev:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalStdDevDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalStdDevQuantity,
+			},
+		}, nil
+	case *model.Variance:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalVarianceDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalVarianceQuantity,
+			},
+		}, nil
+	case *model.Mode:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalModeDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalModeQuantity,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.String}},
+				Result:   i.evalModeString,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Integer}},
+				Result:   i.evalModeInteger,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Long}},
+				Result:   i.evalModeLong,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Date}},
+				Result:   i.evalModeDate,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.DateTime}},
+				Result:   i.evalModeDateTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Time}},
+				Result:   i.evalModeTime,
+			},
+		}, nil
+	case *model.GeometricMean:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalGeometricMeanDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalGeometricMeanQuantity,
+			},
+		}, nil
+	case *model.Product:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Integer}},
+				Result:   i.evalProduct,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Long}},
+				Result:   i.evalProduct,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Decimal}},
+				Result:   i.evalProduct,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Quantity}},
+				Result:   i.evalProduct,
+			},
+		}, nil
+	case *model.CalculateAge:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Date},
+				Result:   evalCalculateAge,
+			},
+			{
+				Operands: []types.IType{types.DateTime},
+				Result:   evalCalculateAge,
 			},
 		}, nil
 	case *model.Flatten:
@@ -867,6 +1024,12 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 		}, nil
 	case *model.DifferenceBetween:
 		return []convert.Overload[evalBinarySignature]{
+			// Single consolidated handler for all date/time type combinations
+			{
+				Operands: []types.IType{types.Any, types.Any},
+				Result:   evalDifferenceBetween,
+			},
+			// Legacy overloads for backward compatibility
 			{
 				Operands: []types.IType{types.Date, types.Date},
 				Result:   evalDifferenceBetweenDate,

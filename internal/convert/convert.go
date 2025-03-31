@@ -115,7 +115,18 @@ func OverloadMatch[F any](invoked []model.IExpression, overloads []Overload[F], 
 		// Matched with conversion to a single overloaded function.
 		return matched, nil
 	}
-	return MatchedOverload[F]{}, fmt.Errorf("could not resolve %v(%v): %w", name, OperandsToString(invoked), ErrNoMatch)
+	
+	// Build a list of available overloads to provide more helpful error message
+	var availableOverloads strings.Builder
+	if len(concreteOverloads) > 0 {
+		availableOverloads.WriteString("\nAvailable overloads:\n")
+		for _, overload := range concreteOverloads {
+			availableOverloads.WriteString(fmt.Sprintf("  %v(%v)\n", name, OperandsToStringForTypes(overload.Operands)))
+		}
+	}
+	
+	return MatchedOverload[F]{}, fmt.Errorf("could not resolve %v(%v): %w%v", 
+		name, OperandsToString(invoked), ErrNoMatch, availableOverloads.String())
 }
 
 type convertedOperands struct {
@@ -437,6 +448,23 @@ func OperandsToString(operands []model.IExpression) string {
 			stringOperands.WriteString("nil")
 		} else {
 			stringOperands.WriteString(operand.GetResultType().String())
+		}
+	}
+	return stringOperands.String()
+}
+
+// OperandsToStringForTypes returns a print friendly representation of type operands.
+// This is similar to OperandsToString but works on IType slices instead of IExpression slices.
+func OperandsToStringForTypes(operands []types.IType) string {
+	var stringOperands strings.Builder
+	for i, operand := range operands {
+		if i > 0 {
+			stringOperands.WriteString(", ")
+		}
+		if operand == nil {
+			stringOperands.WriteString("nil")
+		} else {
+			stringOperands.WriteString(operand.String())
 		}
 	}
 	return stringOperands.String()

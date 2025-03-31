@@ -291,46 +291,66 @@ func evalCanConvertQuantity(b model.IBinaryExpression, lObj, rObj result.Value) 
 	return result.New(false)
 }
 
-// difference in _precision_ between(left Date, right Date) Integer
-// https://cql.hl7.org/09-b-cqlreference.html#difference
-// Returns the number of boundaries crossed between two dates.
-func evalDifferenceBetweenDate(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+// evalDifferenceBetween handles all combinations of date/time types for the DifferenceBetween operator.
+// It consolidates the functionality of evalDifferenceBetweenDate and evalDifferenceBetweenDateTime.
+// This function provides a more scalable implementation that handles all date/time type combinations,
+// including null values and mixed Date/DateTime parameters.
+func evalDifferenceBetween(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
 	m := b.(*model.DifferenceBetween)
 	p := model.DateTimePrecision(m.Precision)
-	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY}); err != nil {
-		return result.Value{}, err
+
+	// Determine if we should validate against date or datetime precisions
+	// by checking the non-null parameters
+	isDateTimeType := false
+	if !result.IsNull(lObj) {
+		_, isLDateTime := lObj.GolangValue().(result.DateTime)
+		isDateTimeType = isDateTimeType || isLDateTime
+	}
+	if !result.IsNull(rObj) {
+		_, isRDateTime := rObj.GolangValue().(result.DateTime)
+		isDateTimeType = isDateTimeType || isRDateTime
 	}
 
+	// Validate precisions appropriately based on the detected types
+	if isDateTimeType {
+		if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY, model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND}); err != nil {
+			return result.Value{}, err
+		}
+	} else {
+		if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY}); err != nil {
+			return result.Value{}, err
+		}
+	}
+
+	// Handle null values
 	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
 
+	// Convert both to DateTime and compute difference
 	l, r, err := applyToValues(lObj, rObj, result.ToDateTime)
 	if err != nil {
 		return result.Value{}, err
 	}
+	
 	return dateTimeDifference(l, r, p)
+}
+
+// The following functions are maintained for backward compatibility
+// and delegate to the consolidated implementation
+
+// difference in _precision_ between(left Date, right Date) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#difference
+// Returns the number of boundaries crossed between two dates.
+func evalDifferenceBetweenDate(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	return evalDifferenceBetween(b, lObj, rObj)
 }
 
 // difference in _precision_ between(left DateTime, right DateTime) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#difference
 // Returns the number of boundaries crossed between two datetimes.
 func evalDifferenceBetweenDateTime(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
-	m := b.(*model.DifferenceBetween)
-	p := model.DateTimePrecision(m.Precision)
-	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY, model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND}); err != nil {
-		return result.Value{}, err
-	}
-
-	if result.IsNull(lObj) || result.IsNull(rObj) {
-		return result.New(nil)
-	}
-
-	l, r, err := applyToValues(lObj, rObj, result.ToDateTime)
-	if err != nil {
-		return result.Value{}, err
-	}
-	return dateTimeDifference(l, r, p)
+	return evalDifferenceBetween(b, lObj, rObj)
 }
 
 // Now() DateTime

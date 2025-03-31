@@ -754,6 +754,16 @@ type ToQuantity struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &ToQuantity{}
 
+// ToRatio ELM expression from https://cql.hl7.org/09-b-cqlreference.html#toratio.
+type ToRatio struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &ToRatio{}
+
+// ToChars ELM expression from https://cql.hl7.org/09-b-cqlreference.html#tochars.
+type ToChars struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &ToChars{}
+
 // ToConcept ELM expression from https://cql.hl7.org/09-b-cqlreference.html#toconcept.
 type ToConcept struct{ *UnaryExpression }
 
@@ -836,11 +846,79 @@ type Median struct{ *UnaryExpression }
 // far as we can tell.
 type PopulationStdDev struct{ *UnaryExpression }
 
+// PopulationVariance ELM expression from https://cql.hl7.org/09-b-cqlreference.html#population-variance
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type PopulationVariance struct{ *UnaryExpression }
+
+// StdDev ELM expression from https://cql.hl7.org/09-b-cqlreference.html#stddev
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type StdDev struct{ *UnaryExpression }
+
+// Variance ELM expression from https://cql.hl7.org/09-b-cqlreference.html#variance
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Variance struct{ *UnaryExpression }
+
+// Mode ELM expression from https://cql.hl7.org/09-b-cqlreference.html#mode
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Mode struct{ *UnaryExpression }
+
+// GeometricMean ELM expression from https://cql.hl7.org/09-b-cqlreference.html#geometricmean
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type GeometricMean struct{ *UnaryExpression }
+
+// Product ELM expression from https://cql.hl7.org/09-b-cqlreference.html#product
+// TODO: b/347346351 - In ELM it's modeled as an AggregateExpression, but for now we model it as an
+// UnaryExpression since there is no way to set the AggregateExpression's "path" property for CQL as
+// far as we can tell.
+type Product struct{ *UnaryExpression }
+
+// Expand ELM expression from https://cql.hl7.org/09-b-cqlreference.html#expand
+// Has two signatures:
+// 1. expand(argument List<Interval<T>>, per Quantity) List<Interval<T>>
+// 2. expand(argument Interval<T>, per Quantity) List<T>
+type Expand struct{ *BinaryExpression }
+
+
+// Expand ELM expression from https://cql.hl7.org/09-b-cqlreference.html#expand
+// Has two signatures:
+// 1. expand(argument List<Interval<T>>) List<Interval<T>>
+// 2. expand(argument List<Interval<T>>, per Quantity) List<Interval<T>>
+type Collapse struct{ *BinaryExpression }
+
 // CalculateAge CQL expression type
 type CalculateAge struct {
 	*UnaryExpression
 	Precision DateTimePrecision
 }
+
+// Width ELM Expression from https://cql.hl7.org/04-logicalspecification.html#width.
+type Width struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &Width{}
+
+// GetName returns the name of the system operator.
+func (w *Width) GetName() string { return "Width" }
+
+// Duration ELM Expression from https://cql.hl7.org/04-logicalspecification.html#duration.
+type Duration struct{ 
+	*UnaryExpression
+	Precision DateTimePrecision
+}
+
+var _ IUnaryExpression = &Duration{}
+
+// GetName returns the name of the system operator.
+func (d *Duration) GetName() string { return "Duration" }
 
 // Tail ELM Expression https://cql.hl7.org/09-b-cqlreference.html#tail.
 type Tail struct{ *UnaryExpression }
@@ -982,6 +1060,12 @@ type Union struct{ *BinaryExpression }
 // it always takes two arguments.
 type Split struct{ *BinaryExpression }
 
+// Indexer ELM Expression https://cql.hl7.org/0
+// Substring ELM Expression https://cql.hl7.org/09-b-cqlreference.html#substring
+// Substring is an OperatorExpression in ELM, but we're modeling it as a BinaryExpression since in CQL
+// it takes two or three arguments (string, start, length).
+type Substring struct{ *BinaryExpression }
+
 // Indexer ELM Expression https://cql.hl7.org/04-logicalspecification.html#indexer.
 type Indexer struct{ *BinaryExpression }
 
@@ -1020,6 +1104,17 @@ type SameOrAfter BinaryExpressionWithPrecision
 
 // DifferenceBetween ELM expression from https://cql.hl7.org/04-logicalspecification.html#differencebetween.
 type DifferenceBetween BinaryExpressionWithPrecision
+
+// DurationBetween ELM expression from https://cql.hl7.org/04-logicalspecification.html#durationbetween.
+type DurationBetween struct {
+	*BinaryExpression
+	Precision DateTimePrecision
+}
+
+var _ IBinaryExpression = &DurationBetween{}
+
+// GetName returns the name of the system operator.
+func (d *DurationBetween) GetName() string { return "DurationBetween" }
 
 // In ELM expression from https://cql.hl7.org/04-logicalspecification.html#in.
 type In BinaryExpressionWithPrecision
@@ -1315,6 +1410,12 @@ func (a *ToInteger) GetName() string { return "ToInteger" }
 func (a *ToQuantity) GetName() string { return "ToQuantity" }
 
 // GetName returns the name of the system operator.
+func (a *ToRatio) GetName() string { return "ToRatio" }
+
+// GetName returns the name of the system operator.
+func (a *ToChars) GetName() string { return "ToChars" }
+
+// GetName returns the name of the system operator.
 func (a *ToConcept) GetName() string { return "ToConcept" }
 
 // GetName returns the name of the system operator.
@@ -1533,3 +1634,27 @@ func (t *Take) GetName() string { return "Take" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationStdDev) GetName() string { return "PopulationStdDev" }
+
+// GetName returns the name of the system operator.
+func (m *PopulationVariance) GetName() string { return "PopulationVariance" }
+
+// GetName returns the name of the system operator.
+func (s *StdDev) GetName() string { return "StdDev" }
+
+// GetName returns the name of the system operator.
+func (v *Variance) GetName() string { return "Variance" }
+
+// GetName returns the name of the system operator.
+func (m *Mode) GetName() string { return "Mode" }
+
+// GetName returns the name of the system operator.
+func (g *GeometricMean) GetName() string { return "GeometricMean" }
+
+// GetName returns the name of the system operator.
+func (p *Product) GetName() string { return "Product" }
+
+// GetName returns the name of the system operator.
+func (p *Expand) GetName() string { return "Expand" }
+
+// GetName returns the name of the system operator.
+func (p *Collapse) GetName() string { return "Collapse" }
