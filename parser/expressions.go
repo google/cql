@@ -48,6 +48,8 @@ func (v *visitor) VisitExpression(tree antlr.Tree) model.IExpression {
 		m = v.VisitBooleanExpressionContext(t)
 	case *cql.MembershipExpressionContext:
 		m = v.VisitMembershipExpression(t)
+	case *cql.BetweenExpressionContext:
+		m = v.VisitBetweenExpression(t)
 	case *cql.ReferentialIdentifierContext:
 		m = v.VisitReferentialIdentifier(t)
 	case *cql.FunctionContext:
@@ -126,6 +128,20 @@ func (v *visitor) VisitExpression(tree antlr.Tree) model.IExpression {
 		m = v.VisitIndexedExpressionTermContext(t)
 	case *cql.AggregateExpressionTermContext:
 		m = v.VisitAggregateExpressionTerm(t)
+	case *cql.WidthExpressionTermContext:
+		m = v.VisitWidthExpressionTerm(t)
+	case *cql.SetAggregateExpressionTermContext:
+		m = v.VisitSetAggregateExpressionTerm(t)
+	case *cql.ConversionExpressionTermContext:
+		m = v.VisitConversionExpressionTerm(t)
+	case *cql.PointExtractorExpressionTermContext:
+		m = v.VisitPointExtractorExpressionTerm(t)
+	case *cql.DurationExpressionTermContext:
+		m = v.VisitDurationExpressionTerm(t)
+	case *cql.DifferenceExpressionTermContext:
+		m = v.VisitDifferenceExpressionTerm(t)
+	case *cql.DurationBetweenExpressionContext:
+		m = v.VisitDurationBetweenExpression(t)
 
 		// All cases that have a single child and recurse to the child are handled below. For example in
 		// the CQL grammar the only child of QueryExpression is Query, so QueryExpression can be handled

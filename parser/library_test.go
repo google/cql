@@ -177,13 +177,13 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			cql: dedent.Dedent(`
 			library intervalOperatorUnsupported version '1.2.3'
 			using FHIR version '4.0.1'
-
+		
 			define "Has coronary heart disease":
 				exists (
 					[Condition] c
-						where c.onset includes start of Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0)
+						where c.onset properly within 5 years of start of Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0)
 				)`),
-			errContains: []string{"unsupported interval operator in timing expression"},
+			errContains: []string{"could not resolve Within"},
 			errCount:    1,
 		},
 		{
@@ -209,7 +209,7 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			using FHIR version '4.0.1'
 			define "Param": expand 4
 				`),
-			errContains: []string{"unsupported expression"},
+			errContains: []string{" could not resolve Expand(System.Integer)"},
 			errCount:    1,
 		},
 		{
