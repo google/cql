@@ -642,35 +642,6 @@ func (v *visitor) VisitSetAggregateExpressionTerm(ctx *cql.SetAggregateExpressio
 	}
 }
 
-// func (v *visitor) VisitConversionExpressionTerm(ctx *cql.ConversionExpressionTermContext) model.IExpression {
-// 	// Get the conversion function name and expression
-// 	conversionFunc := ctx.GetChild(0).(antlr.TerminalNode).GetText()
-// 	expr := v.VisitExpression(ctx.Expression())
-
-// 	if conversionFunc == "convert" {
-// 		// Handle the "convert to Type" case
-// 		if typeSpecifier := ctx.TypeSpecifier(); typeSpecifier != nil {
-// 			typeString := typeSpecifier.GetText()
-// 			targetType := types.String
-// 					return &model.BinaryExpression{
-// 						Operands: []model.IExpression{
-// 							expr, // Source quantity
-// 							destUnit, // Destination unit
-// 						},
-// 						Expression: model.ResultType(types.Quantity),
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-
-//		// For other conversion functions like toInteger, etc., use parseFunction
-//		m, err := v.parseFunction("", conversionFunc, []antlr.Tree{ctx.Expression()}, false)
-//		if err != nil {
-//			return v.badExpression(err.Error(), ctx)
-//		}
-//		return m
-//	}
 func (v *visitor) VisitConversionExpressionTerm(ctx *cql.ConversionExpressionTermContext) model.IExpression {
 	// Get the conversion function name and expression
 	conversionFunc := ctx.GetChild(0).(antlr.TerminalNode).GetText()
