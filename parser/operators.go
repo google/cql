@@ -1005,6 +1005,19 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "Upper",
+			operands: [][]types.IType{
+				{types.String},
+			},
+			model: func() model.IExpression {
+				return &model.Upper{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.String),
+					},
+				}
+			},
+		},
+		{
 			name: "Split",
 			operands: [][]types.IType{
 				{types.String, types.String},

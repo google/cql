@@ -296,3 +296,16 @@ func evalLengthString(m model.IUnaryExpression, stringObj result.Value) (result.
 
 	return result.New(int32(len(string)))
 }
+
+// Upper(argument String) String
+// https://cql.hl7.org/09-b-cqlreference.html#Upper
+func evalUpper(m model.IUnaryExpression, strObj result.Value) (result.Value, error) {
+	if result.IsNull(strObj) {
+		return result.New(nil)
+	}
+	str, err := result.ToString(strObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(strings.ToUpper(str))
+}

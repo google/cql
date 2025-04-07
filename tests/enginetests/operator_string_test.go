@@ -681,3 +681,59 @@ func TestLastPositionOf(t *testing.T) {
 		})
 	}
 }
+
+func TestUpper(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Upper",
+			cql: "Upper('abc')",
+			wantModel: &model.Upper{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: model.NewLiteral("abc", types.String),
+					Expression: model.ResultType(types.String),
+				},
+			},
+				wantResult: newOrFatal(t, "ABC"),
+		},
+		{
+			name: "UpperAlready",
+			cql: "Upper('ABC')",
+			wantResult: newOrFatal(t, "ABC"),
+		},
+		{
+			name: "UpperNil",
+			cql: "Upper(null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "UpperEmpty",
+			cql: "Upper('')",
+			wantResult: newOrFatal(t, ""),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
