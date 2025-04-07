@@ -490,39 +490,39 @@ func TestEndsWith(t *testing.T) {
 			wantResult: newOrFatal(t, true),
 		},
 		{
-			name: "EndsWithFalse",
-			cql: "EndsWith('apple', 'pel')",
+			name:       "EndsWithFalse",
+			cql:        "EndsWith('apple', 'pel')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "EndsWithBothNull",
-			cql: "EndsWith(null, null)",
+			name:       "EndsWithBothNull",
+			cql:        "EndsWith(null, null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "EndsWithRightNull",
-			cql: "EndsWith('apple',null)",
+			name:       "EndsWithRightNull",
+			cql:        "EndsWith('apple',null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "EndsWithLeftNull",
-			cql: "EndsWith(null,'ple')",
-			wantResult: newOrFatal(t,nil),
+			name:       "EndsWithLeftNull",
+			cql:        "EndsWith(null,'ple')",
+			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "EndsWithLeftEmpty",
-			cql: "EndsWith('','ple')",
-			wantResult: newOrFatal(t,false),
+			name:       "EndsWithLeftEmpty",
+			cql:        "EndsWith('','ple')",
+			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "EndsWithRightEmpty",
-			cql: "EndsWith('apple','')",
-			wantResult: newOrFatal(t,true),
+			name:       "EndsWithRightEmpty",
+			cql:        "EndsWith('apple','')",
+			wantResult: newOrFatal(t, true),
 		},
 		{
-			name: "EndsWithBothEmpty",
-			cql: "EndsWith('','')",
-			wantResult: newOrFatal(t,true),
+			name:       "EndsWithBothEmpty",
+			cql:        "EndsWith('','')",
+			wantResult: newOrFatal(t, true),
 		},
 	}
 	for _, tc := range tests {
@@ -548,40 +548,40 @@ func TestEndsWith(t *testing.T) {
 }
 
 func TestLengthString(t *testing.T) {
-  tests := []struct {
+	tests := []struct {
 		name       string
 		cql        string
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-    {
-      name: "Length('ABC') = 3",
-      cql: "Length('ABC')",
-      wantModel: &model.Length{
-        UnaryExpression: &model.UnaryExpression{
-          Operand: model.NewLiteral("ABC", types.String),
-          Expression: model.ResultType(types.Integer),
-        },
-      },
-      wantResult: newOrFatal(t, 3),
-    },
-    {
-      name: "LengthNullasString",
-      cql: "Length(null as String)",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "LengthBig",
-      cql: "Length('How is the weather today')",
-      wantResult: newOrFatal(t, 24),
-    },
-    {
-      name: "LengthEmpty",
-      cql: "Length('')",
-      wantResult: newOrFatal(t,0),
-    },
-  }
-  for _, tc := range tests {
+		{
+			name: "Length('ABC') = 3",
+			cql:  "Length('ABC')",
+			wantModel: &model.Length{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("ABC", types.String),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "LengthNullasString",
+			cql:        "Length(null as String)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "LengthBig",
+			cql:        "Length('How is the weather today')",
+			wantResult: newOrFatal(t, 24),
+		},
+		{
+			name:       "LengthEmpty",
+			cql:        "Length('')",
+			wantResult: newOrFatal(t, 0),
+		},
+	}
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newFHIRParser(t)
 			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
@@ -612,7 +612,7 @@ func TestLastPositionOf(t *testing.T) {
 	}{
 		{
 			name: "LastPositionOfFound",
-			cql: "LastPositionOf('B','ABC')",
+			cql:  "LastPositionOf('B','ABC')",
 			wantModel: &model.LastPositionOf{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -625,38 +625,38 @@ func TestLastPositionOf(t *testing.T) {
 			wantResult: newOrFatal(t, 1),
 		},
 		{
-			name: "LastPositionOfNotFound",
-			cql: "LastPositionOf('X', 'ABC')",
+			name:       "LastPositionOfNotFound",
+			cql:        "LastPositionOf('X', 'ABC')",
 			wantResult: newOrFatal(t, -1),
 		},
 		{
-			name: "LastPositionOfFound2",
-			cql: "LastPositionOf('B', 'ABCDEDCBA')",
+			name:       "LastPositionOfFound2",
+			cql:        "LastPositionOf('B', 'ABCDEDCBA')",
 			wantResult: newOrFatal(t, 7),
 		},
 		{
-			name: "LastPositionOfLeftNull",
-			cql: "LastPositionOf(null, 'ABC')",
+			name:       "LastPositionOfLeftNull",
+			cql:        "LastPositionOf(null, 'ABC')",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "LastPositionOfRightNull",
-			cql: "LastPositionOf('A', null)",
+			name:       "LastPositionOfRightNull",
+			cql:        "LastPositionOf('A', null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "LastPositionOfLong",
-			cql: "LastPositionOf('abra','abracadabra')",
-			wantResult: newOrFatal(t,7),
+			name:       "LastPositionOfLong",
+			cql:        "LastPositionOf('abra','abracadabra')",
+			wantResult: newOrFatal(t, 7),
 		},
 		{
-			name: "LastPositionEmptyLeft",
-			cql: "LastPositionOf('','ABC')",
+			name:       "LastPositionEmptyLeft",
+			cql:        "LastPositionOf('','ABC')",
 			wantResult: newOrFatal(t, 3),
 		},
 		{
-			name: "LastPositionOfEmptyRight",
-			cql: "LastPositionOf('A','')",
+			name:       "LastPositionOfEmptyRight",
+			cql:        "LastPositionOf('A','')",
 			wantResult: newOrFatal(t, -1),
 		},
 	}
@@ -691,28 +691,83 @@ func TestUpper(t *testing.T) {
 	}{
 		{
 			name: "Upper",
-			cql: "Upper('abc')",
+			cql:  "Upper('abc')",
 			wantModel: &model.Upper{
 				UnaryExpression: &model.UnaryExpression{
-					Operand: model.NewLiteral("abc", types.String),
+					Operand:    model.NewLiteral("abc", types.String),
 					Expression: model.ResultType(types.String),
 				},
 			},
-				wantResult: newOrFatal(t, "ABC"),
-		},
-		{
-			name: "UpperAlready",
-			cql: "Upper('ABC')",
 			wantResult: newOrFatal(t, "ABC"),
 		},
 		{
-			name: "UpperNil",
-			cql: "Upper(null)",
+			name:       "UpperAlready",
+			cql:        "Upper('ABC')",
+			wantResult: newOrFatal(t, "ABC"),
+		},
+		{
+			name:       "UpperNil",
+			cql:        "Upper(null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "UpperEmpty",
-			cql: "Upper('')",
+			name:       "UpperEmpty",
+			cql:        "Upper('')",
+			wantResult: newOrFatal(t, ""),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+func TestLower(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Lower",
+			cql:  "Lower('ABC')",
+			wantModel: &model.Lower{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("ABC", types.String),
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "abc"),
+		},
+		{
+			name:       "LowerAlready",
+			cql:        "Lower('abc')",
+			wantResult: newOrFatal(t, "abc"),
+		},
+		{
+			name:       "LowerNil",
+			cql:        "Lower(null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "LowerEmptyString",
+			cql:        "Lower('')",
 			wantResult: newOrFatal(t, ""),
 		},
 	}

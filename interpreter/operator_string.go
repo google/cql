@@ -309,3 +309,16 @@ func evalUpper(m model.IUnaryExpression, strObj result.Value) (result.Value, err
 	}
 	return result.New(strings.ToUpper(str))
 }
+
+// Lower(argument String) String
+// https://cql.hl7.org/09-b-cqlreference.html#lower
+func evalLower(m model.IUnaryExpression, stringObj result.Value) (result.Value, error) {
+	if result.IsNull(stringObj) {
+		return result.New(nil)
+	}
+	str, err := result.ToString(stringObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(strings.ToLower(str))
+}
