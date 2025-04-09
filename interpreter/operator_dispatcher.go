@@ -626,6 +626,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result: evalUpper,
 			},
 		}, nil
+	case *model.Lower:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.String},
+				Result: evalLower,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}
