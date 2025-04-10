@@ -43,8 +43,7 @@ func TestLibraryErrors(t *testing.T) {
 	})
 
 	// Make the library error a generic error
-	var gotErr error
-	gotErr = libErr
+	var gotErr error = libErr
 
 	// Can access LibraryErrors with errors.As
 	var wantLibErr *LibraryErrors
@@ -98,8 +97,7 @@ func TestParameterErrors(t *testing.T) {
 	})
 
 	// Make the parameter error a generic error
-	var gotErr error
-	gotErr = paramErr
+	var gotErr error = paramErr
 
 	// Can access ParameterErrors with errors.As
 	var wantParamErr *ParameterErrors

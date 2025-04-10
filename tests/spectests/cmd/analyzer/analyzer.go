@@ -15,7 +15,6 @@
 // XML Analyzer is a CLI for analyzing engine capabilities vs the external XML tests.
 // This is a temporary tool which could eventually be converted to a PresubmitService but for now
 // is just a CLI which appends it's findings to the CL argument.
-//
 package main
 
 import (
@@ -30,9 +29,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/cql/tests/spectests/third_party/cqltests"
 	"github.com/google/cql/tests/spectests/exclusions"
 	"github.com/google/cql/tests/spectests/models"
+	"github.com/google/cql/tests/spectests/third_party/cqltests"
 	"github.com/lithammer/dedent"
 )
 
