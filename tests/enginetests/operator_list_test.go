@@ -183,6 +183,166 @@ func TestInList(t *testing.T) {
 	}
 }
 
+func TestIncludesListList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Includes List",
+			cql:  "{1, 2, 3} includes {1, 2}",
+			wantModel: &model.Includes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.Integer),
+								model.NewLiteral("2", types.Integer),
+								model.NewLiteral("3", types.Integer),
+							},
+						},
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.Integer),
+								model.NewLiteral("2", types.Integer),
+							},
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "{1, 2} includes {1, 2, 3}",
+			cql:        "{1, 2} includes {1, 2, 3}",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "null as List<Integer> includes {1, 2}",
+			cql:        "null as List<Integer> includes {1, 2}",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "{1, 2} includes null as List<Integer>",
+			cql:        "{1, 2} includes null as List<Integer>",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "{@2019} includes {@2019}",
+			cql:        "{@2019} includes {@2019}",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Functional syntax: Includes list",
+			cql:        "Includes({1, 2}, {1, 2})",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
+func TestIncludesListPoint(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Includes List",
+			cql:  "{1, 2, 3} includes 2",
+			wantModel: &model.Includes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.Integer),
+								model.NewLiteral("2", types.Integer),
+								model.NewLiteral("3", types.Integer),
+							},
+						},
+						model.NewLiteral("2", types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "{1, 2} includes 3",
+			cql:        "{1, 2} includes 3",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "null as List<Integer> includes 1",
+			cql:        "null as List<Integer> includes 1",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "{1, 2} includes null as Integer",
+			cql:        "{1, 2} includes null as Integer",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "{@2019} includes @2019",
+			cql:        "{@2019} includes @2019",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Functional syntax: Includes list",
+			cql:        "Includes({1, 2}, 2)",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
 func TestDistinctList(t *testing.T) {
 	tests := []struct {
 		name       string

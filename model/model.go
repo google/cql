@@ -1024,6 +1024,9 @@ type DifferenceBetween BinaryExpressionWithPrecision
 // In ELM expression from https://cql.hl7.org/04-logicalspecification.html#in.
 type In BinaryExpressionWithPrecision
 
+// Includes ELM expression from https://cql.hl7.org/04-logicalspecification.html#includes.
+type Includes BinaryExpressionWithPrecision
+
 // IncludedIn ELM expression from https://cql.hl7.org/04-logicalspecification.html#included-in.
 type IncludedIn BinaryExpressionWithPrecision
 
@@ -1084,10 +1087,10 @@ type Coalesce struct{ *NaryExpression }
 type Concatenate struct{ *NaryExpression }
 
 // EndsWith is https://cql.hl7.org/09-b-cqlreference.html#endswith
-type EndsWith struct{ *BinaryExpression}
+type EndsWith struct{ *BinaryExpression }
 
 // LastPositionOf is https://cql.hl7.org/09-b-cqlreference.html#lastpositionof
-type LastPositionOf struct{ *BinaryExpression}
+type LastPositionOf struct{ *BinaryExpression }
 
 // Upper is https://cql.hl7.org/09-b-cqlreference.html#Upper
 type Upper struct{ *UnaryExpression}
@@ -1404,6 +1407,9 @@ func (a *DifferenceBetween) GetName() string { return "DifferenceBetween" }
 func (a *In) GetName() string { return "In" }
 
 // GetName returns the name of the system operator.
+func (i *Includes) GetName() string { return "Includes" }
+
+// GetName returns the name of the system operator.
 func (a *IncludedIn) GetName() string { return "IncludedIn" }
 
 // GetName returns the name of the system operator.
@@ -1439,10 +1445,10 @@ func (a *Coalesce) GetName() string { return "Coalesce" }
 func (a *Concatenate) GetName() string { return "Concatenate" }
 
 // GetName returns the name of the system operator.
-func (a *EndsWith) GetName() string { return "EndsWith"}
+func (a *EndsWith) GetName() string { return "EndsWith" }
 
 // GetName returns the name of the system operator.
-func (a *LastPositionOf) GetName() string { return "LastPositionOf"}
+func (a *LastPositionOf) GetName() string { return "LastPositionOf" }
 
 // GetName returns the name of the system operator.
 func (a *Upper) GetName() string { return "Upper"}

@@ -125,6 +125,42 @@ func evalInList(m model.IBinaryExpression, lObj, listObj result.Value) (result.V
 	return result.New(valueInList(lObj, r))
 }
 
+// includes(argument List<T>, element T) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#includes-1
+func evalIncludes(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	return result.New(valueInList(rObj, l))
+}
+
+// includes(argument List<T>, argument List<T>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#includes-1
+func evalIncludesList(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	r, err := result.ToSlice(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elemObj := range r {
+		if !valueInList(elemObj, l) {
+			return result.New(false)
+		}
+	}
+	return result.New(true)
+}
+
 // intersect(argument List<T>, argument List<T>) List<T>
 // https://cql.hl7.org/09-b-cqlreference.html#intersect
 func evalIntersect(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {

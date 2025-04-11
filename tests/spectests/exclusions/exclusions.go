@@ -340,11 +340,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Descendents",
-				"Includes",
 				"IncludedIn",
-				"ProperContains",
 				"ProperIn",
-				"ProperlyIncludes",
 				"ProperlyIncludedIn",
 				"Union",
 			},
@@ -357,9 +354,18 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"Equivalent123AndString123",
 				"EquivalentTimeTrue",
 				"EquivalentTimeFalse",
+				"IncludesNullLeft",
+				"IncludesNullRight",
 				"NotEqualABCAnd123",
 				"NotEqual123AndABC",
 				"NotEqual123AndString123",
+				"ProperContainsNullRightFalse",
+				"ProperContainsNullRightTrue",
+				"ProperContainsTimeNull",
+				"ProperIncludesEmptyAndEmpty",
+				"ProperIncludesListNullAndListNull",
+				"ProperIncludesDateTimeFalse",
+				"ProperlyIncludesNullLeft",
 				// TODO: b/342061783 - Got unexpected result.
 				"EqualNullNull",
 				// TODO: b/346880550 - These test appear to have incorrect assertions.

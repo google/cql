@@ -1653,6 +1653,20 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "Includes",
+			operands: [][]types.IType{
+				{convert.GenericList, convert.GenericType},
+				{convert.GenericList, convert.GenericList},
+			},
+			model: func() model.IExpression {
+				return &model.Includes{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name:     "Intersect",
 			operands: [][]types.IType{{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}}},
 			model: func() model.IExpression {
