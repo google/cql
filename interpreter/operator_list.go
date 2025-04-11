@@ -287,6 +287,48 @@ func evalLengthList(m model.IUnaryExpression, listObj result.Value) (result.Valu
 	return result.New(int32(len(list)))
 }
 
+// properly includes(element Targument List<T>, element T) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#properly-includes-1
+func evalProperlyIncludes(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	if len(l) <= 1 {
+		return result.New(false)
+	}
+	return result.New(valueInList(rObj, l))
+}
+
+// properly includes(argument List<T>, argument List<T>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#properly-includes-1
+func evalProperlyIncludesList(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	r, err := result.ToSlice(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) <= len(r) {
+		return result.New(false)
+	}
+	for _, elemObj := range r {
+		if !valueInList(elemObj, l) {
+			return result.New(false)
+		}
+	}
+	return result.New(true)
+}
+
 // singleton from(argument List<T>) T
 // https://cql.hl7.org/09-b-cqlreference.html#singleton-from
 func evalSingletonFrom(m model.IUnaryExpression, listObj result.Value) (result.Value, error) {

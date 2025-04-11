@@ -1030,6 +1030,9 @@ type Includes BinaryExpressionWithPrecision
 // IncludedIn ELM expression from https://cql.hl7.org/04-logicalspecification.html#included-in.
 type IncludedIn BinaryExpressionWithPrecision
 
+// ProperlyIncludes ELM expression from https://cql.hl7.org/09-b-cqlreference.html#properly-includes-1.
+type ProperlyIncludes BinaryExpressionWithPrecision
+
 // InCodeSystem is https://cql.hl7.org/09-b-cqlreference.html#in-codesystem.
 // This is not technically 1:1 with the ELM definition. The ELM defines Code, CodeSystem and
 // CodeSystemExpression arguments, the last being seemingly impossible to set for for now we're
@@ -1417,6 +1420,9 @@ func (a *InCodeSystem) GetName() string { return "InCodeSystem" }
 
 // GetName returns the name of the system operator.
 func (a *InValueSet) GetName() string { return "InValueSet" }
+
+// GetName returns the name of the system operator.
+func (p *ProperlyIncludes) GetName() string { return "ProperlyIncludes" }
 
 // GetName returns the name of the system operator.
 func (a *Contains) GetName() string { return "Contains" }

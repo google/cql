@@ -1375,6 +1375,32 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "ProperlyIncludes List<T> for point type",
+			cql:  "ProperlyIncludes({1, 2, 3}, 1)",
+			want: &model.ProperlyIncludes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludes List List",
+			cql:  "ProperlyIncludes({1, 2, 3}, {1, 2, 3})",
+			want: &model.ProperlyIncludes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
 			name: "SingletonFrom",
 			cql:  "SingletonFrom({1})",
 			want: &model.SingletonFrom{

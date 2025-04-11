@@ -78,7 +78,14 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 		if precision != model.UNSETDATETIMEPRECISION {
 			return v.badExpression("unsupported interval operator in timing expression, includes operator with precision is not supported", ctx)
 		}
-		fnOperator = "Includes"
+		switch operator.GetText() {
+		case "includes":
+			fnOperator = "Includes"
+		case "properlyincludes":
+			fnOperator = "ProperlyIncludes"
+		default:
+			return v.badExpression("internal error - grammar should not allow this TimeBoundaryExpression", ctx)
+		}
 	case *cql.IncludedInIntervalOperatorPhraseContext:
 		precision = precisionFromContext(operator)
 		fnOperator = "IncludedIn"
