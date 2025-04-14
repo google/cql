@@ -125,6 +125,45 @@ func evalInList(m model.IBinaryExpression, lObj, listObj result.Value) (result.V
 	return result.New(valueInList(lObj, r))
 }
 
+// included in(element T, argument List<T>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#included-in-1
+// This operator acts as a macro for `in` except in cases where arguments are null.
+func evalIncludedIn(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) {
+		return result.New(nil)
+	}
+	if result.IsNull(rObj) {
+		return result.New(false)
+	}
+	return evalInList(m, lObj, rObj)
+}
+
+// included in(argument List<T>, argument List<T>)
+// https://cql.hl7.org/09-b-cqlreference.html#included-in-1
+func evalIncludedInList(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(true)
+	}
+
+	r, err := result.ToSlice(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elemObj := range l {
+		if !valueInList(elemObj, r) {
+			return result.New(false)
+		}
+	}
+	return result.New(true)
+}
+
 // includes(argument List<T>, element T) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#includes-1
 func evalIncludes(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {

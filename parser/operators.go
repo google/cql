@@ -1408,6 +1408,9 @@ func (p *Parser) loadSystemOperators() error {
 				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
 				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
 				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				// list overloads
+				[]types.IType{convert.GenericType, convert.GenericList},
+				[]types.IType{convert.GenericList, convert.GenericList},
 			},
 			model: func() model.IExpression {
 				return &model.IncludedIn{

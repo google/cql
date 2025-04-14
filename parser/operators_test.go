@@ -1177,6 +1177,47 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "IncludedIn for point type with list",
+			cql:  "IncludedIn(@2010, { @2010 })",
+			want: &model.IncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("@2010", types.Date),
+						&model.List{
+							List: []model.IExpression{
+								model.NewLiteral("@2010", types.Date),
+							},
+							Expression: model.ResultType(&types.List{ElementType: types.Date}),
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "IncludedIn with list list overload",
+			cql:  "IncludedIn({ @2010 }, { @2010 })",
+			want: &model.IncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							List: []model.IExpression{
+								model.NewLiteral("@2010", types.Date),
+							},
+							Expression: model.ResultType(&types.List{ElementType: types.Date}),
+						},
+						&model.List{
+							List: []model.IExpression{
+								model.NewLiteral("@2010", types.Date),
+							},
+							Expression: model.ResultType(&types.List{ElementType: types.Date}),
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
 			name: "Overlaps with Date",
 			cql:  "Interval[@2010, @2015] overlaps Interval[@2010, @2020]",
 			want: &model.Overlaps{

@@ -975,6 +975,17 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalIncludesList,
 			},
 		}, nil
+	case *model.IncludedIn:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Any, &types.List{ElementType: types.Any}},
+				Result:   evalIncludedIn,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				Result:   evalIncludedInList,
+			},
+		}, nil
 	case *model.Indexer:
 		return []convert.Overload[evalBinarySignature]{
 			{
