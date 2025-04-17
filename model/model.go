@@ -889,10 +889,10 @@ type Product struct{ *UnaryExpression }
 type Expand struct{ *BinaryExpression }
 
 
-// Expand ELM expression from https://cql.hl7.org/09-b-cqlreference.html#expand
+// Collapse ELM expression from https://cql.hl7.org/09-b-cqlreference.html#collapse
 // Has two signatures:
-// 1. expand(argument List<Interval<T>>) List<Interval<T>>
-// 2. expand(argument List<Interval<T>>, per Quantity) List<Interval<T>>
+// collapse(argument List<Interval<T>>) List<Interval<T>>
+// collapse(argument List<Interval<T>>, per Quantity) List<Interval<T>>
 type Collapse struct{ *BinaryExpression }
 
 // CalculateAge CQL expression type
@@ -906,8 +906,6 @@ type Width struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &Width{}
 
-// GetName returns the name of the system operator.
-func (w *Width) GetName() string { return "Width" }
 
 // Duration ELM Expression from https://cql.hl7.org/04-logicalspecification.html#duration.
 type Duration struct{ 
@@ -916,9 +914,6 @@ type Duration struct{
 }
 
 var _ IUnaryExpression = &Duration{}
-
-// GetName returns the name of the system operator.
-func (d *Duration) GetName() string { return "Duration" }
 
 // Tail ELM Expression https://cql.hl7.org/09-b-cqlreference.html#tail.
 type Tail struct{ *UnaryExpression }
@@ -1658,3 +1653,9 @@ func (p *Expand) GetName() string { return "Expand" }
 
 // GetName returns the name of the system operator.
 func (p *Collapse) GetName() string { return "Collapse" }
+
+// GetName returns the name of the system operator.
+func (w *Width) GetName() string { return "Width" }
+
+// GetName returns the name of the system operator.
+func (d *Duration) GetName() string { return "Duration" }
