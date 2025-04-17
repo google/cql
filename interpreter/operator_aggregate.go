@@ -163,15 +163,8 @@ func (i *interpreter) evalCount(_ model.IUnaryExpression, operand result.Value) 
 }
 
 // Max(argument List<Integer>) Integer
-// Max(argument List<Long>) Long
-// Max(argument List<Decimal>) Decimal
-// Max(argument List<Quantity>) Quantity
-// Max(argument List<Date>) Date
-// Max(argument List<DateTime>) DateTime
-// Max(argument List<Time>) Time
-// Max(argument List<String>) String
 // https://cql.hl7.org/09-b-cqlreference.html#max
-func (i *interpreter) evalMax(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+func (i *interpreter) evalMaxInteger(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
 	if result.IsNull(operand) {
 		return result.New(nil)
 	}
@@ -191,186 +184,358 @@ func (i *interpreter) evalMax(m model.IUnaryExpression, operand result.Value) (r
 		return result.New(nil)
 	}
 
-	switch lType.ElementType {
-	case types.Integer:
-		var maxVal int32
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToInt32(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v > maxVal {
-				maxVal = v
-				foundValue = true
-			}
+	var maxVal int32
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
 		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(maxVal)
-	case types.Long:
-		var maxVal int64
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToInt64(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v > maxVal {
-				maxVal = v
-				foundValue = true
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(maxVal)
-	case types.Decimal:
-		var maxVal float64
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToFloat64(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v > maxVal {
-				maxVal = v
-				foundValue = true
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(maxVal)
-	case types.Quantity:
-		var maxVal result.Quantity
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToQuantity(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue {
-				maxVal = v
-				foundValue = true
-				continue
-			}
-			if maxVal.Unit != v.Unit {
-				return result.Value{}, fmt.Errorf("Max(%v) got List of Quantity values with different units which is not supported, got %v and %v", m.GetName(), maxVal.Unit, v.Unit)
-			}
-			if v.Value > maxVal.Value {
-				maxVal = v
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(maxVal)
-	case types.String:
-		var maxVal string
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToString(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v > maxVal {
-				maxVal = v
-				foundValue = true
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(maxVal)
-	case types.Time:
-		var maxVal result.Time
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToTime(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue {
-				maxVal = v
-				foundValue = true
-				continue
-			}
-			compareResult, err := compareTime(maxVal, v)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if compareResult == leftBeforeRight {
-				maxVal = v
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(maxVal)
-	case types.Date, types.DateTime:
-		minDtVal, err := minValue(lType.ElementType, &i.evaluationTimestamp)
+		v, err := result.ToInt32(elem)
 		if err != nil {
 			return result.Value{}, err
 		}
-		dt, err := result.ToDateTime(minDtVal)
-		if err != nil {
-			return result.Value{}, err
+		if !foundValue || v > maxVal {
+			maxVal = v
+			foundValue = true
 		}
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToDateTime(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			compareResult, err := compareDateTime(dt, v)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if compareResult == leftBeforeRight {
-				dt = v
-			}
-		}
-		if m.GetResultType() == types.Date {
-			return result.New(result.Date(dt))
-		}
-		return result.New(dt)
-	default:
-		return result.Value{}, fmt.Errorf("Max(%v) not implemented for type %v", m.GetName(), lType.ElementType)
 	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(maxVal)
+}
+
+// Max(argument List<Long>) Long
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxLong(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var maxVal int64
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToInt64(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue || v > maxVal {
+			maxVal = v
+			foundValue = true
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(maxVal)
+}
+
+// Max(argument List<Decimal>) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxDecimal(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var maxVal float64
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToFloat64(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue || v > maxVal {
+			maxVal = v
+			foundValue = true
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(maxVal)
+}
+
+// Max(argument List<Quantity>) Quantity
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxQuantity(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var maxVal result.Quantity
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToQuantity(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue {
+			maxVal = v
+			foundValue = true
+			continue
+		}
+		if maxVal.Unit != v.Unit {
+			return result.Value{}, fmt.Errorf("Max(%v) got List of Quantity values with different units which is not supported, got %v and %v", m.GetName(), maxVal.Unit, v.Unit)
+		}
+		if v.Value > maxVal.Value {
+			maxVal = v
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(maxVal)
+}
+
+// Max(argument List<String>) String
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxString(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var maxVal string
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToString(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue || v > maxVal {
+			maxVal = v
+			foundValue = true
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(maxVal)
+}
+
+// Max(argument List<Time>) Time
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxTime(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var maxVal result.Time
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue {
+			maxVal = v
+			foundValue = true
+			continue
+		}
+		compareResult, err := compareTime(maxVal, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftBeforeRight {
+			maxVal = v
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(maxVal)
+}
+
+// Max(argument List<Date>) Date
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxDate(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	minDtVal, err := minValue(lType.ElementType, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	dt, err := result.ToDateTime(minDtVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToDateTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		compareResult, err := compareDateTime(dt, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftBeforeRight {
+			dt = v
+		}
+	}
+	return result.New(result.Date(dt))
+}
+
+// Max(argument List<DateTime>) DateTime
+// https://cql.hl7.org/09-b-cqlreference.html#max
+func (i *interpreter) evalMaxDateTime(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Max(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	minDtVal, err := minValue(lType.ElementType, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	dt, err := result.ToDateTime(minDtVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToDateTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		compareResult, err := compareDateTime(dt, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftBeforeRight {
+			dt = v
+		}
+	}
+	return result.New(dt)
 }
 
 // Min(argument List<Integer>) Integer
-// Min(argument List<Long>) Long
-// Min(argument List<Decimal>) Decimal
-// Min(argument List<Quantity>) Quantity
-// Min(argument List<Date>) Date
-// Min(argument List<DateTime>) DateTime
-// Min(argument List<Time>) Time
-// Min(argument List<String>) String
 // https://cql.hl7.org/09-b-cqlreference.html#min
-func (i *interpreter) evalMin(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+func (i *interpreter) evalMinInteger(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
 	if result.IsNull(operand) {
 		return result.New(nil)
 	}
@@ -390,150 +555,305 @@ func (i *interpreter) evalMin(m model.IUnaryExpression, operand result.Value) (r
 		return result.New(nil)
 	}
 
-	switch lType.ElementType {
-	case types.Integer:
-		var minVal int32
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToInt32(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v < minVal {
-				minVal = v
-				foundValue = true
-			}
+	var minVal int32
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
 		}
-		if !foundValue {
-			return result.New(nil)
+		v, err := result.ToInt32(elem)
+		if err != nil {
+			return result.Value{}, err
 		}
-		return result.New(minVal)
-	case types.Long:
-		var minVal int64
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToInt64(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v < minVal {
-				minVal = v
-				foundValue = true
-			}
+		if !foundValue || v < minVal {
+			minVal = v
+			foundValue = true
 		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(minVal)
-	case types.Decimal:
-		var minVal float64
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToFloat64(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v < minVal {
-				minVal = v
-				foundValue = true
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(minVal)
-	case types.Quantity:
-		var minVal result.Quantity
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToQuantity(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue {
-				minVal = v
-				foundValue = true
-				continue
-			}
-			if minVal.Unit != v.Unit {
-				return result.Value{}, fmt.Errorf("Min(%v) got List of Quantity values with different units which is not supported, got %v and %v", m.GetName(), minVal.Unit, v.Unit)
-			}
-			if v.Value < minVal.Value {
-				minVal = v
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(minVal)
-	case types.String:
-		var minVal string
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToString(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue || v < minVal {
-				minVal = v
-				foundValue = true
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(minVal)
-	case types.Time:
-		var minVal result.Time
-		var foundValue bool
-		for _, elem := range l {
-			if result.IsNull(elem) {
-				continue
-			}
-			v, err := result.ToTime(elem)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if !foundValue {
-				minVal = v
-				foundValue = true
-				continue
-			}
-			compareResult, err := compareTime(minVal, v)
-			if err != nil {
-				return result.Value{}, err
-			}
-			if compareResult == leftAfterRight {
-				minVal = v
-			}
-		}
-		if !foundValue {
-			return result.New(nil)
-		}
-		return result.New(minVal)
-	case types.Date, types.DateTime:
-		return i.evalMinDateTime(m, operand)
-	default:
-		return result.Value{}, fmt.Errorf("Min(%v) not implemented for type %v", m.GetName(), lType.ElementType)
 	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(minVal)
+}
+
+// Min(argument List<Long>) Long
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinLong(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var minVal int64
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToInt64(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue || v < minVal {
+			minVal = v
+			foundValue = true
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(minVal)
+}
+
+// Min(argument List<Decimal>) Decimal
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinDecimal(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var minVal float64
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToFloat64(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue || v < minVal {
+			minVal = v
+			foundValue = true
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(minVal)
+}
+
+// Min(argument List<Quantity>) Quantity
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinQuantity(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var minVal result.Quantity
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToQuantity(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue {
+			minVal = v
+			foundValue = true
+			continue
+		}
+		if minVal.Unit != v.Unit {
+			return result.Value{}, fmt.Errorf("Min(%v) got List of Quantity values with different units which is not supported, got %v and %v", m.GetName(), minVal.Unit, v.Unit)
+		}
+		if v.Value < minVal.Value {
+			minVal = v
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(minVal)
+}
+
+// Min(argument List<String>) String
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinString(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var minVal string
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToString(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue || v < minVal {
+			minVal = v
+			foundValue = true
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(minVal)
+}
+
+// Min(argument List<Time>) Time
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinTime(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+
+	var minVal result.Time
+	var foundValue bool
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if !foundValue {
+			minVal = v
+			foundValue = true
+			continue
+		}
+		compareResult, err := compareTime(minVal, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftAfterRight {
+			minVal = v
+		}
+	}
+	if !foundValue {
+		return result.New(nil)
+	}
+	return result.New(minVal)
 }
 
 // Min(argument List<Date>) Date
+// https://cql.hl7.org/09-b-cqlreference.html#min
+func (i *interpreter) evalMinDate(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	l, err := result.ToSlice(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if len(l) == 0 {
+		return result.New(nil)
+	}
+	lType, ok := operand.RuntimeType().(*types.List)
+	if !ok {
+		return result.Value{}, fmt.Errorf("Min(%v) operand is not a list", m.GetName())
+	}
+	// Special case for handling lists that contain only null runtime values.
+	if lType.ElementType == types.Any {
+		return result.New(nil)
+	}
+	maxDtVal, err := maxValue(lType.ElementType, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	dt, err := result.ToDateTime(maxDtVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	for _, elem := range l {
+		if result.IsNull(elem) {
+			continue
+		}
+		v, err := result.ToDateTime(elem)
+		if err != nil {
+			return result.Value{}, err
+		}
+		compareResult, err := compareDateTime(dt, v)
+		if err != nil {
+			return result.Value{}, err
+		}
+		if compareResult == leftAfterRight {
+			dt = v
+		}
+	}
+	return result.New(result.Date(dt))
+}
+
 // Min(argument List<DateTime>) DateTime
 // https://cql.hl7.org/09-b-cqlreference.html#min
 func (i *interpreter) evalMinDateTime(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
@@ -578,9 +898,6 @@ func (i *interpreter) evalMinDateTime(m model.IUnaryExpression, operand result.V
 		if compareResult == leftAfterRight {
 			dt = v
 		}
-	}
-	if m.GetResultType() == types.Date {
-		return result.New(result.Date(dt))
 	}
 	return result.New(dt)
 }

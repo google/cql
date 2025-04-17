@@ -27,6 +27,10 @@ type XMLTestFileExclusions struct {
 // should be included for each set of skipped tests.
 func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 	return map[string]XMLTestFileExclusions{
+		"CqlAggregateFunctionsTest.xml": XMLTestFileExclusions{
+			GroupExcludes: []string{},
+			NamesExcludes: []string{},
+		},
 		"CqlAggregateTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{},
 			NamesExcludes: []string{

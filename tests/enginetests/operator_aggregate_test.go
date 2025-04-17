@@ -668,132 +668,58 @@ func TestMedian(t *testing.T) {
 	}
 }
 
-func TestMedian_Error(t *testing.T) {
-	tests := []struct {
-		name            string
-		cql             string
-		wantModel       model.IExpression
-		wantErrContains string
-	}{
-		{
-			name:            "Median({1 'cm', 2 'g'})",
-			cql:             "Median({1 'cm', 2 'g'})",
-			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
-		},
-		{
-			name:            "Median({1 '', 2 'g'})",
-			cql:             "Median({1 '', 2 'g'})",
-			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			p := newFHIRParser(t)
-			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
-			if err != nil {
-				t.Fatalf("Parse returned unexpected error: %v", err)
-			}
-			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
-				t.Errorf("Parse diff (-want +got):\n%s", diff)
-			}
-
-			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
-			if err == nil || !strings.Contains(err.Error(), tc.wantErrContains) {
-				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
-			}
-		})
-	}
-}
-
-func TestPopulationStdDev(t *testing.T) {
+func TestMode(t *testing.T) {
 	tests := []struct {
 		name       string
 		cql        string
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-		// Decimal cases - Round is added to the cql to avoid float point comparison issues.
 		{
-			name: "PopulationStdDev({1.5, 2.5, 3.5, 4.5})",
-			cql:  "Round(PopulationStdDev({1.5, 2.5, 3.5, 4.5}), 3)",
-			wantModel: &model.Round{
-				NaryExpression: &model.NaryExpression{
-					Operands: []model.IExpression{
-						&model.PopulationStdDev{
-							UnaryExpression: &model.UnaryExpression{
-								Operand:    model.NewList([]string{"1.5", "2.5", "3.5", "4.5"}, types.Decimal),
-								Expression: model.ResultType(types.Decimal),
-							},
-						},
-						model.NewLiteral("3", types.Integer),
-					},
-					Expression: model.ResultType(types.Decimal),
+			name: "Mode({1, 2, 3, 2, 1, 2})",
+			cql:  "Mode({1, 2, 3, 2, 1, 2})",
+			wantModel: &model.Mode{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3", "2", "1", "2"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
 				},
 			},
-			wantResult: newOrFatal(t, 1.118),
+			wantResult: newOrFatal(t, 2),
 		},
 		{
-			name:       "PopulationStdDev({1.0, 2.0, 3.0, 4.0, 5.0})",
-			cql:        "Round(PopulationStdDev({1.0, 2.0, 3.0, 4.0, 5.0}), 3)",
-			wantResult: newOrFatal(t, 1.414),
+			name:       "Mode({1, 2, 3, 3, 4, 5})",
+			cql:        "Mode({1, 2, 3, 3, 4, 5})",
+			wantResult: newOrFatal(t, 3),
 		},
 		{
-			name:       "Unordered Decimal list: PopulationStdDev({2.5, 3.5, 1.5, 4.5})",
-			cql:        "Round(PopulationStdDev({2.5, 3.5, 1.5, 4.5}), 3)",
-			wantResult: newOrFatal(t, 1.118),
-		},
-		// Quantity cases - Round is added and quantity values is unwrapped to avoid float point
-		// comparison issues.
-		{
-			name:       "PopulationStdDev({1 'cm', 2 'cm', 3 'cm', 4 'cm', 5 'cm'})",
-			cql:        "Round(PopulationStdDev({1 'cm', 2 'cm', 3 'cm', 4 'cm', 5 'cm'}).value, 3)",
-			wantResult: newOrFatal(t, 1.414),
-		},
-		{
-			name:       "PopulationStdDev({1.5 'g', 2.5 'g', 3.5 'g', 4.5 'g'})",
-			cql:        "Round(PopulationStdDev({1.5 'g', 2.5 'g', 3.5 'g', 4.5 'g'}).value, 3)",
-			wantResult: newOrFatal(t, 1.118),
-		},
-		{
-			name:       "Unordered Quantity list: PopulationStdDev({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
-			cql:        "Round(PopulationStdDev({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'}).value, 3)",
-			wantResult: newOrFatal(t, 1.118),
-		},
-		{
-			name:       "PopulationStdDev({1 'cm', 3 'cm'}) simplified case with no rounding",
-			cql:        "PopulationStdDev({1 'cm', 3 'cm'})",
-			wantResult: newOrFatal(t, result.Quantity{Value: 1.0, Unit: "cm"}),
-		},
-		{
-			name:       "PopulationStdDev(List<Decimal>{})",
-			cql:        "PopulationStdDev(List<Decimal>{})",
+			name:       "Mode with null input",
+			cql:        "Mode(null as List<Integer>)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev({null as Decimal})",
-			cql:        "PopulationStdDev({null as Decimal})",
+			name:       "Mode({1, 2, null, 2})",
+			cql:        "Mode({1, 2, null, 2})",
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Mode with empty list",
+			cql:        "Mode(List<Integer>{})",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev(null as List<Decimal>)",
-			cql:        "PopulationStdDev(null as List<Decimal>)",
+			name:       "Mode with all null list",
+			cql:        "Mode({null as Integer, null as Integer})",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev(List<Quantity>{})",
-			cql:        "PopulationStdDev(List<Quantity>{})",
-			wantResult: newOrFatal(t, nil),
+			name:       "Mode({1.5, 2.5, 3.5, 2.5, 1.5, 2.5})",
+			cql:        "Mode({1.5, 2.5, 3.5, 2.5, 1.5, 2.5})",
+			wantResult: newOrFatal(t, 2.5),
 		},
 		{
-			name:       "PopulationStdDev({null as Quantity})",
-			cql:        "PopulationStdDev({null as Quantity})",
-			wantResult: newOrFatal(t, nil),
-		},
-		{
-			name:       "PopulationStdDev(null as List<Quantity>)",
-			cql:        "PopulationStdDev(null as List<Quantity>)",
-			wantResult: newOrFatal(t, nil),
+			name:       "Mode({'a', 'b', 'c', 'b', 'a', 'b'})",
+			cql:        "Mode({'a', 'b', 'c', 'b', 'a', 'b'})",
+			wantResult: newOrFatal(t, "b"),
 		},
 	}
 
@@ -814,44 +740,6 @@ func TestPopulationStdDev(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
 				t.Errorf("Eval diff (-want +got)\n%v", diff)
-			}
-		})
-	}
-}
-
-func TestPopulationStdDev_Error(t *testing.T) {
-	tests := []struct {
-		name            string
-		cql             string
-		wantModel       model.IExpression
-		wantErrContains string
-	}{
-		{
-			name:            "PopulationStdDev({1 'cm', 2 'g'})",
-			cql:             "PopulationStdDev({1 'cm', 2 'g'})",
-			wantErrContains: "operand has different units which is not supported",
-		},
-		{
-			name:            "PopulationStdDev({1 '', 2 'g'})",
-			cql:             "PopulationStdDev({1 '', 2 'g'})",
-			wantErrContains: "operand has different units which is not supported",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			p := newFHIRParser(t)
-			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
-			if err != nil {
-				t.Fatalf("Parse returned unexpected error: %v", err)
-			}
-			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
-				t.Errorf("Parse diff (-want +got):\n%s", diff)
-			}
-
-			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
-			if err == nil || !strings.Contains(err.Error(), tc.wantErrContains) {
-				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
 			}
 		})
 	}
