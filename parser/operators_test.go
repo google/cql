@@ -763,7 +763,7 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "EndsWith",
-			cql: "EndsWith('ABC','C')",
+			cql:  "EndsWith('ABC','C')",
 			want: &model.EndsWith{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -776,7 +776,7 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "LastPositionOf",
-			cql: "LastPositionOf('B','ABC')",
+			cql:  "LastPositionOf('B','ABC')",
 			want: &model.LastPositionOf{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -794,6 +794,26 @@ func TestBuiltInFunctions(t *testing.T) {
 				UnaryExpression: &model.UnaryExpression{
 					Operand:    model.NewLiteral("ABC", types.String),
 					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "Upper",
+			cql: "Upper('abc')",
+			want: &model.Upper{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: model.NewLiteral("abc", types.String),
+					Expression: model.ResultType(types.String),
+				},
+			},
+		},
+		{
+			name: "Lower",
+			cql: "Lower('ABC')",
+			want: &model.Lower{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: model.NewLiteral("ABC", types.String),
+					Expression: model.ResultType(types.String),
 				},
 			},
 		},
@@ -1157,6 +1177,47 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "IncludedIn for point type with list",
+			cql:  "IncludedIn(@2010, { @2010 })",
+			want: &model.IncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("@2010", types.Date),
+						&model.List{
+							List: []model.IExpression{
+								model.NewLiteral("@2010", types.Date),
+							},
+							Expression: model.ResultType(&types.List{ElementType: types.Date}),
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "IncludedIn with list list overload",
+			cql:  "IncludedIn({ @2010 }, { @2010 })",
+			want: &model.IncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							List: []model.IExpression{
+								model.NewLiteral("@2010", types.Date),
+							},
+							Expression: model.ResultType(&types.List{ElementType: types.Date}),
+						},
+						&model.List{
+							List: []model.IExpression{
+								model.NewLiteral("@2010", types.Date),
+							},
+							Expression: model.ResultType(&types.List{ElementType: types.Date}),
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
 			name: "Overlaps with Date",
 			cql:  "Interval[@2010, @2015] overlaps Interval[@2010, @2020]",
 			want: &model.Overlaps{
@@ -1269,6 +1330,32 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "Includes List<T> for point type",
+			cql:  "Includes({1, 2, 3}, 1)",
+			want: &model.Includes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "Includes List List",
+			cql:  "Includes({1, 2, 3}, {1, 2, 3})",
+			want: &model.Includes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
 			name: "Intersect",
 			cql:  "Intersect({1}, {1})",
 			want: &model.Intersect{
@@ -1325,6 +1412,32 @@ func TestBuiltInFunctions(t *testing.T) {
 				UnaryExpression: &model.UnaryExpression{
 					Operand:    model.NewList([]string{"1", "2", "3"}, types.Integer),
 					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludes List<T> for point type",
+			cql:  "ProperlyIncludes({1, 2, 3}, 1)",
+			want: &model.ProperlyIncludes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewLiteral("1", types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludes List List",
+			cql:  "ProperlyIncludes({1, 2, 3}, {1, 2, 3})",
+			want: &model.ProperlyIncludes{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
 				},
 			},
 		},

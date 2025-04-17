@@ -173,20 +173,6 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			errCount: 3,
 		},
 		{
-			name: "unsupported_interval_operator",
-			cql: dedent.Dedent(`
-			library intervalOperatorUnsupported version '1.2.3'
-			using FHIR version '4.0.1'
-
-			define "Has coronary heart disease":
-				exists (
-					[Condition] c
-						where c.onset includes start of Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0)
-				)`),
-			errContains: []string{"unsupported interval operator in timing expression"},
-			errCount:    1,
-		},
-		{
 			name: "Unexpected Result Type in TimeBoundaryExpression operand",
 			cql: `library intervalOperator version '1.2.3'
 			using FHIR version '4.0.1'
@@ -201,6 +187,15 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			using FHIR version '4.0.1'
       valueset "My Valueset": "This should be a single-quoted string"`,
 			errContains: []string{"expecting STRING"},
+			errCount:    1,
+		},
+		{
+			name: "Unsupported Expression",
+			cql: dedent.Dedent(`
+			using FHIR version '4.0.1'
+			define "Param": Interval[@2019, 2020] includes year of @2020
+				`),
+			errContains: []string{"unsupported interval operator in timing expression"},
 			errCount:    1,
 		},
 		{

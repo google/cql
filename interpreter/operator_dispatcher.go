@@ -619,6 +619,20 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalTail,
 			},
 		}, nil
+	case *model.Upper:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.String},
+				Result: evalUpper,
+			},
+		}, nil
+	case *model.Lower:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.String},
+				Result: evalLower,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}
@@ -950,6 +964,28 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   i.evalSplit,
 			},
 		}, nil
+	case *model.Includes:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, types.Any},
+				Result:   evalIncludes,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				Result:   evalIncludesList,
+			},
+		}, nil
+	case *model.IncludedIn:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Any, &types.List{ElementType: types.Any}},
+				Result:   evalIncludedIn,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				Result:   evalIncludedInList,
+			},
+		}, nil
 	case *model.Indexer:
 		return []convert.Overload[evalBinarySignature]{
 			{
@@ -982,6 +1018,17 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalIntersect,
 			},
 		}, nil
+	case *model.ProperlyIncludes:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, types.Any},
+				Result:   evalProperlyIncludes,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				Result:   evalProperlyIncludesList,
+			},
+		}, nil
 	case *model.Skip:
 		return []convert.Overload[evalBinarySignature]{
 			{
@@ -1007,7 +1054,7 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 		return []convert.Overload[evalBinarySignature]{
 			{
 				Operands: []types.IType{types.String, types.String},
-				Result: evalLastPositionOf,
+				Result:   evalLastPositionOf,
 			},
 		}, nil
 	default:

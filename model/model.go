@@ -1024,8 +1024,14 @@ type DifferenceBetween BinaryExpressionWithPrecision
 // In ELM expression from https://cql.hl7.org/04-logicalspecification.html#in.
 type In BinaryExpressionWithPrecision
 
+// Includes ELM expression from https://cql.hl7.org/04-logicalspecification.html#includes.
+type Includes BinaryExpressionWithPrecision
+
 // IncludedIn ELM expression from https://cql.hl7.org/04-logicalspecification.html#included-in.
 type IncludedIn BinaryExpressionWithPrecision
+
+// ProperlyIncludes ELM expression from https://cql.hl7.org/09-b-cqlreference.html#properly-includes-1.
+type ProperlyIncludes BinaryExpressionWithPrecision
 
 // InCodeSystem is https://cql.hl7.org/09-b-cqlreference.html#in-codesystem.
 // This is not technically 1:1 with the ELM definition. The ELM defines Code, CodeSystem and
@@ -1084,10 +1090,16 @@ type Coalesce struct{ *NaryExpression }
 type Concatenate struct{ *NaryExpression }
 
 // EndsWith is https://cql.hl7.org/09-b-cqlreference.html#endswith
-type EndsWith struct{ *BinaryExpression}
+type EndsWith struct{ *BinaryExpression }
 
 // LastPositionOf is https://cql.hl7.org/09-b-cqlreference.html#lastpositionof
-type LastPositionOf struct{ *BinaryExpression}
+type LastPositionOf struct{ *BinaryExpression }
+
+// Upper is https://cql.hl7.org/09-b-cqlreference.html#Upper
+type Upper struct{ *UnaryExpression}
+
+// Lower is https://cql.hl7.org/09-b-cqlreference.html#lower
+type Lower struct{ *UnaryExpression}
 
 // Combine is https://cql.hl7.org/04-logicalspecification.html#combine.
 // In ELM Combine is an OperatorExpression, but we're modeling it as a NaryExpression since in CQL
@@ -1398,6 +1410,9 @@ func (a *DifferenceBetween) GetName() string { return "DifferenceBetween" }
 func (a *In) GetName() string { return "In" }
 
 // GetName returns the name of the system operator.
+func (i *Includes) GetName() string { return "Includes" }
+
+// GetName returns the name of the system operator.
 func (a *IncludedIn) GetName() string { return "IncludedIn" }
 
 // GetName returns the name of the system operator.
@@ -1405,6 +1420,9 @@ func (a *InCodeSystem) GetName() string { return "InCodeSystem" }
 
 // GetName returns the name of the system operator.
 func (a *InValueSet) GetName() string { return "InValueSet" }
+
+// GetName returns the name of the system operator.
+func (p *ProperlyIncludes) GetName() string { return "ProperlyIncludes" }
 
 // GetName returns the name of the system operator.
 func (a *Contains) GetName() string { return "Contains" }
@@ -1433,10 +1451,16 @@ func (a *Coalesce) GetName() string { return "Coalesce" }
 func (a *Concatenate) GetName() string { return "Concatenate" }
 
 // GetName returns the name of the system operator.
-func (a *EndsWith) GetName() string { return "EndsWith"}
+func (a *EndsWith) GetName() string { return "EndsWith" }
 
 // GetName returns the name of the system operator.
-func (a *LastPositionOf) GetName() string { return "LastPositionOf"}
+func (a *LastPositionOf) GetName() string { return "LastPositionOf" }
+
+// GetName returns the name of the system operator.
+func (a *Upper) GetName() string { return "Upper"}
+
+// GetName returns the name of the system operator.
+func (a *Lower) GetName() string{ return "Lower"}
 
 // GetName returns the name of the system operator.
 func (a *Date) GetName() string { return "Date" }

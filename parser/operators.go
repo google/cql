@@ -1005,6 +1005,32 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "Upper",
+			operands: [][]types.IType{
+				{types.String},
+			},
+			model: func() model.IExpression {
+				return &model.Upper{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.String),
+					},
+				}
+			},
+		},
+		{
+			name: "Lower",
+			operands: [][]types.IType{
+				{types.String},
+			},
+			model: func() model.IExpression {
+				return &model.Lower{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.String),
+					},
+				}
+			},
+		},
+		{
 			name: "Split",
 			operands: [][]types.IType{
 				{types.String, types.String},
@@ -1382,6 +1408,9 @@ func (p *Parser) loadSystemOperators() error {
 				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
 				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
 				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				// list overloads
+				[]types.IType{convert.GenericType, convert.GenericList},
+				[]types.IType{convert.GenericList, convert.GenericList},
 			},
 			model: func() model.IExpression {
 				return &model.IncludedIn{
@@ -1627,6 +1656,20 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "Includes",
+			operands: [][]types.IType{
+				{convert.GenericList, convert.GenericType},
+				{convert.GenericList, convert.GenericList},
+			},
+			model: func() model.IExpression {
+				return &model.Includes{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name:     "Intersect",
 			operands: [][]types.IType{{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}}},
 			model: func() model.IExpression {
@@ -1644,6 +1687,20 @@ func (p *Parser) loadSystemOperators() error {
 				return &model.IndexOf{
 					BinaryExpression: &model.BinaryExpression{
 						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		{
+			name: "ProperlyIncludes",
+			operands: [][]types.IType{
+				{convert.GenericList, convert.GenericType},
+				{convert.GenericList, convert.GenericList},
+			},
+			model: func() model.IExpression {
+				return &model.ProperlyIncludes{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
 					},
 				}
 			},
