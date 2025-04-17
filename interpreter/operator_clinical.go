@@ -117,6 +117,18 @@ func calculateAgeAt(birth, asOf result.DateTime, p model.DateTimePrecision) (res
 	if p == model.DAY {
 		return result.New(int(asOf.Date.Sub(birth.Date).Hours() / 24))
 	}
+	
+	if p == model.HOUR {
+		return result.New(int(asOf.Date.Sub(birth.Date).Hours()))
+	}
+	
+	if p == model.MINUTE {
+		return result.New(int(asOf.Date.Sub(birth.Date).Minutes()))
+	}
+	
+	if p == model.SECOND {
+		return result.New(int(asOf.Date.Sub(birth.Date).Seconds()))
+	}
 
 	// TODO(b/304349114): Per https://cql.hl7.org/09-b-cqlreference.html#ageat and
 	// the external tests mentioned in b/304349114#comment3, these date-related
