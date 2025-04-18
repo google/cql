@@ -105,7 +105,7 @@ const (
 // Unit represents the unit for a QuantityValue.
 type Unit string
 
-// TODO(b/319155752) Add support for UCUM values.
+// UCUM values are now supported through the ucum package.
 const (
 	// UNSETUNIT represents unknown unit.
 	UNSETUNIT Unit = ""
@@ -698,6 +698,14 @@ var _ IUnaryExpression = &End{}
 type Predecessor struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &Predecessor{}
+
+// UnitConversion represents a conversion of a quantity to a specific unit
+type UnitConversion struct {
+	*UnaryExpression
+	TargetUnit Unit
+}
+
+var _ IUnaryExpression = &UnitConversion{}
 
 // Successor ELM expression from https://cql.hl7.org/04-logicalspecification.html#successor.
 type Successor struct{ *UnaryExpression }
@@ -1533,3 +1541,6 @@ func (t *Take) GetName() string { return "Take" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationStdDev) GetName() string { return "PopulationStdDev" }
+
+// GetName returns the name of the system operator
+func (u *UnitConversion) GetName() string { return "UnitConversion" }

@@ -722,3 +722,78 @@ func (v *visitor) VisitAggregateExpressionTerm(ctx *cql.AggregateExpressionTermC
 		return v.badExpression(fmt.Sprintf("unsupported aggregate expression: %s", name), ctx)
 	}
 }
+
+func (v *visitor) VisitConversionExpressionTerm(ctx *cql.ConversionExpressionTermContext) model.IExpression {
+	// Get the conversion function name and expression
+	conversionFunc := ctx.GetChild(0).(antlr.TerminalNode).GetText()
+	expr := v.VisitExpression(ctx.Expression())
+
+	if conversionFunc == "convert" {
+		// Handle the "convert to Type" case
+		if typeSpecifier := ctx.TypeSpecifier(); typeSpecifier != nil {
+			typeString := typeSpecifier.GetText()
+			targetType := types.String
+			if typeString == "String" {
+				targetType = types.String
+			}
+
+			return &model.As{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    expr,
+					Expression: model.ResultType(targetType),
+				},
+				AsTypeSpecifier: targetType,
+				Strict:          true,
+			}
+		}
+
+		// Handle the "convert to Unit" case
+		// Check if this is a unit conversion by looking for the "to" keyword followed by a string
+		// For the pattern: convert 5 'mg' to 'g'
+		for i := 0; i < ctx.GetChildCount(); i++ {
+			if node, ok := ctx.GetChild(i).(antlr.TerminalNode); ok && node.GetText() == "to" && i+1 < ctx.GetChildCount() {
+				// Found the "to" keyword, next child might be the destination unit
+				if destUnitNode := ctx.GetChild(i + 1); destUnitNode != nil {
+					// Get the target unit
+					var targetUnit model.Unit
+					if ctx.Unit() != nil {
+						var err error
+						targetUnit, err = v.VisitUnit(ctx.Unit())
+						if err != nil {
+							return v.badExpression(err.Error(), ctx)
+						}
+					} else {
+						// If no direct Unit context, try to parse it from a string literal
+						destUnitExpr := v.VisitExpression(destUnitNode)
+						if literalExpr, ok := destUnitExpr.(*model.Literal); ok && literalExpr.GetResultType() == types.String {
+							// Strip quotes from string literal if present
+							unitStr := literalExpr.Value
+							if len(unitStr) > 2 && unitStr[0] == '\'' && unitStr[len(unitStr)-1] == '\'' {
+								unitStr = unitStr[1 : len(unitStr)-1]
+							}
+							targetUnit = model.Unit(unitStr)
+						} else {
+							return v.badExpression("unit conversion target must be a string literal", ctx)
+						}
+					}
+
+					// Create a UnitConversion expression
+					return &model.UnitConversion{
+						UnaryExpression: &model.UnaryExpression{
+							Operand:    expr,
+							Expression: model.ResultType(types.Quantity),
+						},
+						TargetUnit: targetUnit,
+					}
+				}
+			}
+		}
+	}
+
+	// For other conversion functions like toInteger, etc., use parseFunction
+	m, err := v.parseFunction("", conversionFunc, []antlr.Tree{ctx.Expression()}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
+	}
+	return m
+}
