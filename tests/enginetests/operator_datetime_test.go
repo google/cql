@@ -379,12 +379,12 @@ func TestDateTimeOperatorDifferenceBetween(t *testing.T) {
 		},
 		{
 			name:       "difference in years between null and @2022 returns null",
-			cql:        "difference in years between null  and @2022",
+			cql:        "difference in years between (null as Date)  and @2022",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
 			name:       "difference in years between @2020 and null returns null",
-			cql:        "difference in years between @2020 and null",
+			cql:        "difference in years between @2020 and (null as Date)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{

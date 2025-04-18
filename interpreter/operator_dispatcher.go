@@ -1032,6 +1032,14 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Operands: []types.IType{types.DateTime, types.DateTime},
 				Result:   evalDifferenceBetweenDateTime,
 			},
+			{
+				Operands: []types.IType{types.DateTime, types.Date},
+				Result:   evalDifferenceBetweenDateTime,
+			},
+			{
+				Operands: []types.IType{types.Date, types.DateTime},
+				Result:   evalDifferenceBetweenDateTime,
+			},
 		}, nil
 	case *model.In:
 		// TODO(b/301606416): Support all other In operator overloads.
