@@ -24,6 +24,7 @@ import (
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
+	"github.com/google/cql/ucum"
 )
 
 // ARITHMETIC OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#arithmetic-operators-4
@@ -461,33 +462,75 @@ func bigIntPow(l, r int64) any {
 	return bigResult.Int64()
 }
 
-// TODO(b/319156186): Add support for converting quantities between different units.
-// TODO(b/319333058): Add support for Date + Quantity arithmetic.
-// TODO(b/319525986): Add support for additional arithmetic for Quantities.
+
+// Support for converting quantities between different units and performing arithmetic operations
 func arithmeticQuantity(m model.IBinaryExpression, l, r result.Quantity) (result.Value, error) {
-	if l.Unit != r.Unit {
-		return result.Value{}, fmt.Errorf("internal error - quantity unit conversion unsupported, got units: %s and %s", l.Unit, r.Unit)
-	}
 	switch m.(type) {
-	case *model.Add:
-		return result.New(result.Quantity{Value: l.Value + r.Value, Unit: l.Unit})
-	case *model.Subtract:
-		return result.New(result.Quantity{Value: l.Value - r.Value, Unit: l.Unit})
-	case *model.Multiply:
-		return result.Value{}, fmt.Errorf("internal error - quantity multiplication unsupported, got: %v and %v", l, r)
-	case *model.TruncatedDivide:
-		return result.New(result.Quantity{Value: float64(int64(l.Value / r.Value)), Unit: model.ONEUNIT})
-	case *model.Divide:
-		return result.New(result.Quantity{Value: l.Value / r.Value, Unit: model.ONEUNIT})
-	case *model.Modulo:
+	case *model.Add, *model.Subtract:
+		// For addition and subtraction, convert the right operand to the left's unit if needed
 		if l.Unit != r.Unit {
-			return result.Value{}, fmt.Errorf("internal error - quantity modulo with different units unsupported, got units: %s and %s", l.Unit, r.Unit)
+			// Try to convert r to l's unit
+			convertedVal, err := ucum.ConvertUnit(r.Value, string(r.Unit), string(l.Unit))
+			if err != nil {
+				return result.Value{}, fmt.Errorf("cannot convert between units: %s and %s: %v", r.Unit, l.Unit, err)
+			}
+			// Use the converted value
+			r.Value = convertedVal
+			r.Unit = l.Unit
 		}
+		
+		// Now perform the operation with matching units
+		if m.GetName() == "Add" {
+			return result.New(result.Quantity{Value: l.Value + r.Value, Unit: l.Unit})
+		} else { // Subtract
+			return result.New(result.Quantity{Value: l.Value - r.Value, Unit: l.Unit})
+		}
+	
+	case *model.Multiply:
+		resultUnit := ucum.GetProductOfUnits(string(l.Unit), string(r.Unit))
+		return result.New(result.Quantity{Value: l.Value * r.Value, Unit: model.Unit(resultUnit)})
+		
+	case *model.TruncatedDivide:
 		if r.Value == 0 {
 			return result.New(nil)
 		}
+		// For division, the result unit is dimensionless "1" if units are the same
+		if l.Unit == r.Unit {
+			return result.New(result.Quantity{Value: float64(int64(l.Value / r.Value)), Unit: model.ONEUNIT})
+		}
+		// Otherwise, the result unit is the quotient of the units
+		resultUnit := ucum.GetQuotientOfUnits(string(l.Unit), string(r.Unit))
+		return result.New(result.Quantity{Value: float64(int64(l.Value / r.Value)), Unit: model.Unit(resultUnit)})
+		
+	case *model.Divide:
+		if r.Value == 0 {
+			return result.New(nil)
+		}
+		// For division, the result unit is dimensionless "1" if units are the same
+		if l.Unit == r.Unit {
+			return result.New(result.Quantity{Value: l.Value / r.Value, Unit: model.ONEUNIT})
+		}
+		// Otherwise, the result unit is the quotient of the units
+		resultUnit := ucum.GetQuotientOfUnits(string(l.Unit), string(r.Unit))
+		return result.New(result.Quantity{Value: l.Value / r.Value, Unit: model.Unit(resultUnit)})
+		
+	case *model.Modulo:
+		if r.Value == 0 {
+			return result.New(nil)
+		}
+		// For modulo, units must match or be convertible
+		if l.Unit != r.Unit {
+			// Try to convert r to l's unit
+			convertedVal, err := ucum.ConvertUnit(r.Value, string(r.Unit), string(l.Unit))
+			if err != nil {
+				return result.Value{}, fmt.Errorf("modulo requires matching units, cannot convert %s to %s: %v", r.Unit, l.Unit, err)
+			}
+			// Use the converted value
+			r.Value = convertedVal
+		}
 		return result.New(result.Quantity{Value: math.Mod(l.Value, r.Value), Unit: l.Unit})
 	}
+	
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Arithmetic Expression %v", m)
 }
 

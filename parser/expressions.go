@@ -25,6 +25,7 @@ import (
 	"github.com/google/cql/internal/embeddata/third_party/cqframework/cql"
 	"github.com/google/cql/model"
 	"github.com/google/cql/types"
+	"github.com/google/cql/ucum"
 	"github.com/antlr4-go/antlr/v4"
 )
 
@@ -126,6 +127,8 @@ func (v *visitor) VisitExpression(tree antlr.Tree) model.IExpression {
 		m = v.VisitIndexedExpressionTermContext(t)
 	case *cql.AggregateExpressionTermContext:
 		m = v.VisitAggregateExpressionTerm(t)
+	case *cql.ConversionExpressionTermContext:
+		m = v.VisitConversionExpressionTerm(t)
 
 		// All cases that have a single child and recurse to the child are handled below. For example in
 		// the CQL grammar the only child of QueryExpression is Query, so QueryExpression can be handled
@@ -372,7 +375,7 @@ func (v *visitor) VisitRatioLiteral(ctx *cql.RatioLiteralContext) model.IExpress
 	return &model.Ratio{Numerator: numerator, Denominator: denominator, Expression: model.ResultType(types.Ratio)}
 }
 
-// TODO(b/319155752) Add support for validating UCUM units. Only temporal values are supported for now.
+// VisitQuantityContext handles quantity literals in CQL grammar
 func (v *visitor) VisitQuantityContext(ctx cql.IQuantityContext) (model.Quantity, error) {
 	numberContext := ctx.NUMBER()
 	unitContext := ctx.Unit()
@@ -401,8 +404,53 @@ func (v *visitor) VisitQuantityContext(ctx cql.IQuantityContext) (model.Quantity
 		}
 		return model.Quantity{Value: d, Unit: u, Expression: model.ResultType(types.Quantity)}, nil
 	}
-	fmt.Printf("Warning, parser found a quantity literal declaration with a UCUM unit value, these are not currently validated. got unit: %q", unitContext.STRING())
-	return model.Quantity{Value: d, Unit: model.Unit(parseSTRING(unitContext.STRING())), Expression: model.ResultType(types.Quantity)}, nil
+	
+	// Use UCUM validation for unit strings
+	unitStr := parseSTRING(unitContext.STRING())
+	valid, msg := ucum.CheckUnit(unitStr, true, true)
+	if !valid {
+		// Just log a warning and continue - don't block parsing
+		fmt.Printf("Warning: %s\n", msg)
+	}
+	return model.Quantity{Value: d, Unit: model.Unit(unitStr), Expression: model.ResultType(types.Quantity)}, nil
+}
+
+// VisitUnit handles unit context objects in CQL grammar
+func (v *visitor) VisitUnit(ctx cql.IUnitContext) (model.Unit, error) {
+	if ctx == nil {
+		return model.UNSETUNIT, nil
+	}
+	
+	if ctx.DateTimePrecision() != nil {
+		rs := ctx.DateTimePrecision().GetText()
+		u := stringToTimeUnit(rs)
+		if u == model.UNSETUNIT {
+			return model.UNSETUNIT, fmt.Errorf("invalid date time precision unit: %s", rs)
+		}
+		return u, nil
+	}
+	
+	if ctx.PluralDateTimePrecision() != nil {
+		rs := pluralToSingularDateTimePrecision(ctx.PluralDateTimePrecision().GetText())
+		u := stringToTimeUnit(rs)
+		if u == model.UNSETUNIT {
+			return model.UNSETUNIT, fmt.Errorf("invalid plural date time precision unit: %s", rs)
+		}
+		return u, nil
+	}
+	
+	if ctx.STRING() != nil {
+		unitStr := parseSTRING(ctx.STRING())
+		// Validate the unit through the UCUM package
+		valid, msg := ucum.CheckUnit(unitStr, true, true)
+		if !valid {
+			// Just log a warning and continue - don't block parsing
+			fmt.Printf("Warning: %s\n", msg)
+		}
+		return model.Unit(unitStr), nil
+	}
+	
+	return model.UNSETUNIT, fmt.Errorf("unsupported unit context type")
 }
 
 // VisitReferentialIdentifier handles ReferentialIdentifiers. ReferentialIdentifiers are used
