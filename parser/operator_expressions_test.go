@@ -1025,6 +1025,236 @@ func TestOperatorExpressions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Between Expression with Integers",
+			cql:  "5 between 1 and 10",
+			want: &model.And{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.Boolean),
+					Operands: []model.IExpression{
+						&model.GreaterOrEqual{
+							BinaryExpression: &model.BinaryExpression{
+								Expression: model.ResultType(types.Boolean),
+								Operands: []model.IExpression{
+									model.NewLiteral("5", types.Integer),
+									model.NewLiteral("1", types.Integer),
+								},
+							},
+						},
+						&model.LessOrEqual{
+							BinaryExpression: &model.BinaryExpression{
+								Expression: model.ResultType(types.Boolean),
+								Operands: []model.IExpression{
+									model.NewLiteral("5", types.Integer),
+									model.NewLiteral("10", types.Integer),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Between Expression with Dates",
+			cql:  "@2015 between @2010 and @2020",
+			want: &model.And{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(types.Boolean),
+					Operands: []model.IExpression{
+						&model.GreaterOrEqual{
+							BinaryExpression: &model.BinaryExpression{
+								Expression: model.ResultType(types.Boolean),
+								Operands: []model.IExpression{
+									model.NewLiteral("@2015", types.Date),
+									model.NewLiteral("@2010", types.Date),
+								},
+							},
+						},
+						&model.LessOrEqual{
+							BinaryExpression: &model.BinaryExpression{
+								Expression: model.ResultType(types.Boolean),
+								Operands: []model.IExpression{
+									model.NewLiteral("@2015", types.Date),
+									model.NewLiteral("@2020", types.Date),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Width Expression Term",
+			cql:  "width of Interval[1, 10]",
+			want: &model.UnaryExpression{
+				Operand: &model.Interval{
+					Low:           model.NewLiteral("1", types.Integer),
+					High:          model.NewLiteral("10", types.Integer),
+					Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+					LowInclusive:  true,
+					HighInclusive: true,
+				},
+				Expression: model.ResultType(types.Integer),
+			},
+		},
+		{
+			name: "Width Expression Term with Dates",
+			cql:  "width of Interval[@2010-01-01, @2020-01-01]",
+			want: &model.UnaryExpression{
+				Operand: &model.Interval{
+					Low:           model.NewLiteral("@2010-01-01", types.Date),
+					High:          model.NewLiteral("@2020-01-01", types.Date),
+					Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+					LowInclusive:  true,
+					HighInclusive: true,
+				},
+				Expression: model.ResultType(types.Quantity),
+			},
+		},
+		{
+			name: "Conversion Expression To Type",
+			cql:  "convert 5 to String",
+			want: &model.As{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewLiteral("5", types.Integer),
+					Expression: model.ResultType(types.String),
+				},
+				AsTypeSpecifier: types.String,
+				Strict:          true,
+			},
+		},
+		{
+			name: "Point Extractor Start Expression",
+			cql:  "start of Interval[@2010-01-01, @2020-01-01]",
+			want: &model.Start{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("@2010-01-01", types.Date),
+						High:          model.NewLiteral("@2020-01-01", types.Date),
+						Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+						LowInclusive:  true,
+						HighInclusive: true,
+					},
+					Expression: model.ResultType(types.Date),
+				},
+			},
+		},
+		{
+			name: "Point Extractor End Expression",
+			cql:  "end of Interval[@2010-01-01, @2020-01-01]",
+			want: &model.End{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("@2010-01-01", types.Date),
+						High:          model.NewLiteral("@2020-01-01", types.Date),
+						Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+						LowInclusive:  true,
+						HighInclusive: true,
+					},
+					Expression: model.ResultType(types.Date),
+				},
+			},
+		},
+		{
+			name: "Duration Expression Term",
+			cql:  "duration in days of Interval[@2010-01-01, @2020-01-01]",
+			want: &model.UnaryExpression{
+				Operand: &model.Interval{
+					Low:           model.NewLiteral("@2010-01-01", types.Date),
+					High:          model.NewLiteral("@2020-01-01", types.Date),
+					Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+					LowInclusive:  true,
+					HighInclusive: true,
+				},
+				Expression: model.ResultType(types.Integer),
+			},
+		},
+		{
+			name: "Duration Expression Term in Years",
+			cql:  "duration in years of Interval[@2010-01-01, @2020-01-01]",
+			want: &model.UnaryExpression{
+				Operand: &model.Interval{
+					Low:           model.NewLiteral("@2010-01-01", types.Date),
+					High:          model.NewLiteral("@2020-01-01", types.Date),
+					Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+					LowInclusive:  true,
+					HighInclusive: true,
+				},
+				Expression: model.ResultType(types.Integer),
+			},
+		},
+		{
+			name: "Difference in days between two dates",
+			cql:  "difference in days between @2010-01-01 and @2020-01-01",
+			want: &model.DifferenceBetween{
+				Precision: model.DAY,
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("@2010-01-01", types.Date),
+						model.NewLiteral("@2020-01-01", types.Date),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "Difference in days of interval",
+			cql:  "difference in days of Interval[@2010-01-01, @2020-01-01]",
+			want: &model.DifferenceBetween{
+				Precision: model.DAY,
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.Start{
+							UnaryExpression: &model.UnaryExpression{
+								Operand: &model.Interval{
+									Low:           model.NewLiteral("@2010-01-01", types.Date),
+									High:          model.NewLiteral("@2020-01-01", types.Date),
+									Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+									LowInclusive:  true,
+									HighInclusive: true,
+								},
+								Expression: model.ResultType(types.Date),
+							},
+						},
+						&model.End{
+							UnaryExpression: &model.UnaryExpression{
+								Operand: &model.Interval{
+									Low:           model.NewLiteral("@2010-01-01", types.Date),
+									High:          model.NewLiteral("@2020-01-01", types.Date),
+									Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+									LowInclusive:  true,
+									HighInclusive: true,
+								},
+								Expression: model.ResultType(types.Date),
+							},
+						},
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "Duration Between Expression",
+			cql:  "duration in days between @2010-01-01 and @2020-01-01",
+			want: &model.BinaryExpression{
+				Operands: []model.IExpression{
+					model.NewLiteral("@2010-01-01", types.Date),
+					model.NewLiteral("@2020-01-01", types.Date),
+				},
+				Expression: model.ResultType(types.Integer),
+			},
+		},
+		{
+			name: "Duration Between Expression in Months",
+			cql:  "duration in months between @2010-01-01 and @2020-01-01",
+			want: &model.BinaryExpression{
+				Operands: []model.IExpression{
+					model.NewLiteral("@2010-01-01", types.Date),
+					model.NewLiteral("@2020-01-01", types.Date),
+				},
+				Expression: model.ResultType(types.Integer),
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

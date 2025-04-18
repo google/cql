@@ -16,6 +16,7 @@ package interpreter
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
@@ -24,6 +25,29 @@ import (
 )
 
 // CLINICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#clinical-operators-3
+
+
+// CalculateAgeIn[Years|Months|Weeks|Days|Hours|Minutes|Seconds](birthDate Date|DateTime) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#calculateage
+func evalCalculateAge(u model.IUnaryExpression, birthObj result.Value) (result.Value, error) {
+	m := u.(*model.CalculateAge)
+	p := model.DateTimePrecision(m.Precision)
+	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY, model.HOUR, model.MINUTE, model.SECOND}); err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(birthObj) {
+		return result.New(nil)
+	}
+
+	birth, err := result.ToDateTime(birthObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	
+	// Use current time as asOf time
+	asOf := result.DateTime{Date: time.Now()}
+	return calculateAgeAt(birth, asOf, p)
+}
 
 // CalculateAgeIn[Years|Months|Weeks|Days]At(birthDate Date, asOf Date) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#calculateageat
@@ -92,6 +116,18 @@ func calculateAgeAt(birth, asOf result.DateTime, p model.DateTimePrecision) (res
 
 	if p == model.DAY {
 		return result.New(int(asOf.Date.Sub(birth.Date).Hours() / 24))
+	}
+	
+	if p == model.HOUR {
+		return result.New(int(asOf.Date.Sub(birth.Date).Hours()))
+	}
+	
+	if p == model.MINUTE {
+		return result.New(int(asOf.Date.Sub(birth.Date).Minutes()))
+	}
+	
+	if p == model.SECOND {
+		return result.New(int(asOf.Date.Sub(birth.Date).Seconds()))
 	}
 
 	// TODO(b/304349114): Per https://cql.hl7.org/09-b-cqlreference.html#ageat and

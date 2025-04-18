@@ -297,18 +297,23 @@ func evalCanConvertQuantity(b model.IBinaryExpression, lObj, rObj result.Value) 
 func evalDifferenceBetweenDate(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
 	m := b.(*model.DifferenceBetween)
 	p := model.DateTimePrecision(m.Precision)
-	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY}); err != nil {
-		return result.Value{}, err
-	}
 
+	// Handle null values
 	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
 
+	// Validate date precisions
+	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY}); err != nil {
+		return result.Value{}, err
+	}
+
+	// Convert both to DateTime and compute difference
 	l, r, err := applyToValues(lObj, rObj, result.ToDateTime)
 	if err != nil {
 		return result.Value{}, err
 	}
+
 	return dateTimeDifference(l, r, p)
 }
 
@@ -318,18 +323,23 @@ func evalDifferenceBetweenDate(b model.IBinaryExpression, lObj, rObj result.Valu
 func evalDifferenceBetweenDateTime(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
 	m := b.(*model.DifferenceBetween)
 	p := model.DateTimePrecision(m.Precision)
-	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY, model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND}); err != nil {
-		return result.Value{}, err
-	}
 
+	// Handle null values
 	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
 
+	// Validate datetime precisions
+	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY, model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND}); err != nil {
+		return result.Value{}, err
+	}
+
+	// Convert both to DateTime and compute difference
 	l, r, err := applyToValues(lObj, rObj, result.ToDateTime)
 	if err != nil {
 		return result.Value{}, err
 	}
+
 	return dateTimeDifference(l, r, p)
 }
 

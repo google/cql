@@ -325,6 +325,75 @@ func TestMax(t *testing.T) {
 		wantResult result.Value
 	}{
 		{
+			name: "Max with Integer values",
+			cql:  "Max({1, 5, 3, 10, 2})",
+			wantModel: &model.Max{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "5", "3", "10", "2"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 10),
+		},
+		{
+			name: "Max with Long values",
+			cql:  "Max({100L, 500L, 300L, 1000L, 200L})",
+			wantModel: &model.Max{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"100L", "500L", "300L", "1000L", "200L"}, types.Long),
+					Expression: model.ResultType(types.Long),
+				},
+			},
+			wantResult: newOrFatal(t, int64(1000)),
+		},
+		{
+			name: "Max with Decimal values",
+			cql:  "Max({1.5, 2.5, 3.5, 2.0})",
+			wantModel: &model.Max{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.5", "2.5", "3.5", "2.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 3.5),
+		},
+		{
+			name: "Max with String values",
+			cql:  "Max({'apple', 'zebra', 'banana', 'orange'})",
+			wantModel: &model.Max{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"apple", "zebra", "banana", "orange"}, types.String),
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "zebra"),
+		},
+		{
+			name:       "Max Integer with null values",
+			cql:        "Max({1, null, 5, null, 3})",
+			wantResult: newOrFatal(t, 5),
+		},
+		{
+			name:       "Max Long with null values",
+			cql:        "Max({100L, null, 500L, null, 300L})",
+			wantResult: newOrFatal(t, int64(500)),
+		},
+		{
+			name:       "Max Decimal with null values",
+			cql:        "Max({1.5, null, 3.5, null, 2.0})",
+			wantResult: newOrFatal(t, 3.5),
+		},
+		{
+			name:       "Max with all null Integer list",
+			cql:        "Max({null as Integer, null as Integer})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Max with empty Integer list",
+			cql:        "Max(List<Integer>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
 			name: "Max({@2010, @2012, @2011})",
 			cql:  "Max({@2010, @2012, @2011})",
 			wantModel: &model.Max{
@@ -391,6 +460,75 @@ func TestMin(t *testing.T) {
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
+		{
+			name: "Min with Integer values",
+			cql:  "Min({10, 5, 3, 1, 2})",
+			wantModel: &model.Min{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"10", "5", "3", "1", "2"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name: "Min with Long values",
+			cql:  "Min({1000L, 500L, 300L, 100L, 200L})",
+			wantModel: &model.Min{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1000L", "500L", "300L", "100L", "200L"}, types.Long),
+					Expression: model.ResultType(types.Long),
+				},
+			},
+			wantResult: newOrFatal(t, int64(100)),
+		},
+		{
+			name: "Min with Decimal values",
+			cql:  "Min({3.5, 2.5, 1.5, 2.0})",
+			wantModel: &model.Min{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"3.5", "2.5", "1.5", "2.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 1.5),
+		},
+		{
+			name: "Min with String values",
+			cql:  "Min({'apple', 'zebra', 'banana', 'orange'})",
+			wantModel: &model.Min{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"apple", "zebra", "banana", "orange"}, types.String),
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "apple"),
+		},
+		{
+			name:       "Min Integer with null values",
+			cql:        "Min({10, null, 5, null, 3})",
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "Min Long with null values",
+			cql:        "Min({1000L, null, 500L, null, 300L})",
+			wantResult: newOrFatal(t, int64(300)),
+		},
+		{
+			name:       "Min Decimal with null values",
+			cql:        "Min({3.5, null, 1.5, null, 2.0})",
+			wantResult: newOrFatal(t, 1.5),
+		},
+		{
+			name:       "Min with all null Integer list",
+			cql:        "Min({null as Integer, null as Integer})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Min with empty Integer list",
+			cql:        "Min(List<Integer>{})",
+			wantResult: newOrFatal(t, nil),
+		},
 		{
 			name: "Min({@2012, @2010, @2011})",
 			cql:  "Min({@2012, @2010, @2011})",
@@ -668,132 +806,73 @@ func TestMedian(t *testing.T) {
 	}
 }
 
-func TestMedian_Error(t *testing.T) {
-	tests := []struct {
-		name            string
-		cql             string
-		wantModel       model.IExpression
-		wantErrContains string
-	}{
-		{
-			name:            "Median({1 'cm', 2 'g'})",
-			cql:             "Median({1 'cm', 2 'g'})",
-			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
-		},
-		{
-			name:            "Median({1 '', 2 'g'})",
-			cql:             "Median({1 '', 2 'g'})",
-			wantErrContains: "Median(List<Quantity>) operand has different units which is not supported",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			p := newFHIRParser(t)
-			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
-			if err != nil {
-				t.Fatalf("Parse returned unexpected error: %v", err)
-			}
-			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
-				t.Errorf("Parse diff (-want +got):\n%s", diff)
-			}
-
-			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
-			if err == nil || !strings.Contains(err.Error(), tc.wantErrContains) {
-				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
-			}
-		})
-	}
-}
-
-func TestPopulationStdDev(t *testing.T) {
+func TestStdDev(t *testing.T) {
 	tests := []struct {
 		name       string
 		cql        string
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-		// Decimal cases - Round is added to the cql to avoid float point comparison issues.
 		{
-			name: "PopulationStdDev({1.5, 2.5, 3.5, 4.5})",
-			cql:  "Round(PopulationStdDev({1.5, 2.5, 3.5, 4.5}), 3)",
-			wantModel: &model.Round{
-				NaryExpression: &model.NaryExpression{
-					Operands: []model.IExpression{
-						&model.PopulationStdDev{
-							UnaryExpression: &model.UnaryExpression{
-								Operand:    model.NewList([]string{"1.5", "2.5", "3.5", "4.5"}, types.Decimal),
-								Expression: model.ResultType(types.Decimal),
-							},
-						},
-						model.NewLiteral("3", types.Integer),
-					},
+			name: "StdDev({1.0, 2.0, 3.0, 4.0, 5.0})",
+			cql:  "StdDev({1.0, 2.0, 3.0, 4.0, 5.0})",
+			wantModel: &model.StdDev{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.0", "2.0", "3.0", "4.0", "5.0"}, types.Decimal),
 					Expression: model.ResultType(types.Decimal),
 				},
 			},
-			wantResult: newOrFatal(t, 1.118),
+			wantResult: newOrFatal(t, 1.58113883),
 		},
 		{
-			name:       "PopulationStdDev({1.0, 2.0, 3.0, 4.0, 5.0})",
-			cql:        "Round(PopulationStdDev({1.0, 2.0, 3.0, 4.0, 5.0}), 3)",
-			wantResult: newOrFatal(t, 1.414),
+			name:       "StdDev with unordered decimal list",
+			cql:        "StdDev({5.0, 2.0, 1.0, 4.0, 3.0})",
+			wantResult: newOrFatal(t, 1.58113883),
 		},
 		{
-			name:       "Unordered Decimal list: PopulationStdDev({2.5, 3.5, 1.5, 4.5})",
-			cql:        "Round(PopulationStdDev({2.5, 3.5, 1.5, 4.5}), 3)",
-			wantResult: newOrFatal(t, 1.118),
-		},
-		// Quantity cases - Round is added and quantity values is unwrapped to avoid float point
-		// comparison issues.
-		{
-			name:       "PopulationStdDev({1 'cm', 2 'cm', 3 'cm', 4 'cm', 5 'cm'})",
-			cql:        "Round(PopulationStdDev({1 'cm', 2 'cm', 3 'cm', 4 'cm', 5 'cm'}).value, 3)",
-			wantResult: newOrFatal(t, 1.414),
+			name:       "StdDev with all identical values",
+			cql:        "StdDev({3.0, 3.0, 3.0, 3.0})",
+			wantResult: newOrFatal(t, 0.0),
 		},
 		{
-			name:       "PopulationStdDev({1.5 'g', 2.5 'g', 3.5 'g', 4.5 'g'})",
-			cql:        "Round(PopulationStdDev({1.5 'g', 2.5 'g', 3.5 'g', 4.5 'g'}).value, 3)",
-			wantResult: newOrFatal(t, 1.118),
-		},
-		{
-			name:       "Unordered Quantity list: PopulationStdDev({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'})",
-			cql:        "Round(PopulationStdDev({2.5 'g', 3.5 'g', 1.5 'g', 4.5 'g'}).value, 3)",
-			wantResult: newOrFatal(t, 1.118),
-		},
-		{
-			name:       "PopulationStdDev({1 'cm', 3 'cm'}) simplified case with no rounding",
-			cql:        "PopulationStdDev({1 'cm', 3 'cm'})",
-			wantResult: newOrFatal(t, result.Quantity{Value: 1.0, Unit: "cm"}),
-		},
-		{
-			name:       "PopulationStdDev(List<Decimal>{})",
-			cql:        "PopulationStdDev(List<Decimal>{})",
+			name:       "StdDev with null input",
+			cql:        "StdDev(null as List<Decimal>)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev({null as Decimal})",
-			cql:        "PopulationStdDev({null as Decimal})",
+			name:       "StdDev with empty list",
+			cql:        "StdDev({} as List<Decimal>)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev(null as List<Decimal>)",
-			cql:        "PopulationStdDev(null as List<Decimal>)",
+			name:       "StdDev with single value",
+			cql:        "StdDev({5.0})",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev(List<Quantity>{})",
-			cql:        "PopulationStdDev(List<Quantity>{})",
+			name:       "StdDev with null values in list",
+			cql:        "StdDev({1.0, null, 3.0, null, 5.0})",
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "StdDev with all null values",
+			cql:        "StdDev({null, null, null} as List<Decimal>)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "PopulationStdDev({null as Quantity})",
-			cql:        "PopulationStdDev({null as Quantity})",
-			wantResult: newOrFatal(t, nil),
+			name:       "StdDev with quantities",
+			cql:        "StdDev({1.0 'g', 2.0 'g', 3.0 'g', 4.0 'g', 5.0 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 1.58113883, Unit: "g"}),
 		},
 		{
-			name:       "PopulationStdDev(null as List<Quantity>)",
-			cql:        "PopulationStdDev(null as List<Quantity>)",
-			wantResult: newOrFatal(t, nil),
+			name:       "StdDev with unordered quantities",
+			cql:        "StdDev({5.0 'mg', 2.0 'mg', 1.0 'mg', 4.0 'mg', 3.0 'mg'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 1.58113883, Unit: "mg"}),
+		},
+		{
+			name:       "StdDev with null quantities in list",
+			cql:        "StdDev({1.0 'cm', null, 3.0 'cm', null, 5.0 'cm'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 2.0, Unit: "cm"}),
 		},
 	}
 
@@ -819,7 +898,7 @@ func TestPopulationStdDev(t *testing.T) {
 	}
 }
 
-func TestPopulationStdDev_Error(t *testing.T) {
+func TestStdDev_Error(t *testing.T) {
 	tests := []struct {
 		name            string
 		cql             string
@@ -827,14 +906,9 @@ func TestPopulationStdDev_Error(t *testing.T) {
 		wantErrContains string
 	}{
 		{
-			name:            "PopulationStdDev({1 'cm', 2 'g'})",
-			cql:             "PopulationStdDev({1 'cm', 2 'g'})",
-			wantErrContains: "operand has different units which is not supported",
-		},
-		{
-			name:            "PopulationStdDev({1 '', 2 'g'})",
-			cql:             "PopulationStdDev({1 '', 2 'g'})",
-			wantErrContains: "operand has different units which is not supported",
+			name:            "StdDev with different units",
+			cql:             "StdDev({2.1 'cm', 3.1 'g'})",
+			wantErrContains: "different units which is not supported",
 		},
 	}
 
@@ -850,8 +924,465 @@ func TestPopulationStdDev_Error(t *testing.T) {
 			}
 
 			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
-			if err == nil || !strings.Contains(err.Error(), tc.wantErrContains) {
+			if !strings.Contains(err.Error(), tc.wantErrContains) {
 				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
+			}
+		})
+	}
+}
+
+func TestVariance(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Variance({1.0, 2.0, 3.0, 4.0, 5.0})",
+			cql:  "Variance({1.0, 2.0, 3.0, 4.0, 5.0})",
+			wantModel: &model.Variance{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.0", "2.0", "3.0", "4.0", "5.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 2.5),
+		},
+		{
+			name:       "Variance with unordered decimal list",
+			cql:        "Variance({5.0, 2.0, 1.0, 4.0, 3.0})",
+			wantResult: newOrFatal(t, 2.5),
+		},
+		{
+			name:       "Variance with all identical values",
+			cql:        "Variance({3.0, 3.0, 3.0, 3.0})",
+			wantResult: newOrFatal(t, 0.0),
+		},
+		{
+			name:       "Variance with null input",
+			cql:        "Variance(null as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Variance with empty list",
+			cql:        "Variance({} as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Variance with single value",
+			cql:        "Variance({5.0})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Variance with null values in list",
+			cql:        "Variance({1.0, null, 3.0, null, 5.0})",
+			wantResult: newOrFatal(t, 4.0),
+		},
+		{
+			name:       "Variance with all null values",
+			cql:        "Variance({null, null, null} as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Variance with quantities",
+			cql:        "Variance({1.0 'g', 2.0 'g', 3.0 'g', 4.0 'g', 5.0 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 2.5, Unit: "g"}),
+		},
+		{
+			name:       "Variance with unordered quantities",
+			cql:        "Variance({5.0 'mg', 2.0 'mg', 1.0 'mg', 4.0 'mg', 3.0 'mg'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 2.5, Unit: "mg"}),
+		},
+		{
+			name:       "Variance with null quantities in list",
+			cql:        "Variance({1.0 'cm', null, 3.0 'cm', null, 5.0 'cm'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 4.0, Unit: "cm"}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestVariance_Error(t *testing.T) {
+	tests := []struct {
+		name            string
+		cql             string
+		wantModel       model.IExpression
+		wantErrContains string
+	}{
+		{
+			name:            "Variance with different units",
+			cql:             "Variance({2.1 'cm', 3.1 'g'})",
+			wantErrContains: "different units which is not supported",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if !strings.Contains(err.Error(), tc.wantErrContains) {
+				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
+			}
+		})
+	}
+}
+
+func TestGeometricMean(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "GeometricMean({1.0, 2.0, 3.0, 4.0})",
+			cql:  "GeometricMean({1.0, 2.0, 3.0, 4.0})",
+			wantModel: &model.GeometricMean{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1.0", "2.0", "3.0", "4.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+			wantResult: newOrFatal(t, 2.21336384),
+		},
+		{
+			name:       "GeometricMean with unordered decimal list",
+			cql:        "GeometricMean({4.0, 2.0, 1.0, 3.0})",
+			wantResult: newOrFatal(t, 2.21336384),
+		},
+		{
+			name:       "GeometricMean with all identical values",
+			cql:        "GeometricMean({2.0, 2.0, 2.0, 2.0})",
+			wantResult: newOrFatal(t, 2.0),
+		},
+		{
+			name:       "GeometricMean with null input",
+			cql:        "GeometricMean(null as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "GeometricMean with empty list",
+			cql:        "GeometricMean({} as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "GeometricMean with null values in list",
+			cql:        "GeometricMean({1.0, null, 3.0, null, 9.0})",
+			wantResult: newOrFatal(t, 3.0),
+		},
+		{
+			name:       "GeometricMean with all null values",
+			cql:        "GeometricMean({null, null, null} as List<Decimal>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "GeometricMean with quantities",
+			cql:        "GeometricMean({1.0 'g', 2.0 'g', 3.0 'g', 4.0 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 2.21336384, Unit: "g"}),
+		},
+		{
+			name:       "GeometricMean with unordered quantities",
+			cql:        "GeometricMean({4.0 'mg', 2.0 'mg', 1.0 'mg', 3.0 'mg'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 2.21336384, Unit: "mg"}),
+		},
+		{
+			name:       "GeometricMean with null quantities in list",
+			cql:        "GeometricMean({1.0 'cm', null, 3.0 'cm', null, 9.0 'cm'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 3.0, Unit: "cm"}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestGeometricMean_Error(t *testing.T) {
+	tests := []struct {
+		name            string
+		cql             string
+		wantModel       model.IExpression
+		wantErrContains string
+	}{
+		{
+			name:            "GeometricMean with different units",
+			cql:             "GeometricMean({2.0 'cm', 3.0 'g'})",
+			wantErrContains: "different units which is not supported",
+		},
+		{
+			name:            "GeometricMean with non-positive value",
+			cql:             "GeometricMean({2.0, 0.0, 3.0})",
+			wantErrContains: "non-positive value",
+		},
+		{
+			name:            "GeometricMean with negative value",
+			cql:             "GeometricMean({2.0, -1.0, 3.0})",
+			wantErrContains: "non-positive value",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if !strings.Contains(err.Error(), tc.wantErrContains) {
+				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
+			}
+		})
+	}
+}
+
+func TestProduct(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Product({1, 2, 3, 4})",
+			cql:  "Product({1, 2, 3, 4})",
+			wantModel: &model.Product{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3", "4"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 24),
+		},
+		{
+			name:       "Product with Long values",
+			cql:        "Product({10L, 20L, 30L})",
+			wantResult: newOrFatal(t, int64(6000)),
+		},
+		{
+			name:       "Product with Decimal values",
+			cql:        "Product({1.5, 2.0, 2.5})",
+			wantResult: newOrFatal(t, 7.5),
+		},
+		{
+			name:       "Product with null input",
+			cql:        "Product(null as List<Integer>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Product with empty list",
+			cql:        "Product({} as List<Integer>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Product with null values in list",
+			cql:        "Product({1, null, 3, null, 5})",
+			wantResult: newOrFatal(t, 15),
+		},
+		{
+			name:       "Product with all null values",
+			cql:        "Product({null, null, null} as List<Integer>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Product with zero value",
+			cql:        "Product({1, 0, 3, 4})",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "Product with negative values",
+			cql:        "Product({-1, 2, -3})",
+			wantResult: newOrFatal(t, 6),
+		},
+		{
+			name:       "Product with quantities",
+			cql:        "Product({2.0 'g', 3.0 'g', 4.0 'g'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 24.0, Unit: "g"}),
+		},
+		{
+			name:       "Product with null quantities in list",
+			cql:        "Product({2.0 'cm', null, 4.0 'cm'})",
+			wantResult: newOrFatal(t, result.Quantity{Value: 8.0, Unit: "cm"}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestProduct_Error(t *testing.T) {
+	tests := []struct {
+		name            string
+		cql             string
+		wantModel       model.IExpression
+		wantErrContains string
+	}{
+		{
+			name:            "Product with different units",
+			cql:             "Product({2.0 'cm', 3.0 'g'})",
+			wantErrContains: "different units which is not supported",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if !strings.Contains(err.Error(), tc.wantErrContains) {
+				t.Errorf("Eval returned unexpected error: %v, want error containing %q", err, tc.wantErrContains)
+			}
+		})
+	}
+}
+
+func TestMode(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Mode({1, 2, 3, 2, 1, 2})",
+			cql:  "Mode({1, 2, 3, 2, 1, 2})",
+			wantModel: &model.Mode{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"1", "2", "3", "2", "1", "2"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Mode({1, 2, 3, 3, 4, 5})",
+			cql:        "Mode({1, 2, 3, 3, 4, 5})",
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "Mode with null input",
+			cql:        "Mode(null as List<Integer>)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Mode({1, 2, null, 2})",
+			cql:        "Mode({1, 2, null, 2})",
+			wantResult: newOrFatal(t, 2),
+		},
+		{
+			name:       "Mode with empty list",
+			cql:        "Mode(List<Integer>{})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Mode with all null list",
+			cql:        "Mode({null as Integer, null as Integer})",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Mode({1.5, 2.5, 3.5, 2.5, 1.5, 2.5})",
+			cql:        "Mode({1.5, 2.5, 3.5, 2.5, 1.5, 2.5})",
+			wantResult: newOrFatal(t, 2.5),
+		},
+		{
+			name:       "Mode({'a', 'b', 'c', 'b', 'a', 'b'})",
+			cql:        "Mode({'a', 'b', 'c', 'b', 'a', 'b'})",
+			wantResult: newOrFatal(t, "b"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
 			}
 		})
 	}
