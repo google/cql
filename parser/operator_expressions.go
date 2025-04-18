@@ -580,13 +580,13 @@ func (v *visitor) VisitSetAggregateExpressionTerm(ctx *cql.SetAggregateExpressio
 
 	// Handle different set aggregate functions
 	switch aggFunc {
-	case "alltrue", "allTrue":
+	case "alltrue":
 		m, err := v.parseFunction("", "AllTrue", []antlr.Tree{expr}, false)
 		if err != nil {
 			return v.badExpression(err.Error(), ctx)
 		}
 		return m
-	case "anytrue", "anyTrue":
+	case "anytrue":
 		m, err := v.parseFunction("", "AnyTrue", []antlr.Tree{expr}, false)
 		if err != nil {
 			return v.badExpression(err.Error(), ctx)
