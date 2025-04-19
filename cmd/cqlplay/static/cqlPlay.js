@@ -39,6 +39,9 @@ context Patient`;
 
 let data = syntheticPatient;
 
+// Libraries array to store additional CQL libraries
+let libraries = [];
+
 let results = '';
 
 // Helper functions:
@@ -81,6 +84,16 @@ function bindButtonActions() {
       .addEventListener('click', function(e) {
         showDataTab();
       });
+  document.getElementById('librariesTabButton')
+      .addEventListener('click', function(e) {
+        showLibrariesTab();
+      });
+  document.getElementById('addLibrary')
+      .addEventListener('click', function(e) {
+        addLibrary();
+      });
+  document.getElementById('uploadLibrary')
+      .addEventListener('change', handleFileUpload);
 }
 
 /**
@@ -98,7 +111,15 @@ function runCQL() {
   };
   xhr.open('POST', '/eval_cql', true);
   xhr.setRequestHeader('Content-Type', 'text/json');
-  xhr.send(JSON.stringify({'cql': code, 'data': data}));
+  
+  // Collect library content to send with request
+  const libraryContents = libraries.map(lib => lib.content);
+  
+  xhr.send(JSON.stringify({
+    'cql': code, 
+    'data': data,
+    'libraries': libraryContents
+  }));
 }
 
 /**
@@ -107,9 +128,11 @@ function runCQL() {
 function showDataTab() {
   document.getElementById('cqlEntry').style.display = 'none';
   document.getElementById('dataEntry').style.display = 'block';
+  document.getElementById('librariesEntry').style.display = 'none';
 
-  document.getElementById('dataTabButton').className += 'active';
+  document.getElementById('dataTabButton').className = 'active';
   document.getElementById('cqlTabButton').className = '';
+  document.getElementById('librariesTabButton').className = '';
 }
 
 /**
@@ -118,9 +141,134 @@ function showDataTab() {
 function showCQLTab() {
   document.getElementById('cqlEntry').style.display = 'block';
   document.getElementById('dataEntry').style.display = 'none';
+  document.getElementById('librariesEntry').style.display = 'none';
 
-  document.getElementById('cqlTabButton').className += 'active';
+  document.getElementById('cqlTabButton').className = 'active';
   document.getElementById('dataTabButton').className = '';
+  document.getElementById('librariesTabButton').className = '';
+}
+
+/**
+ * showLibrariesTab shows the Libraries tab and hides other tabs.
+ */
+function showLibrariesTab() {
+  document.getElementById('cqlEntry').style.display = 'none';
+  document.getElementById('dataEntry').style.display = 'none';
+  document.getElementById('librariesEntry').style.display = 'block';
+
+  document.getElementById('librariesTabButton').className = 'active';
+  document.getElementById('cqlTabButton').className = '';
+  document.getElementById('dataTabButton').className = '';
+}
+
+/**
+ * addLibrary adds a new library to the libraries list and updates the UI.
+ */
+function addLibrary(name = '', content = '') {
+  const libraryId = Date.now(); // Unique ID for the library
+  
+  // Add to libraries array
+  libraries.push({
+    id: libraryId,
+    name: name,
+    content: content
+  });
+  
+  // Update the UI
+  renderLibraries();
+  
+  // Save to localStorage
+  saveLibrariesToLocalStorage();
+}
+
+/**
+ * removeLibrary removes a library from the libraries list and updates the UI.
+ */
+function removeLibrary(libraryId) {
+  libraries = libraries.filter(lib => lib.id !== libraryId);
+  renderLibraries();
+  saveLibrariesToLocalStorage();
+}
+
+/**
+ * renderLibraries updates the libraries UI with the current libraries.
+ */
+function renderLibraries() {
+  const container = document.getElementById('librariesContainer');
+  container.innerHTML = '';
+  
+  libraries.forEach(library => {
+    const libraryContainer = document.createElement('div');
+    libraryContainer.className = 'libraryContainer';
+    
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'libraryHeader';
+    
+    // Create label for the library name input
+    const nameLabel = document.createElement('div');
+    nameLabel.className = 'libraryNameLabel';
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = library.name;
+    nameInput.placeholder = 'Library Name';
+    nameInput.className = 'libraryNameInput';
+    nameInput.oninput = function(e) {
+      library.name = e.target.value;
+      saveLibrariesToLocalStorage();
+    };
+    
+    nameLabel.appendChild(document.createTextNode('Library Name:'));
+    nameLabel.appendChild(nameInput);
+    
+    const removeButton = document.createElement('button');
+    removeButton.className = 'removeLibraryButton';
+    removeButton.textContent = 'Remove';
+    removeButton.onclick = function() {
+      removeLibrary(library.id);
+    };
+    
+    headerDiv.appendChild(nameLabel);
+    headerDiv.appendChild(removeButton);
+    
+    const editorDiv = document.createElement('div');
+    editorDiv.className = 'codeInputContainer';
+    
+    const codeInput = document.createElement('code-input');
+    codeInput.setAttribute('lang', 'cql');
+    codeInput.setAttribute('placeholder', 'Type CQL Library Here');
+    codeInput.className = 'codeInput';
+    codeInput.value = library.content;
+    codeInput.onchange = function(e) {
+      library.content = e.target.value;
+      saveLibrariesToLocalStorage();
+    };
+    
+    editorDiv.appendChild(codeInput);
+    
+    libraryContainer.appendChild(headerDiv);
+    libraryContainer.appendChild(editorDiv);
+    
+    container.appendChild(libraryContainer);
+  });
+}
+
+/**
+ * saveLibrariesToLocalStorage saves the libraries to localStorage.
+ */
+function saveLibrariesToLocalStorage() {
+  localStorage.setItem('cqlLibraries', JSON.stringify(libraries));
+}
+
+/**
+ * loadLibrariesFromLocalStorage loads the libraries from localStorage.
+ */
+function loadLibrariesFromLocalStorage() {
+  const storedLibraries = localStorage.getItem('cqlLibraries');
+  if (storedLibraries) {
+    libraries = JSON.parse(storedLibraries);
+    renderLibraries();
+  }
 }
 
 /**
@@ -151,6 +299,33 @@ function setupPrism() {
 }
 
 /**
+ * handleFileUpload processes uploaded CQL library files
+ */
+function handleFileUpload(event) {
+  const fileList = event.target.files;
+  if (fileList.length === 0) {
+    return; // No file selected
+  }
+  
+  const file = fileList[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    const content = e.target.result;
+    // Extract library name from filename (remove .cql extension)
+    const fileName = file.name.replace(/\.cql$/i, '');
+    
+    // Add the library with the file content
+    addLibrary(fileName, content);
+  };
+  
+  reader.readAsText(file);
+  
+  // Reset the file input so the same file can be selected again
+  event.target.value = '';
+}
+
+/**
  * main is the entrypoint for the script.
  */
 function main() {
@@ -159,8 +334,15 @@ function main() {
   bindInputsOnChange();
   bindButtonActions();
 
-  // Initially hide dataEntry tab:
+  // Load libraries from localStorage
+  loadLibrariesFromLocalStorage();
+
+  // Initially hide non-CQL tabs
   document.getElementById('dataEntry').style.display = 'none';
+  document.getElementById('librariesEntry').style.display = 'none';
+  
+  // Set CQL tab as active
+  document.getElementById('cqlTabButton').className = 'active';
 }
 
 main();  // All code actually executed when the script is loaded by the HTML.

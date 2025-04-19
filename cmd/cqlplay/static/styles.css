@@ -91,4 +91,83 @@ code-input {
 
 .submitButton {
   margin: 10px;
+  font-family: Roboto, Helvetica;
+  font-size: 1em;
+  font-weight: normal;
+}
+
+.addButton {
+  margin: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: Roboto, Helvetica;
+  font-size: 1em;
+  font-weight: normal;
+}
+
+.uploadButton {
+  margin: 10px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-block;
+  font-family: Roboto, Helvetica;
+  font-size: 1em;
+  font-weight: normal;
+}
+
+.libraryButtons {
+  display: flex;
+  flex-direction: row;
+}
+
+.libraryContainer {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.libraryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.libraryNameLabel {
+  display: flex;
+  align-items: center;
+  font-family: Roboto, Helvetica;
+  font-weight: bold;
+}
+
+.libraryNameInput {
+  padding: 5px;
+  width: 300px;
+  margin-left: 10px;
+}
+
+.removeLibraryButton {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: Roboto, Helvetica;
+  font-size: 1em;
+  font-weight: normal;
+}
+
+.instructions {
+  font-family: Roboto, Helvetica;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 15px;
+  line-height: 1.4;
 }
