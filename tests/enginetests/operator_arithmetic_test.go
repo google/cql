@@ -1613,7 +1613,7 @@ func TestMaximum(t *testing.T) {
 		{
 			name:       "maximum DateTime",
 			cql:        "maximum DateTime",
-			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(9999, 12, 31, 23, 59, 59, 999, defaultEvalTimestamp.Location()), Precision: model.MILLISECOND}),
+			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(9999, 12, 31, 23, 59, 59, 999000000, time.UTC), Precision: model.MILLISECOND}),
 		},
 		{
 			name:       "maximum Time",
