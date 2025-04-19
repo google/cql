@@ -24,6 +24,10 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
 	"flag"
@@ -50,7 +54,18 @@ func main() {
 // tp is a shared terminology provider. This must be thread safe.
 var tp *terminology.LocalFHIRProvider
 
+// File storage directory
+const uploadDir = ".cql_uploads"
+
+// Mutex for file operations
+var fileMutex sync.Mutex
+
 func serve() error {
+	// Create upload directory if it doesn't exist
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		return fmt.Errorf("failed to create upload directory: %w", err)
+	}
+
 	mux, err := serverHandler()
 	if err != nil {
 		return err
@@ -77,8 +92,183 @@ func serverHandler() (http.Handler, error) {
 
 	// eval_cql is the evaluation endpoint for CQL.
 	mux.HandleFunc("/eval_cql", handleEvalCQL)
+	
+	// File management endpoints
+	mux.HandleFunc("/upload_file", handleUploadFile)
+	mux.HandleFunc("/delete_file", handleDeleteFile)
+	mux.HandleFunc("/list_files", handleListFiles)
+	
+	// Health check endpoint
+	mux.HandleFunc("/health", handleHealthCheck)
 
 	return mux, nil
+}
+
+// Type definitions for file management
+type FileInfo struct {
+	Name string `json:"name"`
+	Size int64  `json:"size"`
+}
+
+type ListFilesResponse struct {
+	Files []FileInfo `json:"files"`
+}
+
+type DeleteFileRequest struct {
+	Filename string `json:"filename"`
+}
+
+// handleUploadFile handles file uploads
+func handleUploadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the multipart form, 10 MB max
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get the file from the form
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Failed to get file: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Check file extension
+	if !strings.HasSuffix(strings.ToLower(header.Filename), ".cql") {
+		http.Error(w, "Only .cql files are allowed", http.StatusBadRequest)
+		return
+	}
+
+	// Create a new file in the uploads directory
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	filePath := filepath.Join(uploadDir, header.Filename)
+	
+	// Create the file
+	dst, err := os.Create(filePath)
+	if err != nil {
+		http.Error(w, "Failed to create file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+
+	// Copy the uploaded file to the destination file
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "Failed to save file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get file info for response
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		http.Error(w, "Failed to get file info: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return the file size in the response
+	response := map[string]int64{
+		"size": fileInfo.Size(),
+	}
+	
+	// Send response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleDeleteFile handles file deletion
+func handleDeleteFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req DeleteFileRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Filename == "" {
+		http.Error(w, "Filename is required", http.StatusBadRequest)
+		return
+	}
+
+	// Prevent directory traversal
+	filename := filepath.Base(req.Filename)
+	filePath := filepath.Join(uploadDir, filename)
+
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	// Delete the file
+	if err := os.Remove(filePath); err != nil {
+		http.Error(w, "Failed to delete file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Send success response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+// handleListFiles handles listing all uploaded files
+func handleListFiles(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	files, err := os.ReadDir(uploadDir)
+	if err != nil {
+		http.Error(w, "Failed to read directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var fileInfos []FileInfo
+	for _, file := range files {
+		// Skip directories
+		if file.IsDir() {
+			continue
+		}
+		
+		// Get file info
+		info, err := file.Info()
+		if err != nil {
+			log.Errorf("Failed to get info for file %s: %v", file.Name(), err)
+			continue
+		}
+		
+		fileInfos = append(fileInfos, FileInfo{
+			Name: info.Name(),
+			Size: info.Size(),
+		})
+	}
+
+	// Send response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ListFilesResponse{Files: fileInfos})
+}
+
+// handleHealthCheck handles health check requests
+func handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
@@ -106,8 +296,21 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 		sendError(w, err, http.StatusInternalServerError)
 		return
 	}
-
-	elm, err := cql.Parse(req.Context(), []string{evalCQLReq.CQL, fhirHelpers}, cql.ParseConfig{DataModels: [][]byte{fhirDM}})
+	
+	// Read all files from the uploads directory
+	uploadedLibraries, err := readUploadedLibraries()
+	if err != nil {
+		sendError(w, fmt.Errorf("failed to read uploaded libraries: %w", err), http.StatusInternalServerError)
+		return
+	}
+	
+	// Add uploaded libraries, FHIRHelpers, and the input CQL to the list of libraries to parse
+	libraries := append([]string{evalCQLReq.CQL, fhirHelpers}, uploadedLibraries...)
+	
+	// Log the libraries being used
+	log.Infof("Parsing %d libraries", len(libraries))
+	
+	elm, err := cql.Parse(req.Context(), libraries, cql.ParseConfig{DataModels: [][]byte{fhirDM}})
 	if err != nil {
 		sendError(w, fmt.Errorf("failed to parse: %w", err), http.StatusInternalServerError)
 		return
@@ -142,8 +345,8 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 
 func sendError(w http.ResponseWriter, err error, code int) {
 	log.Errorf("%v", err)
+	w.WriteHeader(code) // Set status code first
 	w.Write([]byte("Error: " + err.Error())) // be careful in the future, may not always want to send full error strings to the client
-	w.WriteHeader(code)
 }
 
 type evalCQLRequest struct {
@@ -170,4 +373,47 @@ func getTerminologyProvider() (*terminology.LocalFHIRProvider, error) {
 		return nil, err
 	}
 	return tp, nil
+}
+
+// readUploadedLibraries reads all .cql files from the uploads directory
+func readUploadedLibraries() ([]string, error) {
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+	
+	// Read all files in the uploads directory
+	files, err := os.ReadDir(uploadDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// If the directory doesn't exist, return an empty slice
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("failed to read uploads directory: %w", err)
+	}
+	
+	var libraries []string
+	
+	// Read the content of each .cql file
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		
+		// Only process .cql files
+		if !strings.HasSuffix(strings.ToLower(file.Name()), ".cql") {
+			continue
+		}
+		
+		// Read the file content
+		filePath := filepath.Join(uploadDir, file.Name())
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file %s: %w", file.Name(), err)
+		}
+		
+		// Add the file content to the list of libraries
+		libraries = append(libraries, string(content))
+		log.Infof("Added library from file: %s", file.Name())
+	}
+	
+	return libraries, nil
 }
