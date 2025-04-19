@@ -167,6 +167,10 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 	case *model.Precision:
 		return []convert.Overload[evalUnarySignature]{
 			{
+				Operands: []types.IType{types.Decimal},
+				Result:   evalPrecisionDecimal,
+			},
+			{
 				Operands: []types.IType{types.Date},
 				Result:   evalPrecisionDateTime,
 			},
@@ -1055,6 +1059,44 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{types.String, types.String},
 				Result:   evalLastPositionOf,
+			},
+		}, nil
+	case *model.HighBoundary:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Decimal, types.Integer},
+				Result:   evalHighBoundaryDecimal,
+			},
+			{
+				Operands: []types.IType{types.Date, types.Integer},
+				Result:   evalHighBoundaryDate,
+			},
+			{
+				Operands: []types.IType{types.DateTime, types.Integer},
+				Result:   evalHighBoundaryDateTime,
+			},
+			{
+				Operands: []types.IType{types.Time, types.Integer},
+				Result:   evalHighBoundaryTime,
+			},
+		}, nil
+	case *model.LowBoundary:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Decimal, types.Integer},
+				Result:   evalLowBoundaryDecimal,
+			},
+			{
+				Operands: []types.IType{types.Date, types.Integer},
+				Result:   evalLowBoundaryDate,
+			},
+			{
+				Operands: []types.IType{types.DateTime, types.Integer},
+				Result:   evalLowBoundaryDateTime,
+			},
+			{
+				Operands: []types.IType{types.Time, types.Integer},
+				Result:   evalLowBoundaryTime,
 			},
 		}, nil
 	default:
