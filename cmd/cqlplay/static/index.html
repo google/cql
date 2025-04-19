@@ -43,6 +43,7 @@
 <div class="tabholder">
 	<button  id="cqlTabButton"> CQL </button>
 	<button  id="dataTabButton"> Data </button>
+	<button  id="filesTabButton"> Files </button>
 </div>
 
 <div id="cqlEntry" class="tabContent">
@@ -55,6 +56,23 @@
 	<h3>Data Editor</h3>
 	<div class="codeInputContainer">
 		<code-input lang="json" placeholder="Enter synthetic JSON FHIR Bundle here." class="codeInput" id="dataInput"></code-input>
+	</div>
+</div>
+<div id="filesEntry" class="tabContent">
+	<h3>File Management</h3>
+	<div class="fileManagementContainer">
+		<div id="dropZone" class="dropZone">
+			<p>Drag and drop CQL files here</p>
+			<p>or</p>
+			<input type="file" id="fileInput" accept=".cql" style="display: none;">
+			<button id="browseButton" class="browseButton">Browse Files</button>
+		</div>
+		<div class="uploadedFilesContainer">
+			<h4>Uploaded Files</h4>
+			<div id="uploadedFiles" class="uploadedFiles">
+				<p id="noFilesMessage">No files uploaded yet</p>
+			</div>
+		</div>
 	</div>
 </div>
 <button id="submit" class="submitButton">
