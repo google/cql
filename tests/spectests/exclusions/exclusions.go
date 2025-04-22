@@ -28,25 +28,8 @@ type XMLTestFileExclusions struct {
 func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 	return map[string]XMLTestFileExclusions{
 		"CqlAggregateFunctionsTest.xml": XMLTestFileExclusions{
-			GroupExcludes: []string{
-				// TODO: b/342061715 - unsupported operators.
-				"Mode",
-				"PopulationVariance",
-				"StdDev",
-				"Variance",
-			},
-			NamesExcludes: []string{
-				// TODO: b/342061715 - unsupported operators.
-				// Only Date and DateTime overloads are supported for max/min.
-				"MaxTestInteger",
-				"MaxTestString",
-				"MaxTestTime",
-				"MinTestInteger",
-				"MinTestString",
-				"MinTestTime",
-				// TODO: b/342061783 - Operator is supported but the test assertion uses a rounded value.
-				"PopStdDevTest1",
-			},
+			GroupExcludes: []string{},
+			NamesExcludes: []string{},
 		},
 		"CqlAggregateTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{},
@@ -81,7 +64,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
-				"BetweenIntTrue",
 				"DateTimeDayCompare",
 				"GreaterCM0CM0",
 				"GreaterCM0CM1",
@@ -220,7 +202,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DateTimeDurationBetweenUncertainAdd",
 				"DateTimeDurationBetweenUncertainSubtract",
 				"DateTimeDurationBetweenUncertainMultiply",
-				"DateTimeDurationBetweenUncertainDiv",
+				"DateTimeDurationBetweenUncertainDivIf",
 				"DateTimeDurationBetweenMonthUncertain",
 				"DateTimeDurationBetweenMonthUncertain2",
 				"DateTimeDurationBetweenMonthUncertain3",
