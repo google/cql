@@ -1374,6 +1374,13 @@ func (i *interpreter) naryOverloads(m model.INaryExpression) ([]convert.Overload
 				Result:   i.evalCombine,
 			},
 		}, nil
+	case *model.ReplaceMatches:
+		return []convert.Overload[evalNarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String, types.String},
+				Result:   evalReplaceMatches,
+			},
+		}, nil
 	case *model.Round:
 		return []convert.Overload[evalNarySignature]{
 			{
