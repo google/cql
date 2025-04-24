@@ -190,21 +190,12 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			errCount:    1,
 		},
 		{
-			name: "Unsupported Expression",
-			cql: dedent.Dedent(`
-			using FHIR version '4.0.1'
-			define "Param": Interval[@2019, 2020] includes year of @2020
-				`),
-			errContains: []string{"unsupported interval operator in timing expression"},
-			errCount:    1,
-		},
-		{
 			name: "Invalid Expression",
 			cql: dedent.Dedent(`
 			using FHIR version '4.0.1'
 			define "Param": expand 4
 				`),
-			errContains: []string{"unsupported expression"},
+			errContains: []string{" could not resolve Expand(System.Integer)"},
 			errCount:    1,
 		},
 		{

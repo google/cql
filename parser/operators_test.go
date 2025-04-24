@@ -1560,6 +1560,80 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		// Tests for GeometricMean
+		{
+			name: "GeometricMean Decimal",
+			cql:  "GeometricMean({2.0, 8.0})",
+			want: &model.GeometricMean{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"2.0", "8.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
+			name: "GeometricMean Quantity",
+			cql:  "GeometricMean({2.0 'cm', 8.0 'cm'})",
+			want: &model.GeometricMean{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						List: []model.IExpression{
+							&model.Quantity{Value: 2.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+							&model.Quantity{Value: 8.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+						},
+						Expression: model.ResultType(&types.List{ElementType: types.Quantity}),
+					},
+					Expression: model.ResultType(types.Quantity),
+				},
+			},
+		},
+		// Tests for Product
+		{
+			name: "Product Integer",
+			cql:  "Product({2, 4})",
+			want: &model.Product{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"2", "4"}, types.Integer),
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "Product Long",
+			cql:  "Product({2L, 4L})",
+			want: &model.Product{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"2L", "4L"}, types.Long),
+					Expression: model.ResultType(types.Long),
+				},
+			},
+		},
+		{
+			name: "Product Decimal",
+			cql:  "Product({2.0, 4.0})",
+			want: &model.Product{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    model.NewList([]string{"2.0", "4.0"}, types.Decimal),
+					Expression: model.ResultType(types.Decimal),
+				},
+			},
+		},
+		{
+			name: "Product Quantity",
+			cql:  "Product({2.0 'cm', 4.0 'cm'})",
+			want: &model.Product{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.List{
+						List: []model.IExpression{
+							&model.Quantity{Value: 2.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+							&model.Quantity{Value: 4.0, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+						},
+						Expression: model.ResultType(&types.List{ElementType: types.Quantity}),
+					},
+					Expression: model.ResultType(types.Quantity),
+				},
+			},
+		},
 		{
 			name: "Count",
 			cql:  "Count({1, 2, 3})",
