@@ -322,3 +322,20 @@ func evalLower(m model.IUnaryExpression, stringObj result.Value) (result.Value, 
 	}
 	return result.New(strings.ToLower(str))
 }
+
+// PositionOf(pattern String, argument String) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#positionof
+func evalPositionOf(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+  if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	pattern, err := result.ToString(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	argument, err := result.ToString(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(strings.Index(argument, pattern))
+}

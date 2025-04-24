@@ -788,6 +788,19 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "PositionOf",
+			cql: "PositionOf('B','ABC')",
+			want: &model.PositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "Length",
 			cql: "Length('ABC')",
 			want: &model.Length{
