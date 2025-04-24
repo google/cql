@@ -363,7 +363,7 @@ func evalStartsWith(m model.IBinaryExpression, lObj, rObj result.Value) (result.
 func evalReplaceMatches(m model.INaryExpression, operands []result.Value) (result.Value, error) {
 
 	transformSubstring := func(cqlSubst string) string {
-	// This helper function checks and converts PCRE escapes to Go escapes to ensure regexp package compatibility.
+		// This helper function checks and converts PCRE escapes to Go escapes to ensure regexp package compatibility.
 		var goSubst strings.Builder
 		runes := []rune(cqlSubst)
 		i := 0
@@ -401,7 +401,6 @@ func evalReplaceMatches(m model.INaryExpression, operands []result.Value) (resul
 		return goSubst.String()
 	}
 
-
 	if result.IsNull(operands[0]) || result.IsNull(operands[1]) || result.IsNull(operands[2]) {
 		return result.New(nil)
 	}
@@ -425,4 +424,27 @@ func evalReplaceMatches(m model.INaryExpression, operands []result.Value) (resul
 	substitutionStr = transformSubstring(substitutionStr)
 
 	return result.New(patternRe.ReplaceAllString(argumentStr, substitutionStr))
+}
+
+// Matches(argument String, pattern String) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#matches
+func evalMatches(m model.IBinaryExpression, argString, patternString result.Value) (result.Value, error) {
+	if result.IsNull(argString) || result.IsNull(patternString) {
+		return result.New(nil)
+	}
+	argStr, err := result.ToString(argString)
+	if err != nil {
+		return result.Value{}, err
+	}
+	patternStr, err := result.ToString(patternString)
+	if err != nil {
+		return result.Value{}, err
+	}
+	re, err := regexp.Compile(patternStr)
+	if err != nil {
+		return result.New(false)
+	}
+	match := re.FindString(argStr)
+	res := match != ""
+	return result.New(res)
 }

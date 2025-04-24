@@ -1160,6 +1160,19 @@ func (p *Parser) loadSystemOperators() error {
 				}
 			},
 		},
+		{
+			name: "Matches",
+			operands: [][]types.IType{
+				{types.String, types.String},
+			},
+			model: func() model.IExpression {
+				return &model.Matches{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name:     "Add",

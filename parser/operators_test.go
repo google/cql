@@ -857,6 +857,19 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Matches",
+			cql: "Matches('1,2three', '\\d,\\d\\w+'))",
+			want: &model.Matches{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1,2three", types.String),
+						model.NewLiteral("\\d,\\d\\w+", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",

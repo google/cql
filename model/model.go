@@ -1200,6 +1200,9 @@ type PositionOf struct{ *BinaryExpression }
 // ReplaceMatches is https://cql.hl7.org/09-b-cqlreference.html#replacematches
 type ReplaceMatches struct { *NaryExpression } 
 
+// Matches is https://cql.hl7.org/09-b-cqlreference.html#matches
+type Matches struct{ *BinaryExpression }
+
 // Combine is https://cql.hl7.org/04-logicalspecification.html#combine.
 // In ELM Combine is an OperatorExpression, but we're modeling it as a NaryExpression since in CQL
 // it takes either 1 or 2 arguments.
@@ -1578,6 +1581,9 @@ func (a *PositionOf) GetName() string { return "PositionOf" }
 
 // GetName returns the name of the system operator.
 func (a *ReplaceMatches) GetName() string{ return "ReplaceMatches"}
+
+// GetName returns the name of the system operator.
+func (a *Matches) GetName() string { return "Matches" }
 
 // GetName returns the name of the system operator.
 func (a *Date) GetName() string { return "Date" }

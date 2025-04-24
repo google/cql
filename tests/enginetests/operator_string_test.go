@@ -1034,3 +1034,77 @@ func TestStartsWith(t *testing.T) {
 		})
 	}
 }
+
+func TestMatches(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "MatchesWordsAndSpacesTrue",
+			cql: "Matches('Not all who wander are lost', '[\\w|\\s]+')",
+			wantModel: &model.Matches{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("Not all who wander are lost", types.String),
+						model.NewLiteral("[\\w|\\s]+", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name: "MatchesWordsAndSpacesFalse",
+			cql: "Matches('Not all who wander are lost - circa 2017', '^[\\w\\s]+$')",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name: "MatchesNumberTrue",
+			cql: "Matches('Not all who wander are lost - circa 2017', '.*\\d+')",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name: "MatchesNumberFalse",
+			cql: "Matches('Not all who wander are lost', '.*\\d+')",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name: "MatchesLeftNil",
+			cql: "Matches(null, '\\w+')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "MatchesRightNil",
+			cql: "Matches('abc', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "MatchesNotWords",
+			cql: "Matches('   ', '\\W+')",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
