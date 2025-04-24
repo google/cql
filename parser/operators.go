@@ -206,6 +206,24 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 	case *model.PopulationStdDev:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
+	case *model.PopulationVariance:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.StdDev:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Variance:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Mode:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.GeometricMean:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
+	case *model.Product:
+		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
+		t.Expression = model.ResultType(listType.ElementType)
 	}
 
 	// Set Operands.
@@ -247,6 +265,39 @@ func (p *Parser) loadSystemOperators() error {
 		operands [][]types.IType
 		model    func() model.IExpression
 	}{
+		// WIDTH OPERATOR
+		{
+			name: "Width",
+			operands: [][]types.IType{
+				{&types.Interval{PointType: types.Integer}},
+				{&types.Interval{PointType: types.Long}},
+				{&types.Interval{PointType: types.Decimal}},
+				{&types.Interval{PointType: types.Quantity}},
+				{&types.Interval{PointType: types.String}},
+				{&types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}},
+			},
+			model: func() model.IExpression {
+				return &model.Width{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(types.Integer),
+					},
+				}
+			},
+		},
+		// CONVERT QUANTITY OPERATOR
+		{
+			name: "ConvertQuantity",
+			operands: [][]types.IType{
+				{types.Quantity, types.String},
+			},
+			model: func() model.IExpression {
+				return &model.BinaryExpression{
+					Expression: model.ResultType(types.Quantity),
+				}
+			},
+		},
 		// LOGICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#logical-operators-3
 		{
 			name: "And",
@@ -1490,6 +1541,49 @@ func (p *Parser) loadSystemOperators() error {
 			model: inModel(model.MILLISECOND),
 		},
 		{
+			name: "Includes",
+			operands: [][]types.IType{
+				// op (left Interval<T>, right Interval<T>) Boolean
+				[]types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				[]types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				[]types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				[]types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				[]types.IType{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
+				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+			},
+			model: func() model.IExpression {
+				return &model.Includes{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		// Includes in for point type overloads is a macro for the In operator.
+		{
+			name: "Includes",
+			operands: [][]types.IType{
+				// op (left T, right Interval<T>) Boolean
+				[]types.IType{types.Integer, &types.Interval{PointType: types.Integer}},
+				[]types.IType{types.Long, &types.Interval{PointType: types.Long}},
+				[]types.IType{types.Decimal, &types.Interval{PointType: types.Decimal}},
+				[]types.IType{types.Quantity, &types.Interval{PointType: types.Quantity}},
+				[]types.IType{types.String, &types.Interval{PointType: types.String}},
+				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
+				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+			},
+			model: func() model.IExpression {
+				return &model.In{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name: "IncludedIn",
 			operands: [][]types.IType{
 				// op (left Interval<T>, right Interval<T>) Boolean
@@ -1927,8 +2021,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Max",
 			operands: [][]types.IType{
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+				{&types.List{ElementType: types.String}},
 				{&types.List{ElementType: types.Date}},
 				{&types.List{ElementType: types.DateTime}},
+				{&types.List{ElementType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.Max{
@@ -1939,8 +2039,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Min",
 			operands: [][]types.IType{
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+				{&types.List{ElementType: types.String}},
 				{&types.List{ElementType: types.Date}},
 				{&types.List{ElementType: types.DateTime}},
+				{&types.List{ElementType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.Min{
@@ -2232,6 +2338,86 @@ func (p *Parser) loadSystemOperators() error {
 				}
 			},
 		},
+		{
+			name: "PopulationVariance",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.PopulationVariance{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "StdDev",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.StdDev{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Variance",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Variance{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Mode",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+				{&types.List{ElementType: types.String}},
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Date}},
+				{&types.List{ElementType: types.DateTime}},
+				{&types.List{ElementType: types.Time}},
+			},
+			model: func() model.IExpression {
+				return &model.Mode{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "GeometricMean",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.GeometricMean{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
+		{
+			name: "Product",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Integer}},
+				{&types.List{ElementType: types.Long}},
+				{&types.List{ElementType: types.Decimal}},
+				{&types.List{ElementType: types.Quantity}},
+			},
+			model: func() model.IExpression {
+				return &model.Product{
+					UnaryExpression: &model.UnaryExpression{},
+				}
+			},
+		},
 	}
 
 	for _, b := range systemOperators {
@@ -2250,7 +2436,73 @@ func (p *Parser) loadSystemOperators() error {
 		return err
 	}
 
+	if err := p.generateDurationOverloads(); err != nil {
+		return err
+	}
+
+	if err := p.generateDurationBetweenOverloads(); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (p *Parser) generateDurationOverloads() error {
+	overloads := [][]types.IType{
+		{&types.Interval{PointType: types.Date}},
+		{&types.Interval{PointType: types.DateTime}},
+		{&types.Interval{PointType: types.Time}},
+	}
+
+	for _, precision := range dateTimePrecisions() {
+		name := funcNameWithPrecision("Duration", precision)
+		for _, overload := range overloads {
+			if err := p.refs.DefineBuiltinFunc(name, overload, durationModel(precision)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (p *Parser) generateDurationBetweenOverloads() error {
+	overloads := [][]types.IType{
+		{types.Date, types.Date},
+		{types.DateTime, types.DateTime},
+		{types.Time, types.Time},
+	}
+
+	for _, precision := range dateTimePrecisions() {
+		name := funcNameWithPrecision("DurationBetween", precision)
+		for _, overload := range overloads {
+			if err := p.refs.DefineBuiltinFunc(name, overload, durationBetweenModel(precision)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func durationModel(precision model.DateTimePrecision) func() model.IExpression {
+	return func() model.IExpression {
+		return &model.Duration{
+			UnaryExpression: &model.UnaryExpression{
+				Expression: model.ResultType(types.Quantity),
+			},
+			Precision: precision,
+		}
+	}
+}
+
+func durationBetweenModel(precision model.DateTimePrecision) func() model.IExpression {
+	return func() model.IExpression {
+		return &model.DurationBetween{
+			BinaryExpression: &model.BinaryExpression{
+				Expression: model.ResultType(types.Quantity),
+			},
+			Precision: precision,
+		}
+	}
 }
 
 var comparableIntervalOverloads = [][]types.IType{
