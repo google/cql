@@ -830,6 +830,19 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+    {
+      name: "StartsWith",
+      cql: "StartsWith('Excellent', 'Ex')",
+      want: &model.StartsWith{
+        BinaryExpression: &model.BinaryExpression{
+          Operands: []model.IExpression{
+						model.NewLiteral("Excellent", types.String),
+						model.NewLiteral("Ex", types.String),
+					},
+          Expression: model.ResultType(types.Boolean),
+        },
+      },
+    },
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",
