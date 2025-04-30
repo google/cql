@@ -1222,6 +1222,13 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalLastPositionOf,
 			},
 		}, nil
+		case *model.PositionOf:
+			return []convert.Overload[evalBinarySignature]{
+				{
+					Operands: []types.IType{types.String, types.String},
+					Result:   evalPositionOf,
+				},
+			}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Binary Expression %v", m.GetName())
 	}
