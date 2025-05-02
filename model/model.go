@@ -1184,6 +1184,9 @@ type EndsWith struct{ *BinaryExpression }
 // LastPositionOf is https://cql.hl7.org/09-b-cqlreference.html#lastpositionof
 type LastPositionOf struct{ *BinaryExpression }
 
+// StartsWith is https://cql.hl7.org/09-b-cqlreference.html#startswith
+type StartsWith struct { *BinaryExpression}
+
 // Upper is https://cql.hl7.org/09-b-cqlreference.html#Upper
 type Upper struct{ *UnaryExpression}
 
@@ -1553,6 +1556,9 @@ func (a *EndsWith) GetName() string { return "EndsWith" }
 
 // GetName returns the name of the system operator.
 func (a *LastPositionOf) GetName() string { return "LastPositionOf" }
+
+// GetName returns the name of the system operator.
+func (a *StartsWith) GetName() string { return "StartsWith" }
 
 // GetName returns the name of the system operator.
 func (a *Upper) GetName() string { return "Upper"}

@@ -339,3 +339,20 @@ func evalPositionOf(m model.IBinaryExpression, lObj, rObj result.Value) (result.
 	}
 	return result.New(strings.Index(argument, pattern))
 }
+
+// StartsWith(argument String, prefix String) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#startswith
+func evalStartsWith(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	argument, err := result.ToString(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	prefix, err := result.ToString(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	return result.New(strings.HasPrefix(argument, prefix))
+}
