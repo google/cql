@@ -1203,6 +1203,9 @@ type Upper struct{ *UnaryExpression}
 // Lower is https://cql.hl7.org/09-b-cqlreference.html#lower
 type Lower struct{ *UnaryExpression}
 
+// PositionOf is https://cql.hl7.org/09-b-cqlreference.html#positionof
+type PositionOf struct{ *BinaryExpression}
+
 // Combine is https://cql.hl7.org/04-logicalspecification.html#combine.
 // In ELM Combine is an OperatorExpression, but we're modeling it as a NaryExpression since in CQL
 // it takes either 1 or 2 arguments.
@@ -1569,6 +1572,9 @@ func (a *Upper) GetName() string { return "Upper"}
 
 // GetName returns the name of the system operator.
 func (a *Lower) GetName() string{ return "Lower"}
+
+// GetName returns the name of the system operator.
+func (a *PositionOf) GetName() string{ return "PositionOf"}
 
 // GetName returns the name of the system operator.
 func (a *Date) GetName() string { return "Date" }
