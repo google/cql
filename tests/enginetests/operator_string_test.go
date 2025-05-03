@@ -871,3 +871,71 @@ func TestPositionOf(t *testing.T) {
 		})
 	}
 }
+func TestStartsWith(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "StartsWithTrue",
+			cql: "StartsWith('Appendix','App')",
+			wantModel: &model.StartsWith{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("Appendix", types.String),
+						model.NewLiteral("App", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name: "StartsWithFalse",
+			cql: "StartsWith('Appendix','Dep')",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name: "StartsWithLeftNull",
+			cql: "StartsWith(null, 'App')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "StartsWithRightNull",
+			cql: "StartsWith('Appendix', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name: "StartsWithLeftEmpty",
+			cql: "StartsWith('','App')",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name: "StartsWithRightEmpty",
+			cql: "StartsWith('Appendix','')",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
