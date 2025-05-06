@@ -1147,6 +1147,19 @@ func (p *Parser) loadSystemOperators() error {
 				}
 			},
 		},
+		{
+			name: "ReplaceMatches",
+			operands: [][]types.IType{
+				{types.String, types.String, types.String},
+			},
+			model: func() model.IExpression {
+				return &model.ReplaceMatches{
+					NaryExpression: &model.NaryExpression{
+						Expression: model.ResultType(types.String),
+					},
+				}
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name:     "Add",

@@ -16,6 +16,7 @@ package interpreter
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -355,4 +356,30 @@ func evalStartsWith(m model.IBinaryExpression, lObj, rObj result.Value) (result.
 		return result.Value{}, err
 	}
 	return result.New(strings.HasPrefix(argument, prefix))
+}
+
+// ReplaceMatches(argument String, pattern String, substitution String) String
+// https://cql.hl7.org/09-b-cqlreference.html#replacematches
+func evalReplaceMatches(m model.INaryExpression, operands []result.Value) (result.Value, error) {
+	if result.IsNull(operands[0]) || result.IsNull(operands[1]) || result.IsNull(operands[2]) {
+		return result.New(nil)
+	}
+	argumentStr, err := result.ToString(operands[0])
+	if err != nil {
+		return result.Value{}, err
+	}
+	patternStr, err := result.ToString(operands[1])
+	if err != nil {
+		return result.Value{}, err
+	}
+	substitutionStr, err := result.ToString(operands[2])
+	if err != nil {
+		return result.Value{}, err
+	}
+	patternRe, err := regexp.Compile(patternStr)
+	if err != nil {
+		return result.New(false)
+	}
+
+	return result.New(patternRe.ReplaceAllString(argumentStr, substitutionStr))
 }

@@ -843,6 +843,20 @@ func TestBuiltInFunctions(t *testing.T) {
         },
       },
     },
+		{
+			name: "ReplaceMatches",
+			cql: "ReplaceMatches('ABCDE', 'C', 'XYZ')",
+			want: &model.ReplaceMatches{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("ABCDE", types.String),
+						model.NewLiteral("C", types.String),
+						model.NewLiteral("XYZ", types.String),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+		},
 		// DATE AND TIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
 		{
 			name: "After",
