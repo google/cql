@@ -23,6 +23,29 @@ sign a new one.
 This project follows
 [Google's Open Source Community Guidelines](https://opensource.google/conduct/).
 
+### Coding Guidelines
+
+**Note**: Code may be automatically formatted per the guidelines when merged.
+
+#### Go specific
+
+All Go code should comply with the
+[Go Code Review Comments](https://go.dev/wiki/CodeReviewComments) and
+[Effective Go](https://go.dev/doc/effective_go) guides, as well as the
+additional guidelines described here.
+
+#### Early exit
+
+All code, unless it substantially increases the line count or complexity, should
+use early exits from loops and functions where possible.
+
+### Bug IDs
+
+Some `TODO`s and `NOTE`s sprinkled throughout the code have associated IDs of
+the form `b/1234`. These correspond to bugs in our internal bug tracker.
+Eventually these bugs will be moved to the GitHub Issues, but until then they
+can simply be ignored.
+
 ## Contribution process
 
 ### Code reviews
