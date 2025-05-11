@@ -790,6 +790,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result: evalLower,
 			},
 		}, nil
+	case *model.UnitConversion:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Quantity},
+				Result:   evalUnitConversion,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}
@@ -920,6 +927,14 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalEquivalentSimpleType,
 			},
 			{
+				Operands: []types.IType{types.Decimal, types.Decimal},
+				Result:   evalEquivalentSimpleType,
+			},
+			{
+				Operands: []types.IType{types.Quantity, types.Quantity},
+				Result:   evalEquivalentQuantity,
+			},
+			{
 				Operands: []types.IType{types.String, types.String},
 				Result:   evalEquivalentString,
 			},
@@ -975,6 +990,10 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{types.DateTime, types.DateTime},
 				Result:   evalCompareDateTime,
+			},
+			{
+				Operands: []types.IType{types.Quantity, types.Quantity},
+				Result:   evalCompareQuantity,
 			},
 		}, nil
 	case *model.After, *model.Before, *model.SameOrAfter, *model.SameOrBefore:
