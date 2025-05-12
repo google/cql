@@ -40,9 +40,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		},
 		"CqlArithmeticFunctionsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
-				// TODO: b/342061715 - unsupported operators.
-				"HighBoundary",
-				"LowBoundary",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
@@ -54,10 +51,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/342061783 - Got unexpected result.
 				"Subtract2And11D",
 				"TruncatedDivide10d1ByNeg3D1Quantity",
-				"PrecisionDecimal", // Does not yet support trailing zeros.
 				// TODO: b/344002938 - xml test is wrong, asserts with a time zone.
 				"DateTimeMinValue",
-				"DateTimeMaxValue",
 			},
 		},
 		"CqlComparisonOperatorsTest.xml": XMLTestFileExclusions{
