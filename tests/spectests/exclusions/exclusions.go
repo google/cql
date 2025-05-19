@@ -374,7 +374,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/342061715 - unsupported operators.
 				"Matches",
 				"ReplaceMatches",
-				"Substring",
 			},
 			NamesExcludes: []string{
 				// TODO: b/346880550 - These test appear to have incorrect assertions.

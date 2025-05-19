@@ -120,6 +120,223 @@ func TestConcatenate(t *testing.T) {
 	}
 }
 
+func TestSubstring(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// Two-argument form
+		{
+			name: "Substring('abcdef', 2)",
+			cql:  "Substring('abcdef', 2)",
+			wantModel: &model.Substring{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("abcdef", types.String),
+						model.NewLiteral("2", types.Integer),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "cdef"),
+		},
+		{
+			name:       "Substring('abcdef', 0)",
+			cql:        "Substring('abcdef', 0)",
+			wantResult: newOrFatal(t, "abcdef"),
+		},
+		{
+			name:       "Substring('abcdef', 5)",
+			cql:        "Substring('abcdef', 5)",
+			wantResult: newOrFatal(t, "f"),
+		},
+		{
+			name:       "Substring('abcdef', 6) -> empty string",
+			cql:        "Substring('abcdef', 6)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('abcdef', 7) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', 7)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', -1) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', -1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('', 0) -> empty string",
+			cql:        "Substring('', 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('', 1) -> null",
+			cql:        "Substring('', 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring(null, 2) -> null",
+			cql:        "Substring(null, 2)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', null) -> null",
+			cql:        "Substring('abcdef', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('😊😊😊', 1) -> 😊😊 (Unicode)",
+			cql:        "Substring('😊😊😊', 1)",
+			wantResult: newOrFatal(t, "😊😊"),
+		},
+		// Three-argument form
+		{
+			name: "Substring('abcdef', 2, 3)",
+			cql:  "Substring('abcdef', 2, 3)",
+			wantModel: &model.Substring{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("abcdef", types.String),
+						model.NewLiteral("2", types.Integer),
+						model.NewLiteral("3", types.Integer),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "cde"),
+		},
+		{
+			name:       "Substring('abcdef', 0, 3)",
+			cql:        "Substring('abcdef', 0, 3)",
+			wantResult: newOrFatal(t, "abc"),
+		},
+		{
+			name:       "Substring('abcdef', 0, 6)",
+			cql:        "Substring('abcdef', 0, 6)",
+			wantResult: newOrFatal(t, "abcdef"),
+		},
+		{
+			name:       "Substring('abcdef', 0, 7) -> abcdef (length truncated)",
+			cql:        "Substring('abcdef', 0, 7)",
+			wantResult: newOrFatal(t, "abcdef"),
+		},
+		{
+			name:       "Substring('abcdef', 5, 1)",
+			cql:        "Substring('abcdef', 5, 1)",
+			wantResult: newOrFatal(t, "f"),
+		},
+		{
+			name:       "Substring('abcdef', 5, 2) -> f (length truncated)",
+			cql:        "Substring('abcdef', 5, 2)",
+			wantResult: newOrFatal(t, "f"),
+		},
+		{
+			name:       "Substring('abcdef', 2, 0) -> empty string (zero length)",
+			cql:        "Substring('abcdef', 2, 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('abcdef', 6, 0) -> empty string (startIndex at end, zero length)",
+			cql:        "Substring('abcdef', 6, 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('abcdef', 6, 1) -> empty string (startIndex at end, length > 0 but no chars to take)",
+			cql:        "Substring('abcdef', 6, 1)",
+			// According to current evalSubstring logic, Substring("abcdef", 6, 1) results in null
+			// because startIndex >= stringLen (6 >= 6) and length > 0.
+			// The spec says: "If startIndex is equal to the length of stringToSub, the result is an empty string."
+			// "If length is provided and is greater than the remaining number of characters in stringToSub after startIndex, the result includes the characters from startIndex to the end of stringToSub."
+			// This implies Substring('abcdef', 6, 1) should be "".
+			// Let's adjust the expected result based on the spec for now, and potentially flag the implementation.
+			// Updated based on the provided Go code behavior: Substring("abcdef", 6, 1) -> runes[6:min(7,6)] -> runes[6:6] -> ""
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('abcdef', 7, 2) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', 7, 2)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', -1, 3) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', -1, 3)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 2, -1) -> null (negative length)",
+			cql:        "Substring('abcdef', 2, -1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('', 0, 0) -> empty string",
+			cql:        "Substring('', 0, 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('', 0, 1) -> empty string (length truncated)",
+			cql:        "Substring('', 0, 1)",
+			// Spec: "If length is provided and is greater than the remaining number of characters in stringToSub after startIndex, the result includes the characters from startIndex to the end of stringToSub."
+			// For Substring("", 0, 1), stringToSub="", startIndex=0, length=1.
+			// Remaining chars = 0. length > remaining. Result is chars from 0 to end of "" -> ""
+			// Corrected evalSubstring returns "" for this case.
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('', 1, 1) -> null",
+			cql:        "Substring('', 1, 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring(null, 2, 3) -> null",
+			cql:        "Substring(null, 2, 3)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', null, 3) -> null",
+			cql:        "Substring('abcdef', null, 3)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 2, null) -> null",
+			cql:        "Substring('abcdef', 2, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('😊😊😊', 1, 1) -> 😊 (Unicode)",
+			cql:        "Substring('😊😊😊', 1, 1)",
+			wantResult: newOrFatal(t, "😊"),
+		},
+		{
+			name:       "Substring('😊😊😊', 0, 2) -> 😊😊 (Unicode, length truncated within runes)",
+			cql:        "Substring('😊😊😊', 0, 2)",
+			wantResult: newOrFatal(t, "😊😊"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestToString(t *testing.T) {
 	tests := []struct {
 		name       string
