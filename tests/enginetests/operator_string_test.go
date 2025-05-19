@@ -120,6 +120,212 @@ func TestConcatenate(t *testing.T) {
 	}
 }
 
+func TestSubstring(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// Two-argument form
+		{
+			name: "Substring('abcdef', 2)",
+			cql:  "Substring('abcdef', 2)",
+			wantModel: &model.Substring{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("abcdef", types.String),
+						model.NewLiteral("2", types.Integer),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "cdef"),
+		},
+		{
+			name:       "Substring('abcdef', 0)",
+			cql:        "Substring('abcdef', 0)",
+			wantResult: newOrFatal(t, "abcdef"),
+		},
+		{
+			name:       "Substring('abcdef', 5)",
+			cql:        "Substring('abcdef', 5)",
+			wantResult: newOrFatal(t, "f"),
+		},
+		{
+			name:       "Substring('abcdef', 6) -> null (startIndex equals length)",
+			cql:        "Substring('abcdef', 6)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 7) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', 7)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', -1) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', -1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('', 0) -> empty string",
+			cql:        "Substring('', 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('', 1) -> null",
+			cql:        "Substring('', 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring(null, 2) -> null",
+			cql:        "Substring(null, 2)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', null) -> null",
+			cql:        "Substring('abcdef', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('😊😊😊', 1) -> 😊😊 (Unicode)",
+			cql:        "Substring('😊😊😊', 1)",
+			wantResult: newOrFatal(t, "😊😊"),
+		},
+		// Three-argument form
+		{
+			name: "Substring('abcdef', 2, 3)",
+			cql:  "Substring('abcdef', 2, 3)",
+			wantModel: &model.Substring{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("abcdef", types.String),
+						model.NewLiteral("2", types.Integer),
+						model.NewLiteral("3", types.Integer),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "cde"),
+		},
+		{
+			name:       "Substring('abcdef', 0, 3)",
+			cql:        "Substring('abcdef', 0, 3)",
+			wantResult: newOrFatal(t, "abc"),
+		},
+		{
+			name:       "Substring('abcdef', 0, 6)",
+			cql:        "Substring('abcdef', 0, 6)",
+			wantResult: newOrFatal(t, "abcdef"),
+		},
+		{
+			name:       "Substring('abcdef', 0, 7) -> abcdef (length truncated)",
+			cql:        "Substring('abcdef', 0, 7)",
+			wantResult: newOrFatal(t, "abcdef"),
+		},
+		{
+			name:       "Substring('abcdef', 5, 1)",
+			cql:        "Substring('abcdef', 5, 1)",
+			wantResult: newOrFatal(t, "f"),
+		},
+		{
+			name:       "Substring('abcdef', 5, 2) -> f (length truncated)",
+			cql:        "Substring('abcdef', 5, 2)",
+			wantResult: newOrFatal(t, "f"),
+		},
+		{
+			name:       "Substring('abcdef', 2, 0) -> empty string (zero length)",
+			cql:        "Substring('abcdef', 2, 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('abcdef', 6, 0) -> null (startIndex equals length)",
+			cql:        "Substring('abcdef', 6, 0)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 6, 1) -> null (startIndex equals length)",
+			cql:        "Substring('abcdef', 6, 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 7, 2) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', 7, 2)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', -1, 3) -> null (startIndex out of bounds)",
+			cql:        "Substring('abcdef', -1, 3)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 2, -1) -> null (negative length)",
+			cql:        "Substring('abcdef', 2, -1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('', 0, 0) -> empty string",
+			cql:        "Substring('', 0, 0)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('', 0, 1) -> empty string (length truncated)",
+			cql:        "Substring('', 0, 1)",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "Substring('', 1, 1) -> null",
+			cql:        "Substring('', 1, 1)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring(null, 2, 3) -> null",
+			cql:        "Substring(null, 2, 3)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', null, 3) -> null",
+			cql:        "Substring('abcdef', null, 3)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('abcdef', 2, null) -> null",
+			cql:        "Substring('abcdef', 2, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Substring('😊😊😊', 1, 1) -> 😊 (Unicode)",
+			cql:        "Substring('😊😊😊', 1, 1)",
+			wantResult: newOrFatal(t, "😊"),
+		},
+		{
+			name:       "Substring('😊😊😊', 0, 2) -> 😊😊 (Unicode, length truncated within runes)",
+			cql:        "Substring('😊😊😊', 0, 2)",
+			wantResult: newOrFatal(t, "😊😊"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestToString(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -945,6 +1151,56 @@ func TestPositionOf(t *testing.T) {
 			wantResult: newOrFatal(t, -1),
 		},
 	}
+		{
+			name: "PositionOfFound",
+			cql:  "PositionOf('B','ABC')",
+			wantModel: &model.PositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "PositionOfMultiples",
+			cql:        "PositionOf('B', 'ABCBA')",
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "PositionOfNotFound",
+			cql:        "PositionOf('B','ACDC')",
+			wantResult: newOrFatal(t, -1),
+		},
+		{
+			name:       "PositionOfLeftNull",
+			cql:        "PositionOf(null, 'ABC')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfRightNull",
+			cql:        "PositionOf('B', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfBothNull",
+			cql:        "PositionOf(null, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfLeftEmpty",
+			cql:        "PositionOf('','ABC')",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "PositionOfRightEmpty",
+			cql:        "PositionOf('B', '')",
+			wantResult: newOrFatal(t, -1),
+		},
+	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newFHIRParser(t)
@@ -975,6 +1231,7 @@ func TestStartsWith(t *testing.T) {
 	}{
 		{
 			name: "StartsWithTrue",
+			cql:  "StartsWith('Appendix','App')",
 			cql:  "StartsWith('Appendix','App')",
 			wantModel: &model.StartsWith{
 				BinaryExpression: &model.BinaryExpression{
@@ -1108,3 +1365,4 @@ func TestMatches(t *testing.T) {
 		})
 	}
 }
+
