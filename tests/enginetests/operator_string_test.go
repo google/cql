@@ -153,9 +153,9 @@ func TestSubstring(t *testing.T) {
 			wantResult: newOrFatal(t, "f"),
 		},
 		{
-			name:       "Substring('abcdef', 6) -> empty string",
+			name:       "Substring('abcdef', 6) -> null (startIndex equals length)",
 			cql:        "Substring('abcdef', 6)",
-			wantResult: newOrFatal(t, ""),
+			wantResult: newOrFatal(t, nil),
 		},
 		{
 			name:       "Substring('abcdef', 7) -> null (startIndex out of bounds)",
@@ -239,21 +239,14 @@ func TestSubstring(t *testing.T) {
 			wantResult: newOrFatal(t, ""),
 		},
 		{
-			name:       "Substring('abcdef', 6, 0) -> empty string (startIndex at end, zero length)",
+			name:       "Substring('abcdef', 6, 0) -> null (startIndex equals length)",
 			cql:        "Substring('abcdef', 6, 0)",
-			wantResult: newOrFatal(t, ""),
+			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name:       "Substring('abcdef', 6, 1) -> empty string (startIndex at end, length > 0 but no chars to take)",
+			name:       "Substring('abcdef', 6, 1) -> null (startIndex equals length)",
 			cql:        "Substring('abcdef', 6, 1)",
-			// According to current evalSubstring logic, Substring("abcdef", 6, 1) results in null
-			// because startIndex >= stringLen (6 >= 6) and length > 0.
-			// The spec says: "If startIndex is equal to the length of stringToSub, the result is an empty string."
-			// "If length is provided and is greater than the remaining number of characters in stringToSub after startIndex, the result includes the characters from startIndex to the end of stringToSub."
-			// This implies Substring('abcdef', 6, 1) should be "".
-			// Let's adjust the expected result based on the spec for now, and potentially flag the implementation.
-			// Updated based on the provided Go code behavior: Substring("abcdef", 6, 1) -> runes[6:min(7,6)] -> runes[6:6] -> ""
-			wantResult: newOrFatal(t, ""),
+			wantResult: newOrFatal(t, nil),
 		},
 		{
 			name:       "Substring('abcdef', 7, 2) -> null (startIndex out of bounds)",
@@ -278,10 +271,6 @@ func TestSubstring(t *testing.T) {
 		{
 			name:       "Substring('', 0, 1) -> empty string (length truncated)",
 			cql:        "Substring('', 0, 1)",
-			// Spec: "If length is provided and is greater than the remaining number of characters in stringToSub after startIndex, the result includes the characters from startIndex to the end of stringToSub."
-			// For Substring("", 0, 1), stringToSub="", startIndex=0, length=1.
-			// Remaining chars = 0. length > remaining. Result is chars from 0 to end of "" -> ""
-			// Corrected evalSubstring returns "" for this case.
 			wantResult: newOrFatal(t, ""),
 		},
 		{
@@ -1017,56 +1006,56 @@ func TestPositionOf(t *testing.T) {
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-    {
-      name: "PositionOfFound",
-      cql:  "PositionOf('B','ABC')",
-      wantModel: &model.PositionOf{
-        BinaryExpression: &model.BinaryExpression{
-          Operands: []model.IExpression{
-            model.NewLiteral("B", types.String),
-            model.NewLiteral("ABC", types.String),
-          },
-          Expression: model.ResultType(types.Integer),
-        },
-      },
-      wantResult: newOrFatal(t, 1),
-    },
-    {
-      name: "PositionOfMultiples",
-      cql: "PositionOf('B', 'ABCBA')",
-      wantResult: newOrFatal(t, 1),
-    },
-    {
-      name: "PositionOfNotFound",
-      cql: "PositionOf('B','ACDC')",
-      wantResult: newOrFatal(t, -1),
-    },
-    {
-      name: "PositionOfLeftNull",
-      cql: "PositionOf(null, 'ABC')",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "PositionOfRightNull",
-      cql: "PositionOf('B', null)",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "PositionOfBothNull",
-      cql: "PositionOf(null, null)",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "PositionOfLeftEmpty",
-      cql: "PositionOf('','ABC')",
-      wantResult: newOrFatal(t, 0),
-    },
-    {
-      name: "PositionOfRightEmpty",
-      cql: "PositionOf('B', '')",
-      wantResult: newOrFatal(t, -1),
-    },
-  }
+		{
+			name: "PositionOfFound",
+			cql:  "PositionOf('B','ABC')",
+			wantModel: &model.PositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "PositionOfMultiples",
+			cql:        "PositionOf('B', 'ABCBA')",
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "PositionOfNotFound",
+			cql:        "PositionOf('B','ACDC')",
+			wantResult: newOrFatal(t, -1),
+		},
+		{
+			name:       "PositionOfLeftNull",
+			cql:        "PositionOf(null, 'ABC')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfRightNull",
+			cql:        "PositionOf('B', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfBothNull",
+			cql:        "PositionOf(null, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfLeftEmpty",
+			cql:        "PositionOf('','ABC')",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "PositionOfRightEmpty",
+			cql:        "PositionOf('B', '')",
+			wantResult: newOrFatal(t, -1),
+		},
+	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newFHIRParser(t)
@@ -1097,7 +1086,7 @@ func TestStartsWith(t *testing.T) {
 	}{
 		{
 			name: "StartsWithTrue",
-			cql: "StartsWith('Appendix','App')",
+			cql:  "StartsWith('Appendix','App')",
 			wantModel: &model.StartsWith{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -1110,28 +1099,28 @@ func TestStartsWith(t *testing.T) {
 			wantResult: newOrFatal(t, true),
 		},
 		{
-			name: "StartsWithFalse",
-			cql: "StartsWith('Appendix','Dep')",
+			name:       "StartsWithFalse",
+			cql:        "StartsWith('Appendix','Dep')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "StartsWithLeftNull",
-			cql: "StartsWith(null, 'App')",
+			name:       "StartsWithLeftNull",
+			cql:        "StartsWith(null, 'App')",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "StartsWithRightNull",
-			cql: "StartsWith('Appendix', null)",
+			name:       "StartsWithRightNull",
+			cql:        "StartsWith('Appendix', null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "StartsWithLeftEmpty",
-			cql: "StartsWith('','App')",
+			name:       "StartsWithLeftEmpty",
+			cql:        "StartsWith('','App')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "StartsWithRightEmpty",
-			cql: "StartsWith('Appendix','')",
+			name:       "StartsWithRightEmpty",
+			cql:        "StartsWith('Appendix','')",
 			wantResult: newOrFatal(t, true),
 		},
 	}

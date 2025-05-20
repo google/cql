@@ -326,7 +326,7 @@ func evalLower(m model.IUnaryExpression, stringObj result.Value) (result.Value, 
 // PositionOf(pattern String, argument String) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#positionof
 func evalPositionOf(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
-  if result.IsNull(lObj) || result.IsNull(rObj) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
 	pattern, err := result.ToString(lObj)
@@ -389,29 +389,14 @@ func evalSubstring(m model.INaryExpression, operands []result.Value) (result.Val
 	// Rule: If the stringToSub is null or the startIndex is null, the result is null.
 	// (Already handled by initial checks on operands[0] and operands[1])
 
-	// Rule: If startIndex is less than 0 or greater than the length of the stringToSub, the result is null.
-	if startIndex < 0 || startIndex > stringLen {
-		return result.New(nil)
+	// Special case: If string is empty and startIndex is 0, return empty string
+	if stringLen == 0 && startIndex == 0 {
+		return result.New("")
 	}
 
-	// Rule: If startIndex is equal to the length of stringToSub
-	if startIndex == stringLen {
-		if len(operands) == 2 { // Two-argument form
-			return result.New("") // Result is an empty string
-		}
-		// Three-argument form, check length
-		if result.IsNull(operands[2]) { // length is null
-			return result.New(nil)
-		}
-		length, err := result.ToInt32(operands[2])
-		if err != nil {
-			return result.Value{}, fmt.Errorf("could not convert length to int32: %w", err)
-		}
-		if length < 0 { // Negative length
-			return result.New(nil)
-		}
-		// For startIndex == stringLen, any non-negative length results in ""
-		return result.New("")
+	// Rule: If startIndex is less than 0 or greater than or equal to the length of the stringToSub, the result is null.
+	if startIndex < 0 || startIndex >= stringLen {
+		return result.New(nil)
 	}
 
 	// At this point, 0 <= startIndex < stringLen
