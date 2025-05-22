@@ -793,6 +793,101 @@ func TestLower(t *testing.T) {
 	}
 }
 
+func TestReplaceMatches(t *testing.T) {
+  tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+    {
+      name: "ReplaceMatchesOne",
+      cql: "ReplaceMatches('ABC','B','Z')",
+      wantModel: &model.ReplaceMatches{
+        NaryExpression: &model.NaryExpression{
+        	Operands: []model.IExpression{
+					  model.NewLiteral("ABC", types.String),
+					  model.NewLiteral("B", types.String),
+					  model.NewLiteral("Z", types.String),
+					},
+          Expression: model.ResultType(types.String),
+        },
+      },
+      wantResult: newOrFatal(t, "AZC"),
+    },
+    {
+      name: "ReplaceMatchesNotFound",
+      cql: "ReplaceMatches('ABC','D','C')",
+      wantResult: newOrFatal(t, "ABC"),
+    },
+    {
+      name: "ReplaceMatchesArgNull",
+      cql: "ReplaceMatches(null,'B','Z')",
+      wantResult: newOrFatal(t, nil),
+    },
+    {
+      name: "ReplaceMatchesPatternNull",
+      cql: "ReplaceMatches('ABC',null,'Z')",
+      wantResult: newOrFatal(t, nil),
+    },
+    {
+      name: "ReplaceMatchesReplacesNull",
+      cql: "ReplaceMatches('ABC','B',null)",
+      wantResult: newOrFatal(t, nil),
+    },
+    {
+      name: "ReplaceMatchesArgEmpty",
+      cql: "ReplaceMatches('','B','Z')",
+      wantResult: newOrFatal(t, ""),
+    },
+    {
+      name: "ReplaceMatchesPatternEmpty",
+      cql: "ReplaceMatches('ABC','','Z')",
+      wantResult: newOrFatal(t, "ZAZBZCZ"),
+    },
+    {
+      name: "ReplaceMatchesReplacesEmpty",
+      cql: "ReplaceMatches('ABC','B','')",
+      wantResult: newOrFatal(t, "AC"),
+    },
+    {
+      name: "ReplaceMatchesRegex",
+      cql: "ReplaceMatches('A B C D', '\\s', 'match')",
+      wantResult: newOrFatal(t, "AmatchBmatchCmatchD"),
+    },
+    {
+      name: "ReplaceMatchesWholeRegexTrue",
+      cql: "ReplaceMatches('A B C D', '^[\\w|\\s]+$', 'Success')",
+      wantResult: newOrFatal(t, "Success"),
+    },
+    {
+      name: "ReplaceMatchesWholeRegexFalse",
+      cql: "ReplaceMatches('Failure', '^.*\\d+$', 'Success')",
+      wantResult: newOrFatal(t, "Failure"),
+    },
+  }
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestPositionOf(t *testing.T) {
 	tests := []struct {
 		name       string
