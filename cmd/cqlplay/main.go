@@ -110,6 +110,8 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 
 	// Combine main CQL with additional libraries and FHIRHelpers
 	cqlInputs := append([]string{evalCQLReq.CQL}, evalCQLReq.Libraries...)
+	// TODO: now that users can supply their own libraries, we may wish to only add FHIRHelpers if
+	// it's not already included. Though, our parser really only works with FHIR Helpers 4.0.1.
 	cqlInputs = append(cqlInputs, fhirHelpers)
 
 	elm, err := cql.Parse(req.Context(), cqlInputs, cql.ParseConfig{DataModels: [][]byte{fhirDM}})
