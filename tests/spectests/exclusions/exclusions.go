@@ -344,9 +344,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"ProperContainsNullRightTrue",
 				"ProperContainsTimeNull",
 				"ProperInTimeNull",
-				"ProperIncludedInEmptyAndEmpty",
-				"ProperIncludedInListNullAndListNull",
-				"ProperIncludedInDateTimeFalse",
 				// TODO: b/342061783 - Got unexpected result.
 				"EqualNullNull",
 				// TODO: b/346880550 - These test appear to have incorrect assertions.

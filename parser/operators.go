@@ -1826,6 +1826,20 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "ProperlyIncludedIn",
+			operands: [][]types.IType{
+				{convert.GenericType, convert.GenericList},
+				{convert.GenericList, convert.GenericList},
+			},
+			model: func() model.IExpression {
+				return &model.ProperlyIncludedIn{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Boolean),
+					},
+				}
+			},
+		},
+		{
 			name: "Last",
 			operands: [][]types.IType{
 				{&types.List{ElementType: types.Any}}},
