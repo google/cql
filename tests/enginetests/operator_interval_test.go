@@ -1223,6 +1223,11 @@ func TestIntervalIn(t *testing.T) {
 			wantResult: newOrFatal(t, nil),
 		},
 		{
+			name:       "@2020 in null",
+			cql:        "@2020 in null",
+			wantResult: newOrFatal(t, false),
+		},
+		{
 			name:       "On inclusive bound date",
 			cql:        "@2020-03 in month of Interval[@2020-03-25, @2022-04)",
 			wantResult: newOrFatal(t, true),

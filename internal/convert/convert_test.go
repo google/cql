@@ -267,8 +267,34 @@ func TestOverloadMatch(t *testing.T) {
 				},
 			},
 		},
-		// TODO(b/312172420): Add tests where generics need a list promotion and interval promotion once
-		// supported in the conversion precedence.
+		{
+			name: "Promotes null to Interval over List",
+			invoked: []model.IExpression{
+				model.NewLiteral("null", types.Any),
+			},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Just Right",
+					Operands: []types.IType{GenericInterval},
+				},
+				Overload[string]{
+					Result:   "Lower Promotion Priority",
+					Operands: []types.IType{GenericList},
+				},
+			},
+			wantRes: MatchedOverload[string]{
+				Result: "Just Right",
+				WrappedOperands: []model.IExpression{
+					&model.As{
+						UnaryExpression: &model.UnaryExpression{
+							Expression: model.ResultType(&types.Interval{PointType: types.Any}),
+							Operand:    model.NewLiteral("null", types.Any),
+						},
+						AsTypeSpecifier: &types.Interval{PointType: types.Any},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -453,33 +479,34 @@ func TestOperandImplicitConverter(t *testing.T) {
 			name:         "Exact Match",
 			invokedType:  &types.Interval{PointType: types.DateTime},
 			declaredType: &types.Interval{PointType: types.DateTime},
-			want:         ConvertedOperand{Matched: true, Score: 0, WrappedOperand: model.NewLiteral("operand", types.String)},
+			want:         ConvertedOperand{Matched: true, Score: 0, TypePrecedenceScore: 3, WrappedOperand: model.NewLiteral("operand", types.String)},
 		},
 		{
 			name:         "SubType",
 			invokedType:  &types.Interval{PointType: types.DateTime},
 			declaredType: types.Any,
-			want:         ConvertedOperand{Matched: true, Score: 1, WrappedOperand: model.NewLiteral("operand", types.String)},
+			want:         ConvertedOperand{Matched: true, Score: 1, TypePrecedenceScore: 1, WrappedOperand: model.NewLiteral("operand", types.String)},
 		},
 		{
 			name:         "Tuple SubType",
 			invokedType:  &types.Tuple{ElementTypes: map[string]types.IType{"foo": types.ValueSet, "bar": types.String}},
 			declaredType: &types.Tuple{ElementTypes: map[string]types.IType{"foo": types.Vocabulary, "bar": types.String}},
-			want:         ConvertedOperand{Matched: true, Score: 1, WrappedOperand: model.NewLiteral("operand", types.String)},
+			want:         ConvertedOperand{Matched: true, Score: 1, TypePrecedenceScore: 2, WrappedOperand: model.NewLiteral("operand", types.String)},
 		},
 		{
 			name:         "List<Tuple> SubType",
 			invokedType:  &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{"foo": types.ValueSet, "bar": types.String}}},
 			declaredType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{"foo": types.Vocabulary, "bar": types.String}}},
-			want:         ConvertedOperand{Matched: true, Score: 1, WrappedOperand: model.NewLiteral("operand", types.String)},
+			want:         ConvertedOperand{Matched: true, Score: 1, TypePrecedenceScore: 4, WrappedOperand: model.NewLiteral("operand", types.String)},
 		},
 		{
 			name:         "Compatible aka Null",
 			invokedType:  types.Any,
 			declaredType: types.Decimal,
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   2,
+				Matched:             true,
+				Score:               2,
+				TypePrecedenceScore: 1,
 				WrappedOperand: &model.As{
 					UnaryExpression: &model.UnaryExpression{
 						Operand:    model.NewLiteral("operand", types.String),
@@ -500,8 +527,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			},
 			declaredType: &types.Interval{PointType: types.DateTime},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   3,
+				Matched:             true,
+				Score:               3,
+				TypePrecedenceScore: 3,
 				WrappedOperand: &model.As{
 					UnaryExpression: &model.UnaryExpression{
 						Operand:    model.NewLiteral("operand", types.String),
@@ -522,8 +550,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 				},
 			},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   3,
+				Matched:             true,
+				Score:               3,
+				TypePrecedenceScore: 5,
 				WrappedOperand: &model.As{
 					UnaryExpression: &model.UnaryExpression{
 						Operand: model.NewLiteral("operand", types.String),
@@ -559,8 +588,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 				},
 			},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   3,
+				Matched:             true,
+				Score:               3,
+				TypePrecedenceScore: 5,
 				WrappedOperand: &model.As{
 					AsTypeSpecifier: &types.Choice{ChoiceTypes: []types.IType{&types.Interval{PointType: types.Integer}, types.Decimal}},
 					Strict:          false,
@@ -588,8 +618,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  &types.Named{TypeName: "FHIR.date"},
 			declaredType: types.Date,
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   4,
+				Matched:             true,
+				Score:               4,
+				TypePrecedenceScore: 1,
 				WrappedOperand: &model.FunctionRef{
 					LibraryName: "FHIRHelpers",
 					Name:        "ToDate",
@@ -603,8 +634,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  &types.Named{TypeName: "FHIR.Period"},
 			declaredType: &types.Interval{PointType: types.DateTime},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   5,
+				Matched:             true,
+				Score:               5,
+				TypePrecedenceScore: 3,
 				WrappedOperand: &model.FunctionRef{
 					LibraryName: "FHIRHelpers",
 					Name:        "ToInterval",
@@ -618,8 +650,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  &types.Named{TypeName: "FHIR.Period"},
 			declaredType: &types.Interval{PointType: types.Any},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   5,
+				Matched:             true,
+				Score:               5,
+				TypePrecedenceScore: 3,
 				WrappedOperand: &model.FunctionRef{
 					LibraryName: "FHIRHelpers",
 					Name:        "ToInterval",
@@ -633,8 +666,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  types.Integer,
 			declaredType: types.Quantity,
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   5,
+				Matched:             true,
+				Score:               5,
+				TypePrecedenceScore: 1,
 				WrappedOperand: &model.ToQuantity{
 					UnaryExpression: &model.UnaryExpression{
 						Operand:    model.NewLiteral("operand", types.String),
@@ -648,8 +682,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  types.Date,
 			declaredType: types.DateTime,
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   4,
+				Matched:             true,
+				Score:               4,
+				TypePrecedenceScore: 1,
 				WrappedOperand: &model.ToDateTime{
 					UnaryExpression: &model.UnaryExpression{
 						Operand:    model.NewLiteral("operand", types.String),
@@ -663,8 +698,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  &types.Interval{PointType: types.Decimal},
 			declaredType: &types.Interval{PointType: types.Quantity},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   5,
+				Matched:             true,
+				Score:               5,
+				TypePrecedenceScore: 3,
 				WrappedOperand: &model.Interval{
 					Expression:           model.ResultType(&types.Interval{PointType: types.Quantity}),
 					LowClosedExpression:  &model.Property{Source: model.NewLiteral("operand", types.String), Path: "lowClosed", Expression: model.ResultType(types.Boolean)},
@@ -697,8 +733,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  &types.List{ElementType: types.Integer},
 			declaredType: &types.List{ElementType: types.Long},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   5,
+				Matched:             true,
+				Score:               5,
+				TypePrecedenceScore: 4,
 				WrappedOperand: &model.Query{
 					Source: []*model.AliasedSource{
 						&model.AliasedSource{
@@ -726,8 +763,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			invokedType:  &types.Named{TypeName: "FHIR.id"},
 			declaredType: types.String,
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   5,
+				Matched:             true,
+				Score:               5,
+				TypePrecedenceScore: 1,
 				WrappedOperand: &model.FunctionRef{
 					Expression:  model.ResultType(types.String),
 					Name:        "ToString",
@@ -754,8 +792,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			},
 			declaredType: types.Boolean,
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   7,
+				Matched:             true,
+				Score:               7,
+				TypePrecedenceScore: 1,
 				WrappedOperand: &model.FunctionRef{
 					LibraryName: "FHIRHelpers",
 					Name:        "ToBoolean",
@@ -782,8 +821,9 @@ func TestOperandImplicitConverter(t *testing.T) {
 			},
 			declaredType: &types.Interval{PointType: types.DateTime},
 			want: ConvertedOperand{
-				Matched: true,
-				Score:   8,
+				Matched:             true,
+				Score:               8,
+				TypePrecedenceScore: 3,
 				WrappedOperand: &model.Interval{
 					Expression: model.ResultType(&types.Interval{PointType: types.DateTime}),
 					LowClosedExpression: &model.Property{
@@ -923,8 +963,9 @@ func TestOperandImplicitConverter_NilOperands(t *testing.T) {
 	}
 
 	want := ConvertedOperand{
-		Matched: true,
-		Score:   4,
+		Matched:             true,
+		Score:               4,
+		TypePrecedenceScore: 1,
 		WrappedOperand: &model.ToDateTime{
 			UnaryExpression: &model.UnaryExpression{
 				// This is nil which is ok because the caller does not care about the wrapped operand only

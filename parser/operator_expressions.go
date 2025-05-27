@@ -137,7 +137,14 @@ func (v *visitor) VisitTimingExpression(ctx *cql.TimingExpressionContext) model.
 		}
 	case *cql.IncludedInIntervalOperatorPhraseContext:
 		precision = precisionFromContext(operator)
-		fnOperator = "IncludedIn"
+		opText := operator.GetText()
+		if strings.Contains(opText, "properlyincluded in") {
+			fnOperator = "ProperlyIncludedIn"
+		} else if strings.Contains(opText, "during") || strings.Contains(opText, "included in") {
+			fnOperator = "IncludedIn"
+		} else {
+			return v.badExpression("internal error - grammar should not allow this TimeBoundaryExpression", ctx)
+		}
 	case *cql.ConcurrentWithIntervalOperatorPhraseContext:
 		precision = precisionFromContext(operator)
 		// TODO(b/298104070): Support ConcurrentWithIntervalOperatorPhraseContext without 'or'

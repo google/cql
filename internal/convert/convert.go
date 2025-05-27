@@ -86,22 +86,24 @@ func OverloadMatch[F any](invoked []model.IExpression, overloads []Overload[F], 
 
 	ambiguous := false
 	minScore := math.MaxInt
+	currTypePrecedenceScore := math.MaxInt
 	matched := MatchedOverload[F]{WrappedOperands: make([]model.IExpression, len(invoked))}
 	for _, overload := range concreteOverloads {
 		res, err := operandsImplicitConverter(OperandsToTypes(invoked), overload.Operands, invoked, modelinfo)
 		if err != nil {
 			return MatchedOverload[F]{}, fmt.Errorf("%v(%v): %w", name, OperandsToString(invoked), err)
 		}
-		if res.Matched && res.Score == minScore {
+		if res.Matched && res.Score == minScore && res.TypePrecedenceScore == currTypePrecedenceScore {
 			// The least converting match is now ambiguous
 			ambiguous = true
 			continue
 		}
 
-		if res.Matched && res.Score < minScore {
+		if res.Matched && (res.Score < minScore || (res.Score == minScore && res.TypePrecedenceScore < currTypePrecedenceScore)) {
 			// A new least converting match
 			ambiguous = false
 			minScore = res.Score
+			currTypePrecedenceScore = res.TypePrecedenceScore
 			matched.Result = overload.Result
 			// Beware of the shallow copy
 			matched.WrappedOperands = res.WrappedOperands
@@ -125,6 +127,9 @@ type convertedOperands struct {
 	// The score of each operand are added together. Multiple conversions on the same operand are not
 	// taken into account. https://cql.hl7.org/03-developersguide.html#conversion-precedence
 	Score int
+	// TypePrecedenceScore is the score based on the declared type category precedence. Lower is
+	// better. Used as a tie-breaker when Score is equal between overloads.
+	TypePrecedenceScore int
 	// WrappedOperands are the operands wrapped in all necessary system operators and function refs to
 	// convert them.
 	WrappedOperands []model.IExpression
@@ -152,6 +157,7 @@ func operandsImplicitConverter(invokedTypes []types.IType, declaredTypes []types
 			return convertedOperands{Matched: false}, nil
 		}
 		results.Score += result.Score
+		results.TypePrecedenceScore += result.TypePrecedenceScore
 		results.WrappedOperands[i] = result.WrappedOperand
 	}
 	return results, nil
@@ -165,6 +171,9 @@ type ConvertedOperand struct {
 	// The score does not take into account multiple conversions.
 	// https://cql.hl7.org/03-developersguide.html#conversion-precedence
 	Score int
+	// TypePrecedenceScore is the score based on the declared type category precedence. Lower is better.
+	// Used as a tie-breaker when Score is equal between overloads.
+	TypePrecedenceScore int
 	// WrappedOperand is the operand wrapped in all necessary system operators and function refs to
 	// convert it.
 	WrappedOperand model.IExpression
@@ -183,20 +192,23 @@ type ConvertedOperand struct {
 // diverge on some recursive calls. opToWrap.GetResultType() should not be used in the implementation
 // of operandImplicitConverter.
 func OperandImplicitConverter(invokedType types.IType, declaredType types.IType, opToWrap model.IExpression, mi *modelinfo.ModelInfos) (ConvertedOperand, error) {
-	// As we try different conversion paths minConverted will keep track of the lowest scoring
-	// conversion.
-	minConverted := ConvertedOperand{Score: math.MaxInt}
-
 	if invokedType == types.Unset {
-		return ConvertedOperand{Matched: false, Score: 0, WrappedOperand: opToWrap}, fmt.Errorf("internal error - invokedType is %v", invokedType)
+		return ConvertedOperand{}, fmt.Errorf("internal error - invokedType is %v", invokedType)
 	}
 	if declaredType == types.Unset {
-		return ConvertedOperand{Matched: false, Score: 0, WrappedOperand: opToWrap}, fmt.Errorf("internal error - declaredType is %v", declaredType)
+		return ConvertedOperand{}, fmt.Errorf("internal error - declaredType is %v", declaredType)
 	}
+
+	// Try different conversion paths minConverted will keep track of the lowest scoring conversion.
+	declaredTypePrecedence, err := getTypeCategoryPrecedence(declaredType)
+	if err != nil {
+		return ConvertedOperand{}, err
+	}
+	minConverted := ConvertedOperand{Score: math.MaxInt, TypePrecedenceScore: declaredTypePrecedence}
 
 	// EXACT MATCH
 	if invokedType.Equal(declaredType) {
-		return ConvertedOperand{Matched: true, Score: 0, WrappedOperand: opToWrap}, nil
+		return ConvertedOperand{Matched: true, Score: 0, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: opToWrap}, nil
 	}
 
 	// SUBTYPE
@@ -205,8 +217,8 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 		return ConvertedOperand{}, err
 	}
 	if isSub {
-		// No wrapper is needed, the interpreter will handle subtypes.
-		minConverted = ConvertedOperand{Matched: true, Score: 1, WrappedOperand: opToWrap}
+		// No conversion wrapper is needed, the interpreter will handle subtypes.
+		minConverted = ConvertedOperand{Matched: true, Score: 1, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: opToWrap}
 	}
 
 	// All types can be converted from invoked --> Any --> declared. However that leads to incorrect
@@ -231,10 +243,13 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 	}
 
 	// COMPATIBLE/NULL
-	// Ex Any --> Decimal   As(operand, Decimal)
+	// https://cql.hl7.org/03-developersguide.html#casting
+	//
+	// This is not described well in the CQL spec but, you can pass null literals to any function.
+	// Null has a type of Any, and is documented as being compatible with all types (Conversion
+	// Precedence step 3).
+	// Ex Any --> Decimal, implicitly calls: As(operand, Decimal)
 	if invokedType.Equal(types.Any) {
-		// This is not described well in the CQL spec but, you can pass null literals to any function.
-		// Null has type Any.
 		wrapped := &model.As{
 			UnaryExpression: &model.UnaryExpression{
 				Operand:    opToWrap,
@@ -244,7 +259,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 			Strict:          false,
 		}
 		if 2 < minConverted.Score {
-			minConverted = ConvertedOperand{Matched: true, Score: 2, WrappedOperand: wrapped}
+			minConverted = ConvertedOperand{Matched: true, Score: 2, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: wrapped}
 		}
 	}
 
@@ -291,7 +306,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 					Strict:          false,
 				}
 				if 3 < minConverted.Score {
-					minConverted = ConvertedOperand{Matched: true, Score: 3, WrappedOperand: wrapped}
+					minConverted = ConvertedOperand{Matched: true, Score: 3, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: wrapped}
 				}
 			}
 		}
@@ -313,7 +328,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 
 		score := implicitConversionScore(declaredType)
 		if score < minConverted.Score {
-			minConverted = ConvertedOperand{Matched: true, Score: score, WrappedOperand: wrapped}
+			minConverted = ConvertedOperand{Matched: true, Score: score, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: wrapped}
 		}
 	}
 
@@ -329,7 +344,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 
 		score := implicitConversionScore(declaredType)
 		if score < minConverted.Score {
-			minConverted = ConvertedOperand{Matched: true, Score: score, WrappedOperand: wrapped}
+			minConverted = ConvertedOperand{Matched: true, Score: score, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: wrapped}
 		}
 	}
 
@@ -341,6 +356,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 		if !ok {
 			break
 		}
+
 		low := &model.Property{Source: opToWrap, Path: "low", Expression: model.ResultType(i.PointType)}
 		high := &model.Property{Source: opToWrap, Path: "high", Expression: model.ResultType(i.PointType)}
 		rLow, err := OperandImplicitConverter(i.PointType, d.PointType, low, mi)
@@ -367,7 +383,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 			Expression:           model.ResultType(d),
 		}
 		if 5 < minConverted.Score {
-			minConverted = ConvertedOperand{Matched: true, Score: 5, WrappedOperand: wrapped}
+			minConverted = ConvertedOperand{Matched: true, Score: 5, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: wrapped}
 		}
 
 	// Ex List<Integer> --> List<Decimal>   [operand] X return ToDecimal(X)
@@ -397,9 +413,11 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 			Expression: model.ResultType(declaredType),
 		}
 		if 5 < minConverted.Score {
-			minConverted = ConvertedOperand{Matched: true, Score: 5, WrappedOperand: wrapped}
+			minConverted = ConvertedOperand{Matched: true, Score: 5, TypePrecedenceScore: declaredTypePrecedence, WrappedOperand: wrapped}
 		}
 	}
+
+	// TODO(b/301606416): Add List Demotion (T -> List<T>) and Interval Demotion (T -> Interval<T>).
 
 	if minConverted.Matched {
 		return minConverted, nil
@@ -424,6 +442,29 @@ func wrapSystemImplicitConversion(library string, function string, operand model
 		return &model.ToConcept{UnaryExpression: &model.UnaryExpression{Operand: operand, Expression: model.ResultType(types.Concept)}}, nil
 	}
 	return nil, fmt.Errorf("internal error - could not find wrapper for %v %v", library, function)
+}
+
+// getTypeCategoryPrecedence returns a score based on the type category precedence, lower score
+// indicates a higher precedence.
+// This function is used as a tie breaker when two conversion paths have the same conversion
+// score.
+func getTypeCategoryPrecedence(t types.IType) (int, error) {
+	switch t.(type) {
+	case types.System:
+		return 1, nil
+	case *types.Tuple:
+		return 2, nil
+	case *types.Named:
+		return 3, nil
+	case *types.Interval:
+		return 3, nil
+	case *types.List:
+		return 4, nil
+	case *types.Choice:
+		return 5, nil
+	default:
+		return 0, fmt.Errorf("internal error - could not find type category precedence for %v", t)
+	}
 }
 
 // OperandsToString returns a print friendly representation of the operands.

@@ -789,7 +789,7 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "PositionOf",
-			cql: "PositionOf('B','ABC')",
+			cql:  "PositionOf('B','ABC')",
 			want: &model.PositionOf{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -802,7 +802,7 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "Length",
-			cql: "Length('ABC')",
+			cql:  "Length('ABC')",
 			want: &model.Length{
 				UnaryExpression: &model.UnaryExpression{
 					Operand:    model.NewLiteral("ABC", types.String),
@@ -812,30 +812,30 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "Upper",
-			cql: "Upper('abc')",
+			cql:  "Upper('abc')",
 			want: &model.Upper{
 				UnaryExpression: &model.UnaryExpression{
-					Operand: model.NewLiteral("abc", types.String),
+					Operand:    model.NewLiteral("abc", types.String),
 					Expression: model.ResultType(types.String),
 				},
 			},
 		},
 		{
 			name: "Lower",
-			cql: "Lower('ABC')",
+			cql:  "Lower('ABC')",
 			want: &model.Lower{
 				UnaryExpression: &model.UnaryExpression{
-					Operand: model.NewLiteral("ABC", types.String),
+					Operand:    model.NewLiteral("ABC", types.String),
 					Expression: model.ResultType(types.String),
 				},
 			},
 		},
-    {
-      name: "StartsWith",
-      cql: "StartsWith('Excellent', 'Ex')",
-      want: &model.StartsWith{
-        BinaryExpression: &model.BinaryExpression{
-          Operands: []model.IExpression{
+		{
+			name: "StartsWith",
+			cql:  "StartsWith('Excellent', 'Ex')",
+			want: &model.StartsWith{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
 						model.NewLiteral("Excellent", types.String),
 						model.NewLiteral("Ex", types.String),
 					},
@@ -1493,6 +1493,32 @@ func TestBuiltInFunctions(t *testing.T) {
 						},
 					},
 					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludedIn List<T> for point type",
+			cql:  "ProperlyIncludedIn(1, {1, 2, 3})",
+			want: &model.ProperlyIncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1", types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludedIn List List",
+			cql:  "ProperlyIncludedIn({1, 2, 3}, {1, 2, 3})",
+			want: &model.ProperlyIncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
 				},
 			},
 		},
