@@ -186,7 +186,7 @@ func TestCQL_ParseErrors(t *testing.T) {
 				LibKey: result.LibKey{Name: "Unnamed Library", IsUnnamed: true /* Version is ignored*/},
 				Errors: []*parser.ParsingError{
 					{
-						Message: "could not resolve Add(System.Integer, System.String): no matching overloads",
+						Message: "could not resolve Add(System.Integer, System.String): no matching overloads available overloads: [Add(System.Integer, System.Integer), Add(System.Long, System.Long), Add(System.Decimal, System.Decimal), Add(System.Quantity, System.Quantity), Add(System.String, System.String), Add(System.Date, System.Quantity), Add(System.DateTime, System.Quantity), Add(System.Time, System.Quantity)]",
 						Line:    1,
 						Column:  12,
 					},

@@ -375,6 +375,30 @@ func TestOverloadMatch_Error(t *testing.T) {
 			errIs:       ErrNoMatch,
 		},
 		{
+			name: "Multiple No Match Includes Available Overloads",
+			invoked: []model.IExpression{
+				model.NewLiteral("String", types.String),
+				model.NewInclusiveInterval("@2020-03-04", "@2020-03-05", types.Date),
+				model.NewList([]string{"4", "5"}, types.Integer),
+			},
+			overloads: []Overload[string]{
+				Overload[string]{
+					Result:   "Too Short",
+					Operands: []types.IType{types.String, &types.Interval{PointType: types.DateTime}},
+				},
+				Overload[string]{
+					Result: "Wrong Type",
+					Operands: []types.IType{
+						types.Integer,
+						&types.Interval{PointType: types.DateTime},
+						&types.List{ElementType: types.Integer},
+					},
+				},
+			},
+			errContains: "available overloads: [Name(System.String, Interval<System.DateTime>), Name(System.Integer, Interval<System.DateTime>, List<System.Integer>)]",
+			errIs:       ErrNoMatch,
+		},
+		{
 			name:    "Ambiguous Match",
 			invoked: []model.IExpression{model.NewLiteral("String", types.String), model.NewLiteral("String", types.String)},
 			overloads: []Overload[string]{
