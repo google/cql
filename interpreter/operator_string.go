@@ -16,6 +16,7 @@ package interpreter
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -326,7 +327,7 @@ func evalLower(m model.IUnaryExpression, stringObj result.Value) (result.Value, 
 // PositionOf(pattern String, argument String) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#positionof
 func evalPositionOf(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
-  if result.IsNull(lObj) || result.IsNull(rObj) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
 	pattern, err := result.ToString(lObj)
@@ -355,4 +356,73 @@ func evalStartsWith(m model.IBinaryExpression, lObj, rObj result.Value) (result.
 		return result.Value{}, err
 	}
 	return result.New(strings.HasPrefix(argument, prefix))
+}
+
+// ReplaceMatches(argument String, pattern String, substitution String) String
+// https://cql.hl7.org/09-b-cqlreference.html#replacematches
+func evalReplaceMatches(m model.INaryExpression, operands []result.Value) (result.Value, error) {
+
+	transformSubstring := func(cqlSubst string) string {
+	// This helper function checks and converts PCRE escapes to Go escapes to ensure regexp package compatibility.
+		var goSubst strings.Builder
+		runes := []rune(cqlSubst)
+		i := 0
+		for i < len(runes) {
+			if runes[i] == '\\' {
+				if i+1 < len(runes) {
+					switch runes[i+1] {
+					case '$':
+						goSubst.WriteString("$$") // PCRE \$ -> Go $$
+						i++
+					case '\\':
+						goSubst.WriteRune('\\') // PCRE \\ -> Go \
+						i++
+					// Add other PCRE escapes if needed (e.g., \n, \t)
+					// and convert them to actual characters or Go's equivalents if any.
+					// Go's Expand treats \n literally, so you'd convert to actual newline.
+					default:
+						goSubst.WriteRune('\\') // Keep other backslashed chars
+						goSubst.WriteRune(runes[i+1])
+						i++
+					}
+				} else {
+					goSubst.WriteRune('\\') // Trailing backslash
+				}
+			} else if runes[i] == '$' {
+				// Check if it's not followed by a character that would make it a Go literal $ (e.g. another $)
+				// or if it's a group $1, ${name} which are compatible.
+				// For simplicity, assuming $ not part of \$ or $$ is a group or literal $ that Go handles.
+				goSubst.WriteRune('$')
+			} else {
+				goSubst.WriteRune(runes[i])
+			}
+			i++
+		}
+		return goSubst.String()
+	}
+
+
+	if result.IsNull(operands[0]) || result.IsNull(operands[1]) || result.IsNull(operands[2]) {
+		return result.New(nil)
+	}
+	argumentStr, err := result.ToString(operands[0])
+	if err != nil {
+		return result.Value{}, err
+	}
+	patternStr, err := result.ToString(operands[1])
+	if err != nil {
+		return result.Value{}, err
+	}
+	substitutionStr, err := result.ToString(operands[2])
+	if err != nil {
+		return result.Value{}, err
+	}
+	patternRe, err := regexp.Compile(patternStr)
+	if err != nil {
+		return result.New(false)
+	}
+
+	substitutionStr = transformSubstring(substitutionStr)
+
+	return result.New(patternRe.ReplaceAllString(argumentStr, substitutionStr))
 }
