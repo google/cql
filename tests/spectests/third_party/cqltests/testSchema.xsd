@@ -42,7 +42,7 @@
 					<xs:documentation>Notes about the test group.</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="test" type="Test" maxOccurs="unbounded"/>
+			<xs:element name="test" type="Test" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string">
 			<xs:annotation>
@@ -67,11 +67,18 @@
 	</xs:complexType>
 	<xs:complexType name="Test">
 		<xs:sequence>
-			<xs:element name="expression" type="Expression">
-				<xs:annotation>
-					<xs:documentation>The expression to be tested.</xs:documentation>
-				</xs:annotation>
-			</xs:element>
+			<xs:choice>
+				<xs:element name="expression" type="Expression">
+					<xs:annotation>
+						<xs:documentation>The expression to be tested.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="library" type="Library" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>For CQL, this is an inline CQL Library. In the future, references to filesysem libraries may be supported.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:choice>
 			<xs:element name="output" type="Output" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>The expected output of the test.</xs:documentation>
@@ -143,12 +150,22 @@
 	<xs:complexType name="Output">
 		<xs:simpleContent>
 			<xs:extension base="xs:string">
+				<xs:attribute name="name" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>The name of the output. For CQL, this must correspond to the name of the expression definition this output corresponds to.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
 				<xs:attribute name="type" type="OutputType" use="optional">
 					<xs:annotation>
 						<xs:documentation>The type of the expected output. If no type is provided, the value is expected to be an expression in the language under test and will be set equal to the test expression and the expected evaluation result will be true. In the special case that the output is a null, a null predicate test will be used.</xs:documentation>
 					</xs:annotation>
 				</xs:attribute>
 			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:complexType name="Library">
+		<xs:simpleContent>
+			<xs:extension base="xs:string"/>
 		</xs:simpleContent>
 	</xs:complexType>
 	<xs:simpleType name="OutputType">

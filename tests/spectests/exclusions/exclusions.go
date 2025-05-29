@@ -51,6 +51,9 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/342061606 - Unit conversion is not supported.
 				"Divide1Q1",
 				"Divide10Q5I",
+				"TruncatedDivide10By5DQuantity",
+				"TruncatedDivide414By206DQuantity",
+				"TruncatedDivide10By0DQuantity",
 				// TODO: b/342061783 - Got unexpected result.
 				"Subtract2And11D",
 				"TruncatedDivide10d1ByNeg3D1Quantity",
@@ -117,12 +120,21 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlDateTimeOperatorsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
+				"DateTimeComponentFrom",
 				"Duration",
 				// TODO: b/342064491 - runtime error: invalid memory address or nil pointer dereference.
 				"SameAs",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
+				"DateTimeAddYearInWeeks",
+				"DateAdd2YearsAsMonths",
+				"DateAdd2YearsAsMonthsRem1",
+				"DateAdd1Year",
+				"DateTimeSubtractYearInWeeks",
+				"DateSubtract2YearsAsMonths",
+				"DateSubtract2YearsAsMonthsRem1",
+				"DateSubtract1Year",
 				"DateTimeComponentFromYear",
 				"DateTimeComponentFromMonth",
 				"DateTimeComponentFromMonthMinBoundary",
@@ -197,6 +209,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DateTimeAdd2YearsByDays",
 				"DateTimeAdd2YearsByDaysRem5Days",
 				// TODO: b/342064012 - Uncertain result.
+				"DateAdd33Days",
+				"DateSubtract33Days",
 				"DateTimeDurationBetweenUncertainInterval",
 				"DateTimeDurationBetweenUncertainInterval2",
 				"DateTimeDurationBetweenUncertainAdd",
@@ -214,8 +228,10 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DurationInWeeks",
 				"DurationInWeeks2",
 				"DurationInWeeks3",
+				"DateTimeSubtract1YearInSeconds",
 				"TimeDurationBetweenHour",
 				"TimeDurationBetweenHourDiffPrecision",
+				"TimeDurationBetweenHourDiffPrecision2",
 				"TimeDurationBetweenMinute",
 				"TimeDurationBetweenSecond",
 				"TimeDurationBetweenMillis",
@@ -261,6 +277,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// before/after keyword for Date/Time test cases so they are not excluded.
 				"TestOverlapsNull",
 				"IntegerIntervalOverlapsTrue",
+				"IntegerIntervalOverlapsTrue2",
+				"IntegerIntervalOverlapsTrue3",
 				"IntegerIntervalOverlapsFalse",
 				"DecimalIntervalOverlapsTrue",
 				"DecimalIntervalOverlapsFalse",
@@ -269,6 +287,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TestOverlapsBeforeNull",
 				"IntegerIntervalOverlapsBeforeTrue",
 				"IntegerIntervalOverlapsBeforeFalse",
+				"IntegerIntervalOverlapsBeforeFalse2",
 				"DecimalIntervalOverlapsBeforeTrue",
 				"DecimalIntervalOverlapsBeforeFalse",
 				"QuantityIntervalOverlapsBeforeTrue",
@@ -276,6 +295,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TestOverlapsAfterNull",
 				"IntegerIntervalOverlapsAfterTrue",
 				"IntegerIntervalOverlapsAfterFalse",
+				"IntegerIntervalOverlapsAfterFalse2",
 				"DecimalIntervalOverlapsAfterTrue",
 				"DecimalIntervalOverlapsAfterFalse",
 				"QuantityIntervalOverlapsAfterTrue",
@@ -338,6 +358,9 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operator.
 				"ContainsNullLeft",
+				"EqualABCAnd123",
+				"Equal123AndABC",
+				"Equal123AndString123",
 				"EquivalentABCAnd123",
 				"Equivalent123AndABC",
 				"Equivalent123AndString123",
@@ -351,7 +374,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"NotEqual123AndABC",
 				"NotEqual123AndString123",
 				// TODO: b/342061783 - Got unexpected result.
-				"EqualNullNull",
 				"ProperContainsTimeNull",
 				"ProperInTimeNull",
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
@@ -363,6 +385,13 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TakeNullEmpty",
 				"TakeEmpty",
 			},
+		},
+		"CqlOverloadMatching.xml": XMLTestFileExclusions{
+			GroupExcludes: []string{
+				// TODO: b/342061783 - xml tests don't yet support library tags.
+				"OverloadMatching",
+			},
+			NamesExcludes: []string{},
 		},
 		"CqlQueryTests.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{},
@@ -381,10 +410,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
 				"DateTimeToString1",
 				"DateTimeToString2",
-				"MatchesWordsAndSpacesFalse",
-				// The spec test is incorrect, fix pending in
-				// https://github.com/cqframework/cql-tests/pull/35.
-				"CombineEmptyList",
 			},
 		},
 		"CqlTypesTest.xml": XMLTestFileExclusions{
@@ -412,6 +437,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"ToDateTimeTimeUnspecified",
+				// TODO: b/343515613 - fails with unexpected result. Technically not supported.
+				"ToDateTimeMalformed",
 			},
 		},
 		"ValueLiteralsAndSelectors.xml": XMLTestFileExclusions{

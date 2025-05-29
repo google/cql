@@ -32,11 +32,11 @@
 		</test>
 		<test name="DateTimeCoalesce">
 			<expression>Coalesce(null, null, DateTime(2012, 5, 18))</expression>
-			<output>DateTime(2012, 5, 18)</output>
+			<output>@2012-05-18T</output>
 		</test>
 		<test name="DateTimeListCoalesce">
 			<expression>Coalesce({ null, null, DateTime(2012, 5, 18) })</expression>
-			<output>DateTime(2012, 5, 18)</output>
+			<output>@2012-05-18T</output>
 		</test>
 		<test name="TimeCoalesce">
 			<expression>Coalesce(null, null, @T05:15:33.556)</expression>
