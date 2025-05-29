@@ -1198,7 +1198,7 @@ type Lower struct{ *UnaryExpression }
 type PositionOf struct{ *BinaryExpression }
 
 // ReplaceMatches is https://cql.hl7.org/09-b-cqlreference.html#replacematches
-type ReplaceMatches struct { *NaryExpression } 
+type ReplaceMatches struct{ *NaryExpression }
 
 // Matches is https://cql.hl7.org/09-b-cqlreference.html#matches
 type Matches struct{ *BinaryExpression }
@@ -1580,7 +1580,7 @@ func (a *Lower) GetName() string { return "Lower" }
 func (a *PositionOf) GetName() string { return "PositionOf" }
 
 // GetName returns the name of the system operator.
-func (a *ReplaceMatches) GetName() string{ return "ReplaceMatches"}
+func (a *ReplaceMatches) GetName() string { return "ReplaceMatches" }
 
 // GetName returns the name of the system operator.
 func (a *Matches) GetName() string { return "Matches" }

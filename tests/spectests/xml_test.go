@@ -92,8 +92,7 @@ func TestCQLXML(t *testing.T) {
 
 		for _, tc := range cqlTests {
 			t.Run(fmt.Sprintf("%s_%s_%s", tc.FileName, tc.Group, tc.Name), func(t *testing.T) {
-				shouldSkip := (
-					slices.Contains(currExclusions.GroupExcludes, tc.Group) ||
+				shouldSkip := (slices.Contains(currExclusions.GroupExcludes, tc.Group) ||
 					slices.Contains(currExclusions.NamesExcludes, tc.Name) ||
 					tc.Skip)
 				if shouldSkip && strings.Contains(tc.SkipReason, "no output defined") {

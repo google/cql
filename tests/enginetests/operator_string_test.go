@@ -794,78 +794,78 @@ func TestLower(t *testing.T) {
 }
 
 func TestReplaceMatches(t *testing.T) {
-  tests := []struct {
+	tests := []struct {
 		name       string
 		cql        string
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-    {
-      name: "ReplaceMatchesOne",
-      cql: "ReplaceMatches('ABC','B','Z')",
-      wantModel: &model.ReplaceMatches{
-        NaryExpression: &model.NaryExpression{
-        	Operands: []model.IExpression{
-					  model.NewLiteral("ABC", types.String),
-					  model.NewLiteral("B", types.String),
-					  model.NewLiteral("Z", types.String),
+		{
+			name: "ReplaceMatchesOne",
+			cql:  "ReplaceMatches('ABC','B','Z')",
+			wantModel: &model.ReplaceMatches{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("ABC", types.String),
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("Z", types.String),
 					},
-          Expression: model.ResultType(types.String),
-        },
-      },
-      wantResult: newOrFatal(t, "AZC"),
-    },
-    {
-      name: "ReplaceMatchesNotFound",
-      cql: "ReplaceMatches('ABC','D','C')",
-      wantResult: newOrFatal(t, "ABC"),
-    },
-    {
-      name: "ReplaceMatchesArgNull",
-      cql: "ReplaceMatches(null,'B','Z')",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "ReplaceMatchesPatternNull",
-      cql: "ReplaceMatches('ABC',null,'Z')",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "ReplaceMatchesReplacesNull",
-      cql: "ReplaceMatches('ABC','B',null)",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "ReplaceMatchesArgEmpty",
-      cql: "ReplaceMatches('','B','Z')",
-      wantResult: newOrFatal(t, ""),
-    },
-    {
-      name: "ReplaceMatchesPatternEmpty",
-      cql: "ReplaceMatches('ABC','','Z')",
-      wantResult: newOrFatal(t, "ZAZBZCZ"),
-    },
-    {
-      name: "ReplaceMatchesReplacesEmpty",
-      cql: "ReplaceMatches('ABC','B','')",
-      wantResult: newOrFatal(t, "AC"),
-    },
-    {
-      name: "ReplaceMatchesRegex",
-      cql: "ReplaceMatches('A B C D', '\\s', 'match')",
-      wantResult: newOrFatal(t, "AmatchBmatchCmatchD"),
-    },
-    {
-      name: "ReplaceMatchesWholeRegexTrue",
-      cql: "ReplaceMatches('A B C D', '^[\\w|\\s]+$', 'Success')",
-      wantResult: newOrFatal(t, "Success"),
-    },
-    {
-      name: "ReplaceMatchesWholeRegexFalse",
-      cql: "ReplaceMatches('Failure', '^.*\\d+$', 'Success')",
-      wantResult: newOrFatal(t, "Failure"),
-    },
-  }
+					Expression: model.ResultType(types.String),
+				},
+			},
+			wantResult: newOrFatal(t, "AZC"),
+		},
+		{
+			name:       "ReplaceMatchesNotFound",
+			cql:        "ReplaceMatches('ABC','D','C')",
+			wantResult: newOrFatal(t, "ABC"),
+		},
+		{
+			name:       "ReplaceMatchesArgNull",
+			cql:        "ReplaceMatches(null,'B','Z')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "ReplaceMatchesPatternNull",
+			cql:        "ReplaceMatches('ABC',null,'Z')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "ReplaceMatchesReplacesNull",
+			cql:        "ReplaceMatches('ABC','B',null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "ReplaceMatchesArgEmpty",
+			cql:        "ReplaceMatches('','B','Z')",
+			wantResult: newOrFatal(t, ""),
+		},
+		{
+			name:       "ReplaceMatchesPatternEmpty",
+			cql:        "ReplaceMatches('ABC','','Z')",
+			wantResult: newOrFatal(t, "ZAZBZCZ"),
+		},
+		{
+			name:       "ReplaceMatchesReplacesEmpty",
+			cql:        "ReplaceMatches('ABC','B','')",
+			wantResult: newOrFatal(t, "AC"),
+		},
+		{
+			name:       "ReplaceMatchesRegex",
+			cql:        "ReplaceMatches('A B C D', '\\s', 'match')",
+			wantResult: newOrFatal(t, "AmatchBmatchCmatchD"),
+		},
+		{
+			name:       "ReplaceMatchesWholeRegexTrue",
+			cql:        "ReplaceMatches('A B C D', '^[\\w|\\s]+$', 'Success')",
+			wantResult: newOrFatal(t, "Success"),
+		},
+		{
+			name:       "ReplaceMatchesWholeRegexFalse",
+			cql:        "ReplaceMatches('Failure', '^.*\\d+$', 'Success')",
+			wantResult: newOrFatal(t, "Failure"),
+		},
+	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newFHIRParser(t)
@@ -895,56 +895,56 @@ func TestPositionOf(t *testing.T) {
 		wantModel  model.IExpression
 		wantResult result.Value
 	}{
-    {
-      name: "PositionOfFound",
-      cql:  "PositionOf('B','ABC')",
-      wantModel: &model.PositionOf{
-        BinaryExpression: &model.BinaryExpression{
-          Operands: []model.IExpression{
-            model.NewLiteral("B", types.String),
-            model.NewLiteral("ABC", types.String),
-          },
-          Expression: model.ResultType(types.Integer),
-        },
-      },
-      wantResult: newOrFatal(t, 1),
-    },
-    {
-      name: "PositionOfMultiples",
-      cql: "PositionOf('B', 'ABCBA')",
-      wantResult: newOrFatal(t, 1),
-    },
-    {
-      name: "PositionOfNotFound",
-      cql: "PositionOf('B','ACDC')",
-      wantResult: newOrFatal(t, -1),
-    },
-    {
-      name: "PositionOfLeftNull",
-      cql: "PositionOf(null, 'ABC')",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "PositionOfRightNull",
-      cql: "PositionOf('B', null)",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "PositionOfBothNull",
-      cql: "PositionOf(null, null)",
-      wantResult: newOrFatal(t, nil),
-    },
-    {
-      name: "PositionOfLeftEmpty",
-      cql: "PositionOf('','ABC')",
-      wantResult: newOrFatal(t, 0),
-    },
-    {
-      name: "PositionOfRightEmpty",
-      cql: "PositionOf('B', '')",
-      wantResult: newOrFatal(t, -1),
-    },
-  }
+		{
+			name: "PositionOfFound",
+			cql:  "PositionOf('B','ABC')",
+			wantModel: &model.PositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "PositionOfMultiples",
+			cql:        "PositionOf('B', 'ABCBA')",
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "PositionOfNotFound",
+			cql:        "PositionOf('B','ACDC')",
+			wantResult: newOrFatal(t, -1),
+		},
+		{
+			name:       "PositionOfLeftNull",
+			cql:        "PositionOf(null, 'ABC')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfRightNull",
+			cql:        "PositionOf('B', null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfBothNull",
+			cql:        "PositionOf(null, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "PositionOfLeftEmpty",
+			cql:        "PositionOf('','ABC')",
+			wantResult: newOrFatal(t, 0),
+		},
+		{
+			name:       "PositionOfRightEmpty",
+			cql:        "PositionOf('B', '')",
+			wantResult: newOrFatal(t, -1),
+		},
+	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newFHIRParser(t)
@@ -975,7 +975,7 @@ func TestStartsWith(t *testing.T) {
 	}{
 		{
 			name: "StartsWithTrue",
-			cql: "StartsWith('Appendix','App')",
+			cql:  "StartsWith('Appendix','App')",
 			wantModel: &model.StartsWith{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -988,28 +988,28 @@ func TestStartsWith(t *testing.T) {
 			wantResult: newOrFatal(t, true),
 		},
 		{
-			name: "StartsWithFalse",
-			cql: "StartsWith('Appendix','Dep')",
+			name:       "StartsWithFalse",
+			cql:        "StartsWith('Appendix','Dep')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "StartsWithLeftNull",
-			cql: "StartsWith(null, 'App')",
+			name:       "StartsWithLeftNull",
+			cql:        "StartsWith(null, 'App')",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "StartsWithRightNull",
-			cql: "StartsWith('Appendix', null)",
+			name:       "StartsWithRightNull",
+			cql:        "StartsWith('Appendix', null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "StartsWithLeftEmpty",
-			cql: "StartsWith('','App')",
+			name:       "StartsWithLeftEmpty",
+			cql:        "StartsWith('','App')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "StartsWithRightEmpty",
-			cql: "StartsWith('Appendix','')",
+			name:       "StartsWithRightEmpty",
+			cql:        "StartsWith('Appendix','')",
 			wantResult: newOrFatal(t, true),
 		},
 	}
@@ -1044,7 +1044,7 @@ func TestMatches(t *testing.T) {
 	}{
 		{
 			name: "MatchesWordsAndSpacesTrue",
-			cql: "Matches('Not all who wander are lost', '[\\w|\\s]+')",
+			cql:  "Matches('Not all who wander are lost', '[\\w|\\s]+')",
 			wantModel: &model.Matches{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
@@ -1057,33 +1057,33 @@ func TestMatches(t *testing.T) {
 			wantResult: newOrFatal(t, true),
 		},
 		{
-			name: "MatchesWordsAndSpacesFalse",
-			cql: "Matches('Not all who wander are lost - circa 2017', '^[\\w\\s]+$')",
+			name:       "MatchesWordsAndSpacesFalse",
+			cql:        "Matches('Not all who wander are lost - circa 2017', '^[\\w\\s]+$')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "MatchesNumberTrue",
-			cql: "Matches('Not all who wander are lost - circa 2017', '.*\\d+')",
+			name:       "MatchesNumberTrue",
+			cql:        "Matches('Not all who wander are lost - circa 2017', '.*\\d+')",
 			wantResult: newOrFatal(t, true),
 		},
 		{
-			name: "MatchesNumberFalse",
-			cql: "Matches('Not all who wander are lost', '.*\\d+')",
+			name:       "MatchesNumberFalse",
+			cql:        "Matches('Not all who wander are lost', '.*\\d+')",
 			wantResult: newOrFatal(t, false),
 		},
 		{
-			name: "MatchesLeftNil",
-			cql: "Matches(null, '\\w+')",
+			name:       "MatchesLeftNil",
+			cql:        "Matches(null, '\\w+')",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "MatchesRightNil",
-			cql: "Matches('abc', null)",
+			name:       "MatchesRightNil",
+			cql:        "Matches('abc', null)",
 			wantResult: newOrFatal(t, nil),
 		},
 		{
-			name: "MatchesNotWords",
-			cql: "Matches('   ', '\\W+')",
+			name:       "MatchesNotWords",
+			cql:        "Matches('   ', '\\W+')",
 			wantResult: newOrFatal(t, true),
 		},
 	}
