@@ -39,6 +39,14 @@ jobs:
       run: |
             go build ./...
 
+    - name: Run gofmt
+      if: matrix.os == 'ubuntu-latest' # Ensures only ran once.
+      run: FMT_RESULTS="$(gofmt -l .)"; if [ "$(wc -l <<< "$FMT_RESULTS")" -gt 0 ]; then echo $FMT_RESULTS | xargs -n1; exit 1; fi
+
+    - name: Run go vet
+      if: matrix.os == 'ubuntu-latest' # Ensures only ran once.
+      run: go vet ./...
+
     - name: Test
       run: |
             go test ./...
