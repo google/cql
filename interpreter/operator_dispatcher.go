@@ -1251,7 +1251,7 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 		return []convert.Overload[evalBinarySignature]{
 			{
 				Operands: []types.IType{types.String, types.String},
-				Result: evalMatches,
+				Result:   evalMatches,
 			},
 		}, nil
 	default:

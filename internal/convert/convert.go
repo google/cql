@@ -131,7 +131,7 @@ func OverloadMatch[F any](invoked []model.IExpression, overloads []Overload[F], 
 		availableOverloads.WriteString("]")
 	}
 
-	return MatchedOverload[F]{}, fmt.Errorf("could not resolve %v(%v): %w%v", 
+	return MatchedOverload[F]{}, fmt.Errorf("could not resolve %v(%v): %w%v",
 		name, OperandsToString(invoked), ErrNoMatch, availableOverloads.String())
 }
 

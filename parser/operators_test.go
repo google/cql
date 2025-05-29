@@ -839,13 +839,13 @@ func TestBuiltInFunctions(t *testing.T) {
 						model.NewLiteral("Excellent", types.String),
 						model.NewLiteral("Ex", types.String),
 					},
-          Expression: model.ResultType(types.Boolean),
-        },
-      },
-    },
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
 		{
 			name: "ReplaceMatches",
-			cql: "ReplaceMatches('ABCDE', 'C', 'XYZ')",
+			cql:  "ReplaceMatches('ABCDE', 'C', 'XYZ')",
 			want: &model.ReplaceMatches{
 				NaryExpression: &model.NaryExpression{
 					Operands: []model.IExpression{
@@ -859,7 +859,7 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "Matches",
-			cql: "Matches('1,2three', '\\d,\\d\\w+')",
+			cql:  "Matches('1,2three', '\\d,\\d\\w+')",
 			want: &model.Matches{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
