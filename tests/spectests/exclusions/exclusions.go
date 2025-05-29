@@ -27,18 +27,18 @@ type XMLTestFileExclusions struct {
 // should be included for each set of skipped tests.
 func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 	return map[string]XMLTestFileExclusions{
-		"CqlAggregateFunctionsTest.xml": XMLTestFileExclusions{
+		"CqlAggregateFunctionsTest.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{},
 		},
-		"CqlAggregateTest.xml": XMLTestFileExclusions{
+		"CqlAggregateTest.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"RolledOutIntervals",
 			},
 		},
-		"CqlArithmeticFunctionsTest.xml": XMLTestFileExclusions{
+		"CqlArithmeticFunctionsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"HighBoundary",
@@ -63,7 +63,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DateTimeMaxValue",
 			},
 		},
-		"CqlComparisonOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlComparisonOperatorsTest.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
@@ -117,7 +117,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TupleNotEqJohn1John1WithNullName",
 			},
 		},
-		"CqlDateTimeOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlDateTimeOperatorsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"DateTimeComponentFrom",
@@ -248,7 +248,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DateTimeAddLeapYear",
 			},
 		},
-		"CqlIntervalOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlIntervalOperatorsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"After",
@@ -349,7 +349,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TestInNullBoundaries",
 			},
 		},
-		"CqlListOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlListOperatorsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Descendents",
@@ -386,22 +386,22 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TakeEmpty",
 			},
 		},
-		"CqlOverloadMatching.xml": XMLTestFileExclusions{
+		"CqlOverloadMatching.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061783 - xml tests don't yet support library tags.
 				"OverloadMatching",
 			},
 			NamesExcludes: []string{},
 		},
-		"CqlQueryTests.xml": XMLTestFileExclusions{
+		"CqlQueryTests.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{},
 		},
-		"CqlNullologicalOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlNullologicalOperatorsTest.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{},
 		},
-		"CqlStringOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlStringOperatorsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Substring",
@@ -412,7 +412,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DateTimeToString2",
 			},
 		},
-		"CqlTypesTest.xml": XMLTestFileExclusions{
+		"CqlTypesTest.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{
 				// TODO: b/342064012 - Uncertain result.
@@ -425,7 +425,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"StringTestEscapeQuotes",
 			},
 		},
-		"CqlTypeOperatorsTest.xml": XMLTestFileExclusions{
+		"CqlTypeOperatorsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Convert",
@@ -441,7 +441,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"ToDateTimeMalformed",
 			},
 		},
-		"ValueLiteralsAndSelectors.xml": XMLTestFileExclusions{
+		"ValueLiteralsAndSelectors.xml": {
 			GroupExcludes: []string{},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operator. These return a decimal

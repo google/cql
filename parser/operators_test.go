@@ -206,10 +206,10 @@ func TestBuiltInFunctions(t *testing.T) {
 					Operand: &model.Instance{
 						ClassType: types.Code,
 						Elements: []*model.InstanceElement{
-							&model.InstanceElement{Name: "code", Value: model.NewLiteral("foo", types.String)},
-							&model.InstanceElement{Name: "system", Value: model.NewLiteral("bar", types.String)},
-							&model.InstanceElement{Name: "version", Value: model.NewLiteral("1.0", types.String)},
-							&model.InstanceElement{Name: "display", Value: model.NewLiteral("severed leg", types.String)},
+							{Name: "code", Value: model.NewLiteral("foo", types.String)},
+							{Name: "system", Value: model.NewLiteral("bar", types.String)},
+							{Name: "version", Value: model.NewLiteral("1.0", types.String)},
+							{Name: "display", Value: model.NewLiteral("severed leg", types.String)},
 						},
 						Expression: model.ResultType(types.Code),
 					},
@@ -391,7 +391,7 @@ func TestBuiltInFunctions(t *testing.T) {
 							Expression: model.ResultType(types.Concept),
 							ClassType:  types.Concept,
 							Elements: []*model.InstanceElement{
-								&model.InstanceElement{
+								{
 									Name: "codes",
 									Value: &model.List{
 										Expression: model.ResultType(&types.List{ElementType: types.Code}),
@@ -400,8 +400,8 @@ func TestBuiltInFunctions(t *testing.T) {
 												Expression: model.ResultType(types.Code),
 												ClassType:  types.Code,
 												Elements: []*model.InstanceElement{
-													&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
-													&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+													{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+													{Name: "code", Value: model.NewLiteral("1", types.String)},
 												},
 											},
 										},
@@ -413,8 +413,8 @@ func TestBuiltInFunctions(t *testing.T) {
 							Expression: model.ResultType(types.Code),
 							ClassType:  types.Code,
 							Elements: []*model.InstanceElement{
-								&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
-								&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+								{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+								{Name: "code", Value: model.NewLiteral("1", types.String)},
 							},
 						},
 					},

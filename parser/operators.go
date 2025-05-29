@@ -620,14 +620,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Less",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Long, types.Long},
-				[]types.IType{types.Decimal, types.Decimal},
-				[]types.IType{types.Quantity, types.Quantity},
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
-				[]types.IType{types.String, types.String},
+				{types.Integer, types.Integer},
+				{types.Long, types.Long},
+				{types.Decimal, types.Decimal},
+				{types.Quantity, types.Quantity},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
+				{types.String, types.String},
 			},
 			model: func() model.IExpression {
 				return &model.Less{
@@ -640,14 +640,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Greater",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Long, types.Long},
-				[]types.IType{types.Decimal, types.Decimal},
-				[]types.IType{types.Quantity, types.Quantity},
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
-				[]types.IType{types.String, types.String},
+				{types.Integer, types.Integer},
+				{types.Long, types.Long},
+				{types.Decimal, types.Decimal},
+				{types.Quantity, types.Quantity},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
+				{types.String, types.String},
 			},
 			model: func() model.IExpression {
 				return &model.Greater{
@@ -660,14 +660,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "LessOrEqual",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Long, types.Long},
-				[]types.IType{types.Decimal, types.Decimal},
-				[]types.IType{types.Quantity, types.Quantity},
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
-				[]types.IType{types.String, types.String},
+				{types.Integer, types.Integer},
+				{types.Long, types.Long},
+				{types.Decimal, types.Decimal},
+				{types.Quantity, types.Quantity},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
+				{types.String, types.String},
 			},
 			model: func() model.IExpression {
 				return &model.LessOrEqual{
@@ -680,14 +680,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "GreaterOrEqual",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Long, types.Long},
-				[]types.IType{types.Decimal, types.Decimal},
-				[]types.IType{types.Quantity, types.Quantity},
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
-				[]types.IType{types.String, types.String},
+				{types.Integer, types.Integer},
+				{types.Long, types.Long},
+				{types.Decimal, types.Decimal},
+				{types.Quantity, types.Quantity},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
+				{types.String, types.String},
 			},
 			model: func() model.IExpression {
 				return &model.GreaterOrEqual{
@@ -1193,9 +1193,9 @@ func (p *Parser) loadSystemOperators() error {
 			name: "After",
 			// See generatePrecisionTimingOverloads() for more overloads.
 			operands: [][]types.IType{
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
 			},
 			model: func() model.IExpression {
 				return &model.After{
@@ -1209,9 +1209,9 @@ func (p *Parser) loadSystemOperators() error {
 			name: "Before",
 			// See generatePrecisionTimingOverloads() for more overloads.
 			operands: [][]types.IType{
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
 			},
 			model: func() model.IExpression {
 				return &model.Before{
@@ -1224,9 +1224,9 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Date",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer},
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer},
+				{types.Integer},
+				{types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer},
 			},
 			model: func() model.IExpression {
 				return &model.Date{
@@ -1239,14 +1239,14 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "DateTime",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer},
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Decimal},
+				{types.Integer},
+				{types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Integer, types.Decimal},
 			},
 			model: func() model.IExpression {
 				return &model.DateTime{
@@ -1293,9 +1293,9 @@ func (p *Parser) loadSystemOperators() error {
 			name: "SameOrAfter",
 			// See generatePrecisionTimingOverloads() for more overloads.
 			operands: [][]types.IType{
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
 			},
 			model: func() model.IExpression {
 				return &model.SameOrAfter{
@@ -1309,9 +1309,9 @@ func (p *Parser) loadSystemOperators() error {
 			name: "SameOrBefore",
 			// See generatePrecisionTimingOverloads() for more overloads.
 			operands: [][]types.IType{
-				[]types.IType{types.Date, types.Date},
-				[]types.IType{types.DateTime, types.DateTime},
-				[]types.IType{types.Time, types.Time},
+				{types.Date, types.Date},
+				{types.DateTime, types.DateTime},
+				{types.Time, types.Time},
 			},
 			model: func() model.IExpression {
 				return &model.SameOrBefore{
@@ -1339,10 +1339,10 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Time",
 			operands: [][]types.IType{
-				[]types.IType{types.Integer},
-				[]types.IType{types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer},
-				[]types.IType{types.Integer, types.Integer, types.Integer, types.Integer},
+				{types.Integer},
+				{types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer},
+				{types.Integer, types.Integer, types.Integer, types.Integer},
 			},
 			model: func() model.IExpression {
 				return &model.Time{
@@ -1394,14 +1394,14 @@ func (p *Parser) loadSystemOperators() error {
 			operands: [][]types.IType{
 				{convert.GenericList, convert.GenericType},
 				// TODO(b/301606416): Add support for ContainsYears, ContainsDays...
-				[]types.IType{&types.Interval{PointType: types.Integer}, types.Integer},
-				[]types.IType{&types.Interval{PointType: types.Long}, types.Long},
-				[]types.IType{&types.Interval{PointType: types.Decimal}, types.Decimal},
-				[]types.IType{&types.Interval{PointType: types.Quantity}, types.Quantity},
-				[]types.IType{&types.Interval{PointType: types.String}, types.String},
-				[]types.IType{&types.Interval{PointType: types.Date}, types.Date},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, types.DateTime},
-				[]types.IType{&types.Interval{PointType: types.Time}, types.Time},
+				{&types.Interval{PointType: types.Integer}, types.Integer},
+				{&types.Interval{PointType: types.Long}, types.Long},
+				{&types.Interval{PointType: types.Decimal}, types.Decimal},
+				{&types.Interval{PointType: types.Quantity}, types.Quantity},
+				{&types.Interval{PointType: types.String}, types.String},
+				{&types.Interval{PointType: types.Date}, types.Date},
+				{&types.Interval{PointType: types.DateTime}, types.DateTime},
+				{&types.Interval{PointType: types.Time}, types.Time},
 			},
 			model: func() model.IExpression {
 				return &model.Contains{
@@ -1426,14 +1426,14 @@ func (p *Parser) loadSystemOperators() error {
 			name: "In",
 			operands: [][]types.IType{
 				{convert.GenericType, convert.GenericList},
-				[]types.IType{types.Integer, &types.Interval{PointType: types.Integer}},
-				[]types.IType{types.Long, &types.Interval{PointType: types.Long}},
-				[]types.IType{types.Decimal, &types.Interval{PointType: types.Decimal}},
-				[]types.IType{types.Quantity, &types.Interval{PointType: types.Quantity}},
-				[]types.IType{types.String, &types.Interval{PointType: types.String}},
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.Integer, &types.Interval{PointType: types.Integer}},
+				{types.Long, &types.Interval{PointType: types.Long}},
+				{types.Decimal, &types.Interval{PointType: types.Decimal}},
+				{types.Quantity, &types.Interval{PointType: types.Quantity}},
+				{types.String, &types.Interval{PointType: types.String}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.In{
@@ -1446,56 +1446,56 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "InYears",
 			operands: [][]types.IType{
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
 			},
 			model: inModel(model.YEAR),
 		},
 		{
 			name: "InMonths",
 			operands: [][]types.IType{
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
 			},
 			model: inModel(model.MONTH),
 		},
 		{
 			name: "InDays",
 			operands: [][]types.IType{
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
 			},
 			model: inModel(model.DAY),
 		},
 		{
 			name: "InHours",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.HOUR),
 		},
 		{
 			name: "InMinutes",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.MINUTE),
 		},
 		{
 			name: "InSeconds",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.SECOND),
 		},
 		{
 			name: "InMilliseconds",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.MILLISECOND),
 		},
@@ -1503,14 +1503,14 @@ func (p *Parser) loadSystemOperators() error {
 			name: "Includes",
 			operands: [][]types.IType{
 				// op (left Interval<T>, right Interval<T>) Boolean
-				[]types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
-				[]types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
-				[]types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
-				[]types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
-				[]types.IType{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
-				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.Includes{
@@ -1525,14 +1525,14 @@ func (p *Parser) loadSystemOperators() error {
 			name: "Includes",
 			operands: [][]types.IType{
 				// op (left T, right Interval<T>) Boolean
-				[]types.IType{types.Integer, &types.Interval{PointType: types.Integer}},
-				[]types.IType{types.Long, &types.Interval{PointType: types.Long}},
-				[]types.IType{types.Decimal, &types.Interval{PointType: types.Decimal}},
-				[]types.IType{types.Quantity, &types.Interval{PointType: types.Quantity}},
-				[]types.IType{types.String, &types.Interval{PointType: types.String}},
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.Integer, &types.Interval{PointType: types.Integer}},
+				{types.Long, &types.Interval{PointType: types.Long}},
+				{types.Decimal, &types.Interval{PointType: types.Decimal}},
+				{types.Quantity, &types.Interval{PointType: types.Quantity}},
+				{types.String, &types.Interval{PointType: types.String}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.In{
@@ -1546,17 +1546,17 @@ func (p *Parser) loadSystemOperators() error {
 			name: "IncludedIn",
 			operands: [][]types.IType{
 				// op (left Interval<T>, right Interval<T>) Boolean
-				[]types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
-				[]types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
-				[]types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
-				[]types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
-				[]types.IType{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
-				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 				// list overloads
-				[]types.IType{convert.GenericType, convert.GenericList},
-				[]types.IType{convert.GenericList, convert.GenericList},
+				{convert.GenericType, convert.GenericList},
+				{convert.GenericList, convert.GenericList},
 			},
 			model: func() model.IExpression {
 				return &model.IncludedIn{
@@ -1571,14 +1571,14 @@ func (p *Parser) loadSystemOperators() error {
 			name: "IncludedIn",
 			operands: [][]types.IType{
 				// op (left T, right Interval<T>) Boolean
-				[]types.IType{types.Integer, &types.Interval{PointType: types.Integer}},
-				[]types.IType{types.Long, &types.Interval{PointType: types.Long}},
-				[]types.IType{types.Decimal, &types.Interval{PointType: types.Decimal}},
-				[]types.IType{types.Quantity, &types.Interval{PointType: types.Quantity}},
-				[]types.IType{types.String, &types.Interval{PointType: types.String}},
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.Integer, &types.Interval{PointType: types.Integer}},
+				{types.Long, &types.Interval{PointType: types.Long}},
+				{types.Decimal, &types.Interval{PointType: types.Decimal}},
+				{types.Quantity, &types.Interval{PointType: types.Quantity}},
+				{types.String, &types.Interval{PointType: types.String}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.In{
@@ -1591,120 +1591,120 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "IncludedInYears",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
 			},
 			model: includedInModel(model.YEAR),
 		},
 		{
 			name: "IncludedInYears",
 			operands: [][]types.IType{
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
 			},
 			model: inModel(model.YEAR),
 		},
 		{
 			name: "IncludedInMonths",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
 			},
 			model: includedInModel(model.MONTH),
 		},
 		{
 			name: "IncludedInMonths",
 			operands: [][]types.IType{
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
 			},
 			model: inModel(model.MONTH),
 		},
 		{
 			name: "IncludedInDays",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
 			},
 			model: includedInModel(model.DAY),
 		},
 		{
 			name: "IncludedInDays",
 			operands: [][]types.IType{
-				[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Date, &types.Interval{PointType: types.Date}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
 			},
 			model: inModel(model.DAY),
 		},
 		{
 			name: "IncludedInHours",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 			},
 			model: includedInModel(model.HOUR),
 		},
 		{
 			name: "IncludedInHours",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.HOUR),
 		},
 		{
 			name: "IncludedInMinutes",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 			},
 			model: includedInModel(model.MINUTE),
 		},
 		{
 			name: "IncludedInMinutes",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.MINUTE),
 		},
 		{
 			name: "IncludedInSeconds",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 			},
 			model: includedInModel(model.SECOND),
 		},
 		{
 			name: "IncludedInSeconds",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.SECOND),
 		},
 		{
 			name: "IncludedInMilliseconds",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 			},
 			model: includedInModel(model.MILLISECOND),
 		},
 		{
 			name: "IncludedInMilliseconds",
 			operands: [][]types.IType{
-				[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-				[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+				{types.DateTime, &types.Interval{PointType: types.DateTime}},
+				{types.Time, &types.Interval{PointType: types.Time}},
 			},
 			model: inModel(model.MILLISECOND),
 		},
 		{
 			name: "Overlaps",
 			operands: [][]types.IType{
-				[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-				[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
 			},
 			model: func() model.IExpression {
 				return &model.Overlaps{
@@ -2044,37 +2044,37 @@ func (p *Parser) loadSystemOperators() error {
 		// CLINICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#clinical-operators-3
 		{
 			name:     "AgeInYears",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.YEAR),
 		},
 		{
 			name:     "AgeInMonths",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.MONTH),
 		},
 		{
 			name:     "AgeInWeeks",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.WEEK),
 		},
 		{
 			name:     "AgeInDays",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.DAY),
 		},
 		{
 			name:     "AgeInHours",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.HOUR),
 		},
 		{
 			name:     "AgeInMinutes",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.MINUTE),
 		},
 		{
 			name:     "AgeInSeconds",
-			operands: [][]types.IType{[]types.IType{}},
+			operands: [][]types.IType{{}},
 			model:    calculateAgeModel(model.SECOND),
 		},
 		{
@@ -2480,51 +2480,51 @@ func durationBetweenModel(precision model.DateTimePrecision) func() model.IExpre
 
 var comparableIntervalOverloads = [][]types.IType{
 	// op (left Interval<T>, right Interval<T>) Boolean
-	[]types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
-	[]types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
-	[]types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
-	[]types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
-	[]types.IType{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
-	[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-	[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-	[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+	{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+	{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+	{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+	{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+	{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
+	{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+	{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+	{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 	// op (left T, right Interval<T>) Boolean
-	[]types.IType{types.Integer, &types.Interval{PointType: types.Integer}},
-	[]types.IType{types.Long, &types.Interval{PointType: types.Long}},
-	[]types.IType{types.Decimal, &types.Interval{PointType: types.Decimal}},
-	[]types.IType{types.Quantity, &types.Interval{PointType: types.Quantity}},
-	[]types.IType{types.String, &types.Interval{PointType: types.String}},
-	[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-	[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-	[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+	{types.Integer, &types.Interval{PointType: types.Integer}},
+	{types.Long, &types.Interval{PointType: types.Long}},
+	{types.Decimal, &types.Interval{PointType: types.Decimal}},
+	{types.Quantity, &types.Interval{PointType: types.Quantity}},
+	{types.String, &types.Interval{PointType: types.String}},
+	{types.Date, &types.Interval{PointType: types.Date}},
+	{types.DateTime, &types.Interval{PointType: types.DateTime}},
+	{types.Time, &types.Interval{PointType: types.Time}},
 	// op (left Interval<T>, right T) Boolean
-	[]types.IType{&types.Interval{PointType: types.Integer}, types.Integer},
-	[]types.IType{&types.Interval{PointType: types.Long}, types.Long},
-	[]types.IType{&types.Interval{PointType: types.Decimal}, types.Decimal},
-	[]types.IType{&types.Interval{PointType: types.Quantity}, types.Quantity},
-	[]types.IType{&types.Interval{PointType: types.String}, types.String},
-	[]types.IType{&types.Interval{PointType: types.Date}, types.Date},
-	[]types.IType{&types.Interval{PointType: types.DateTime}, types.DateTime},
-	[]types.IType{&types.Interval{PointType: types.Time}, types.Time},
+	{&types.Interval{PointType: types.Integer}, types.Integer},
+	{&types.Interval{PointType: types.Long}, types.Long},
+	{&types.Interval{PointType: types.Decimal}, types.Decimal},
+	{&types.Interval{PointType: types.Quantity}, types.Quantity},
+	{&types.Interval{PointType: types.String}, types.String},
+	{&types.Interval{PointType: types.Date}, types.Date},
+	{&types.Interval{PointType: types.DateTime}, types.DateTime},
+	{&types.Interval{PointType: types.Time}, types.Time},
 }
 
 func (p *Parser) generatePrecisionTimingOverloads() error {
 	overloads := [][]types.IType{
-		[]types.IType{types.Date, types.Date},
-		[]types.IType{types.DateTime, types.DateTime},
-		[]types.IType{types.Time, types.Time},
+		{types.Date, types.Date},
+		{types.DateTime, types.DateTime},
+		{types.Time, types.Time},
 		// (left Interval<T>, right Interval<T>) Boolean
-		[]types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
-		[]types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
-		[]types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+		{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+		{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+		{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
 		// (left T, right Interval<T>) Boolean
-		[]types.IType{types.Date, &types.Interval{PointType: types.Date}},
-		[]types.IType{types.DateTime, &types.Interval{PointType: types.DateTime}},
-		[]types.IType{types.Time, &types.Interval{PointType: types.Time}},
+		{types.Date, &types.Interval{PointType: types.Date}},
+		{types.DateTime, &types.Interval{PointType: types.DateTime}},
+		{types.Time, &types.Interval{PointType: types.Time}},
 		// (left Interval<T>, right T) Boolean
-		[]types.IType{&types.Interval{PointType: types.Date}, types.Date},
-		[]types.IType{&types.Interval{PointType: types.DateTime}, types.DateTime},
-		[]types.IType{&types.Interval{PointType: types.Time}, types.Time},
+		{&types.Interval{PointType: types.Date}, types.Date},
+		{&types.Interval{PointType: types.DateTime}, types.DateTime},
+		{&types.Interval{PointType: types.Time}, types.Time},
 	}
 
 	for _, precision := range dateTimePrecisions() {
@@ -2564,9 +2564,9 @@ func (p *Parser) generatePrecisionTimingOverloads() error {
 
 func (p *Parser) generateDifferenceBetweenOverloads() error {
 	overloads := [][]types.IType{
-		[]types.IType{types.Date, types.Date},
-		[]types.IType{types.DateTime, types.DateTime},
-		[]types.IType{types.Time, types.Time},
+		{types.Date, types.Date},
+		{types.DateTime, types.DateTime},
+		{types.Time, types.Time},
 	}
 
 	for _, precision := range dateTimePrecisions() {

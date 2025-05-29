@@ -186,7 +186,7 @@ func TestParserExpressions(t *testing.T) {
 			want: &model.Case{
 				Comparand: nil,
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("true", types.Boolean),
 						Then: model.NewLiteral("4", types.Integer),
 					},
@@ -205,7 +205,7 @@ func TestParserExpressions(t *testing.T) {
 			want: &model.Case{
 				Comparand: model.NewLiteral("4", types.Integer),
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("5", types.Integer),
 						Then: model.NewLiteral("6", types.Integer),
 					},
@@ -224,7 +224,7 @@ func TestParserExpressions(t *testing.T) {
 			want: &model.Case{
 				Comparand: model.NewLiteral("5.2", types.Decimal),
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: &model.ToDecimal{
 							UnaryExpression: &model.UnaryExpression{
 								Operand:    model.NewLiteral("5", types.Integer),
@@ -249,11 +249,11 @@ func TestParserExpressions(t *testing.T) {
 			want: &model.Case{
 				Comparand: model.NewLiteral("4", types.Integer),
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("5", types.Integer),
 						Then: model.NewLiteral("6.0", types.Decimal),
 					},
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("7", types.Integer),
 						Then: &model.ToDecimal{
 							UnaryExpression: &model.UnaryExpression{
@@ -283,7 +283,7 @@ func TestParserExpressions(t *testing.T) {
 			want: &model.Case{
 				Comparand: model.NewLiteral("4", types.Integer),
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("5", types.Integer),
 						Then: &model.As{
 							UnaryExpression: &model.UnaryExpression{
@@ -293,7 +293,7 @@ func TestParserExpressions(t *testing.T) {
 							AsTypeSpecifier: &types.Choice{ChoiceTypes: []types.IType{types.Decimal, types.String, types.Long}},
 						},
 					},
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("7", types.Integer),
 						Then: &model.As{
 							UnaryExpression: &model.UnaryExpression{
@@ -566,7 +566,7 @@ func TestParserExpressions(t *testing.T) {
 			cql:  "Tuple{foo: 4}.foo",
 			want: &model.Property{
 				Source: &model.Tuple{
-					Elements:   []*model.TupleElement{&model.TupleElement{Name: "foo", Value: model.NewLiteral("4", types.Integer)}},
+					Elements:   []*model.TupleElement{{Name: "foo", Value: model.NewLiteral("4", types.Integer)}},
 					Expression: model.ResultType(&types.Tuple{ElementTypes: map[string]types.IType{"foo": types.Integer}}),
 				},
 				Path:       "foo",
@@ -760,8 +760,8 @@ func TestParserExpressions(t *testing.T) {
 			want: &model.Tuple{
 				Expression: model.ResultType(&types.Tuple{ElementTypes: map[string]types.IType{"code": types.String, "id": types.Integer}}),
 				Elements: []*model.TupleElement{
-					&model.TupleElement{Name: "code", Value: model.NewLiteral("foo", types.String)},
-					&model.TupleElement{Name: "id", Value: model.NewLiteral("4", types.Integer)},
+					{Name: "code", Value: model.NewLiteral("foo", types.String)},
+					{Name: "id", Value: model.NewLiteral("4", types.Integer)},
 				},
 			},
 		},
@@ -772,10 +772,10 @@ func TestParserExpressions(t *testing.T) {
 				Expression: model.ResultType(types.Code),
 				ClassType:  types.Code,
 				Elements: []*model.InstanceElement{
-					&model.InstanceElement{Name: "code", Value: model.NewLiteral("foo", types.String)},
-					&model.InstanceElement{Name: "system", Value: model.NewLiteral("bar", types.String)},
-					&model.InstanceElement{Name: "display", Value: model.NewLiteral("the foo", types.String)},
-					&model.InstanceElement{Name: "version", Value: model.NewLiteral("1.0", types.String)},
+					{Name: "code", Value: model.NewLiteral("foo", types.String)},
+					{Name: "system", Value: model.NewLiteral("bar", types.String)},
+					{Name: "display", Value: model.NewLiteral("the foo", types.String)},
+					{Name: "version", Value: model.NewLiteral("1.0", types.String)},
 				},
 			},
 		},
@@ -786,7 +786,7 @@ func TestParserExpressions(t *testing.T) {
 				Expression: model.ResultType(types.Quantity),
 				ClassType:  types.Quantity,
 				Elements: []*model.InstanceElement{
-					&model.InstanceElement{
+					{
 						Name: "value",
 						Value: &model.ToDecimal{
 							UnaryExpression: &model.UnaryExpression{
@@ -795,7 +795,7 @@ func TestParserExpressions(t *testing.T) {
 							},
 						},
 					},
-					&model.InstanceElement{Name: "unit", Value: model.NewLiteral("mg", types.String)},
+					{Name: "unit", Value: model.NewLiteral("mg", types.String)},
 				},
 			},
 		},
@@ -949,7 +949,7 @@ func TestParserExpressions_SingleLibrary(t *testing.T) {
 							}`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -967,7 +967,7 @@ func TestParserExpressions_SingleLibrary(t *testing.T) {
 									Expression: &model.Expression{Element: &model.Element{ResultType: types.Concept}},
 									ClassType:  types.Concept,
 									Elements: []*model.InstanceElement{
-										&model.InstanceElement{
+										{
 											Name: "codes",
 											// We need to convert "concept.coding C return C" which returns a
 											// List<FHIR.Coding> to List<Coding> to match the codes element in the Concept
@@ -976,14 +976,14 @@ func TestParserExpressions_SingleLibrary(t *testing.T) {
 											Value: &model.Query{
 												Expression: model.ResultType(&types.List{ElementType: types.Code}),
 												Source: []*model.AliasedSource{
-													&model.AliasedSource{
+													{
 														Alias:      "X",
 														Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Coding"}}),
 														// This is the "concept.coding C return C" query you see in the CQL which returns List<FHIR.Coding>
 														Source: &model.Query{
 															Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Coding"}}),
 															Source: []*model.AliasedSource{
-																&model.AliasedSource{
+																{
 																	Alias:      "C",
 																	Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Coding"}}),
 																	Source: &model.Property{
@@ -1020,7 +1020,7 @@ func TestParserExpressions_SingleLibrary(t *testing.T) {
 												},
 											},
 										},
-										&model.InstanceElement{
+										{
 											Name: "display",
 											Value: &model.Property{
 												Path:       "value",

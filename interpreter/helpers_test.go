@@ -48,7 +48,7 @@ func defaultInterpreterConfig(t testing.TB) Config {
 func wrapInLib(t *testing.T, expr model.IExpression) *model.Library {
 	return &model.Library{
 		Identifier: &model.LibraryIdentifier{Qualified: "TESTLIB", Version: "1.0.0"},
-		Usings:     []*model.Using{&model.Using{LocalIdentifier: "FHIR", Version: "4.0.1", URI: "http://hl7.org/fhir"}},
+		Usings:     []*model.Using{{LocalIdentifier: "FHIR", Version: "4.0.1", URI: "http://hl7.org/fhir"}},
 		Statements: &model.Statements{
 			Defs: []model.IExpressionDef{
 				&model.ExpressionDef{

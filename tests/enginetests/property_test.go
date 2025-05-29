@@ -252,7 +252,7 @@ func TestPropertyFHIRData(t *testing.T) {
 						result.Named{
 							Value: &d4pb.HumanName{
 								Given: []*d4pb.String{
-									&d4pb.String{Value: "GivenName"},
+									{Value: "GivenName"},
 								},
 								Family: &d4pb.String{Value: "FamilyName"}}, RuntimeType: &types.Named{TypeName: "FHIR.HumanName"}},
 					),
@@ -289,12 +289,12 @@ func TestPropertyFHIRData(t *testing.T) {
 			cql:  "define TESTRESULT: ([Patient]).name.family",
 			resources: []*r4pb.ContainedResource{
 				containedFromPatient(&r4patientpb.Patient{Name: []*d4pb.HumanName{
-					&d4pb.HumanName{Family: &d4pb.String{Value: "John"}},
-					&d4pb.HumanName{Family: &d4pb.String{Value: "Jim"}},
+					{Family: &d4pb.String{Value: "John"}},
+					{Family: &d4pb.String{Value: "Jim"}},
 				}}),
 				containedFromPatient(&r4patientpb.Patient{Name: []*d4pb.HumanName{
-					&d4pb.HumanName{Family: &d4pb.String{Value: "Dave"}},
-					&d4pb.HumanName{Family: &d4pb.String{Value: "Dan"}},
+					{Family: &d4pb.String{Value: "Dave"}},
+					{Family: &d4pb.String{Value: "Dan"}},
 				}}),
 			},
 			wantResult: newOrFatal(
@@ -319,12 +319,12 @@ func TestPropertyFHIRData(t *testing.T) {
 					define TESTRESULT: PatientRetrieve.name.family`),
 			resources: []*r4pb.ContainedResource{
 				containedFromPatient(&r4patientpb.Patient{Name: []*d4pb.HumanName{
-					&d4pb.HumanName{Family: &d4pb.String{Value: "John"}},
-					&d4pb.HumanName{Family: &d4pb.String{Value: "Jim"}},
+					{Family: &d4pb.String{Value: "John"}},
+					{Family: &d4pb.String{Value: "Jim"}},
 				}}),
 				containedFromPatient(&r4patientpb.Patient{Name: []*d4pb.HumanName{
-					&d4pb.HumanName{Family: &d4pb.String{Value: "Dave"}},
-					&d4pb.HumanName{Family: &d4pb.String{Value: "Dan"}},
+					{Family: &d4pb.String{Value: "Dave"}},
+					{Family: &d4pb.String{Value: "Dan"}},
 				}}),
 			},
 			wantResult: newOrFatal(
@@ -502,7 +502,7 @@ func TestPropertyFHIRData(t *testing.T) {
 			cql: dedent.Dedent(`
 					define TESTRESULT: First([Encounter]).class`),
 			resources: []*r4pb.ContainedResource{
-				&r4pb.ContainedResource{
+				{
 					OneofResource: &r4pb.ContainedResource_Encounter{
 						Encounter: &r4encounterpb.Encounter{
 							ClassValue: &d4pb.Coding{Display: &d4pb.String{Value: "Display"}},
@@ -517,7 +517,7 @@ func TestPropertyFHIRData(t *testing.T) {
 			cql: dedent.Dedent(`
 					define TESTRESULT: First([Encounter]).serviceType`),
 			resources: []*r4pb.ContainedResource{
-				&r4pb.ContainedResource{
+				{
 					OneofResource: &r4pb.ContainedResource_Encounter{
 						Encounter: &r4encounterpb.Encounter{
 							ServiceType: &d4pb.CodeableConcept{Text: &d4pb.String{Value: "ServiceType"}},

@@ -58,7 +58,7 @@ func TestEvalPropertyValue(t *testing.T) {
 		{
 			name:     "concept",
 			property: "codes",
-			value:    newOrFatal(t, result.Concept{Codes: []*result.Code{&result.Code{Code: "code1", System: "system1", Version: "version1"}, nil}, Display: "display"}),
+			value:    newOrFatal(t, result.Concept{Codes: []*result.Code{{Code: "code1", System: "system1", Version: "version1"}, nil}, Display: "display"}),
 			wantResult: newOrFatal(t, result.List{
 				Value: []result.Value{
 					newOrFatal(t, result.Code{Code: "code1", System: "system1", Version: "version1"}),
@@ -70,7 +70,7 @@ func TestEvalPropertyValue(t *testing.T) {
 		{
 			name:       "concept",
 			property:   "display",
-			value:      newOrFatal(t, result.Concept{Codes: []*result.Code{&result.Code{Code: "code1", System: "system1", Version: "version1"}, nil}, Display: "display1"}),
+			value:      newOrFatal(t, result.Concept{Codes: []*result.Code{{Code: "code1", System: "system1", Version: "version1"}, nil}, Display: "display1"}),
 			wantResult: newOrFatal(t, "display1"),
 		},
 	}

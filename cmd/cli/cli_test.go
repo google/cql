@@ -252,7 +252,7 @@ func TestParseFHIRParameters(t *testing.T) {
 				]
 			}`,
 			want: map[result.DefKey]string{
-				result.DefKey{Name: "boolean value"}: "true",
+				{Name: "boolean value"}: "true",
 			},
 		},
 		{
@@ -268,7 +268,7 @@ func TestParseFHIRParameters(t *testing.T) {
 				]
 			}`,
 			want: map[result.DefKey]string{
-				result.DefKey{Name: "decimal value"}: "1.1",
+				{Name: "decimal value"}: "1.1",
 			},
 		},
 		{
@@ -284,7 +284,7 @@ func TestParseFHIRParameters(t *testing.T) {
 				]
 			}`,
 			want: map[result.DefKey]string{
-				result.DefKey{Name: "integer value"}: "42",
+				{Name: "integer value"}: "42",
 			},
 		},
 		{
@@ -300,7 +300,7 @@ func TestParseFHIRParameters(t *testing.T) {
 				]
 			}`,
 			want: map[result.DefKey]string{
-				result.DefKey{Name: "positive integer value"}: "42",
+				{Name: "positive integer value"}: "42",
 			},
 		},
 		{
@@ -316,7 +316,7 @@ func TestParseFHIRParameters(t *testing.T) {
 				]
 			}`,
 			want: map[result.DefKey]string{
-				result.DefKey{Name: "unsigned integer value"}: "43",
+				{Name: "unsigned integer value"}: "43",
 			},
 		},
 		// This currently isn't particularly useful but we will need to support it properly in the future.
@@ -333,7 +333,7 @@ func TestParseFHIRParameters(t *testing.T) {
 				]
 			}`,
 			want: map[result.DefKey]string{
-				result.DefKey{Name: "code value"}: "value: 'code_value'",
+				{Name: "code value"}: "value: 'code_value'",
 			},
 		},
 	}

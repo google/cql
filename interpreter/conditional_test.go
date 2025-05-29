@@ -64,7 +64,7 @@ func TestCase_Error(t *testing.T) {
 			expr: &model.Case{
 				Comparand: nil,
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("5", types.Integer),
 						Then: model.NewLiteral("6", types.Integer),
 					},
@@ -79,7 +79,7 @@ func TestCase_Error(t *testing.T) {
 			expr: &model.Case{
 				Comparand: model.NewLiteral("Apple", types.String),
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("5", types.Integer),
 						Then: model.NewLiteral("6", types.Integer),
 					},

@@ -256,8 +256,8 @@ func TestEqual(t *testing.T) {
 		},
 		{
 			name:      "equal valueset with unsorted but equal codesystem",
-			a:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "ID1"}, CodeSystem{ID: "ID2"}}}),
-			b:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "ID2"}, CodeSystem{ID: "ID1"}}}),
+			a:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{{ID: "ID1"}, {ID: "ID2"}}}),
+			b:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{{ID: "ID2"}, {ID: "ID1"}}}),
 			wantEqual: true,
 		},
 		{
@@ -268,14 +268,14 @@ func TestEqual(t *testing.T) {
 		},
 		{
 			name:      "unequal valueset with unequal codesystem",
-			a:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "ID"}}}),
-			b:         newOrFatal(t, ValueSet{ID: "ID2", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "ID", Version: "Version"}}}),
+			a:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{{ID: "ID"}}}),
+			b:         newOrFatal(t, ValueSet{ID: "ID2", Version: "Version", CodeSystems: []CodeSystem{{ID: "ID", Version: "Version"}}}),
 			wantEqual: false,
 		},
 		{
 			name:      "unequal valueset with unequal number of codesystem",
-			a:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "ID"}}}),
-			b:         newOrFatal(t, ValueSet{ID: "ID2", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "ID"}, CodeSystem{ID: "ID2"}}}),
+			a:         newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{{ID: "ID"}}}),
+			b:         newOrFatal(t, ValueSet{ID: "ID2", Version: "Version", CodeSystems: []CodeSystem{{ID: "ID"}, {ID: "ID2"}}}),
 			wantEqual: false,
 		},
 		{
@@ -304,38 +304,38 @@ func TestEqual(t *testing.T) {
 		},
 		{
 			name:      "equal concept",
-			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
 			wantEqual: true,
 		},
 		{
 			name:      "equal concept with null code",
-			a:         newOrFatal(t, Concept{Codes: []*Code{nil, &Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []*Code{nil, &Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{nil, {System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{nil, {System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
 			wantEqual: true,
 		},
 		{
 			name:      "equal concept with unsorted but equal codes",
-			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}, &Code{System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem2", Code: "Code2"}, &Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}, {System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem2", Code: "Code2"}, {System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
 			wantEqual: true,
 		},
 		{
 			name:      "unequal concept different displays",
-			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code2"}}, Display: "Deoderant"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code2"}}, Display: "Deoderant"}),
 			wantEqual: false,
 		},
 		{
 			name:      "unequal concept",
-			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}, &Code{System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}, {System: "CodeSystem2", Code: "Code2"}}, Display: "BO"}),
 			wantEqual: false,
 		},
 		{
 			name:      "unequal concept",
-			a:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
-			b:         newOrFatal(t, Concept{Codes: []*Code{&Code{System: "CS", Code: "Co"}}, Display: "BO"}),
+			a:         newOrFatal(t, Concept{Codes: []*Code{{System: "CodeSystem", Code: "Code"}}, Display: "BO"}),
+			b:         newOrFatal(t, Concept{Codes: []*Code{{System: "CS", Code: "Co"}}, Display: "BO"}),
 			wantEqual: false,
 		},
 		{
@@ -633,8 +633,8 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name:  "concept",
-			input: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"},
-			want:  Value{goValue: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
+			input: Concept{Codes: []*Code{{System: "System", Code: "Code"}}, Display: "A disease"},
+			want:  Value{goValue: Concept{Codes: []*Code{{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
 		},
 		{
 			name: "tuple",
@@ -882,8 +882,8 @@ func TestNewWithSources(t *testing.T) {
 		},
 		{
 			name:  "concept",
-			input: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"},
-			want:  Value{sourceExpr: defaultSourceExpr, sourceVals: defaultSourceObs, goValue: Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
+			input: Concept{Codes: []*Code{{System: "System", Code: "Code"}}, Display: "A disease"},
+			want:  Value{sourceExpr: defaultSourceExpr, sourceVals: defaultSourceObs, goValue: Concept{Codes: []*Code{{System: "System", Code: "Code"}}, Display: "A disease"}, runtimeType: types.Concept},
 		},
 		{
 			name:  "concept with null codes",
@@ -1113,7 +1113,7 @@ func TestMarshalJSON(t *testing.T) {
 		},
 		{
 			name:         "Concept",
-			unmarshalled: newOrFatal(t, Concept{Codes: []*Code{&Code{System: "foo", Code: "bar", Version: "1.0"}}, Display: "A disease"}),
+			unmarshalled: newOrFatal(t, Concept{Codes: []*Code{{System: "foo", Code: "bar", Version: "1.0"}}, Display: "A disease"}),
 			want:         `{"@type":"System.Concept","codes":[{"@type":"System.Code","code":"bar","system":"foo","version":"1.0"}],"display":"A disease"}`,
 		},
 		{
@@ -1425,8 +1425,8 @@ func TestProtoAndBack(t *testing.T) {
 				Value: &crpb.Value_ListValue{
 					ListValue: &crpb.List{
 						Value: []*crpb.Value{
-							&crpb.Value{Value: &crpb.Value_IntegerValue{IntegerValue: 1}},
-							&crpb.Value{Value: &crpb.Value_IntegerValue{IntegerValue: 2}},
+							{Value: &crpb.Value_IntegerValue{IntegerValue: 1}},
+							{Value: &crpb.Value_IntegerValue{IntegerValue: 2}},
 						},
 						StaticType: &ctpb.ListType{ElementType: &ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}}},
 					},
@@ -1444,12 +1444,12 @@ func TestProtoAndBack(t *testing.T) {
 				Value: &crpb.Value_TupleValue{
 					TupleValue: &crpb.Tuple{
 						Value: map[string]*crpb.Value{
-							"Apple":  &crpb.Value{Value: &crpb.Value_IntegerValue{IntegerValue: 10}},
-							"Banana": &crpb.Value{Value: &crpb.Value_IntegerValue{IntegerValue: 20}},
+							"Apple":  {Value: &crpb.Value_IntegerValue{IntegerValue: 10}},
+							"Banana": {Value: &crpb.Value_IntegerValue{IntegerValue: 20}},
 						},
 						RuntimeType: &crpb.Tuple_TupleType{TupleType: &ctpb.TupleType{ElementTypes: map[string]*ctpb.CQLType{
-							"Apple":  &ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
-							"Banana": &ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
+							"Apple":  {Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
+							"Banana": {Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
 						}}},
 					},
 				},
@@ -1471,14 +1471,14 @@ func TestProtoAndBack(t *testing.T) {
 		},
 		{
 			name:  "ValueSet",
-			value: newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{CodeSystem{ID: "CSID", Version: "CSVersion"}}}),
+			value: newOrFatal(t, ValueSet{ID: "ID", Version: "Version", CodeSystems: []CodeSystem{{ID: "CSID", Version: "CSVersion"}}}),
 			wantProto: &crpb.Value{
 				Value: &crpb.Value_ValueSetValue{
 					ValueSetValue: &crpb.ValueSet{
 						Id:      proto.String("ID"),
 						Version: proto.String("Version"),
 						CodeSystems: []*crpb.CodeSystem{
-							&crpb.CodeSystem{
+							{
 								Id:      proto.String("CSID"),
 								Version: proto.String("CSVersion"),
 							},
@@ -1490,12 +1490,12 @@ func TestProtoAndBack(t *testing.T) {
 		},
 		{
 			name:  "Concept",
-			value: newOrFatal(t, Concept{Codes: []*Code{&Code{System: "System", Code: "Code"}}, Display: "A disease"}),
+			value: newOrFatal(t, Concept{Codes: []*Code{{System: "System", Code: "Code"}}, Display: "A disease"}),
 			wantProto: &crpb.Value{
 				Value: &crpb.Value_ConceptValue{
 					ConceptValue: &crpb.Concept{
 						Codes: []*crpb.Code{
-							&crpb.Code{
+							{
 								System:  proto.String("System"),
 								Code:    proto.String("Code"),
 								Display: proto.String(""),

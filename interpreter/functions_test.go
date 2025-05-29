@@ -60,7 +60,7 @@ func TestFailingMultipleLibraries(t *testing.T) {
 								},
 								Element: &model.Element{ResultType: types.Integer},
 							},
-							Operands: []model.OperandDef{model.OperandDef{Name: "A", Expression: &model.Expression{Element: &model.Element{ResultType: types.Integer}}}},
+							Operands: []model.OperandDef{{Name: "A", Expression: &model.Expression{Element: &model.Element{ResultType: types.Integer}}}},
 						},
 						&model.ExpressionDef{
 							Name:    "Param",

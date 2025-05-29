@@ -658,7 +658,7 @@ func TestToConcept(t *testing.T) {
 			define TESTRESULT: ToConcept(Code '132' from cs)`),
 			wantResult: newOrFatal(t, result.Concept{
 				Codes: []*result.Code{
-					&result.Code{
+					{
 						Code:    "132",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
@@ -673,7 +673,7 @@ func TestToConcept(t *testing.T) {
 			wantResult: newOrFatal(t, result.Concept{
 				Display: "Severed Leg",
 				Codes: []*result.Code{
-					&result.Code{
+					{
 						Code:    "132",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
@@ -688,13 +688,13 @@ func TestToConcept(t *testing.T) {
 			define TESTRESULT: ToConcept({Code '132' from cs display 'Severed Leg', Code '444' from cs display 'Burnt Cranium'})`),
 			wantResult: newOrFatal(t, result.Concept{
 				Codes: []*result.Code{
-					&result.Code{
+					{
 						Code:    "132",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
 						Display: "Severed Leg",
 					},
-					&result.Code{
+					{
 						Code:    "444",
 						System:  "https://example.com/cs/diagnosis",
 						Version: "1.0",
