@@ -590,13 +590,13 @@ func (v *visitor) VisitIntervalSelectorTerm(ctx *cql.IntervalSelectorTermContext
 	// Predecessor operators. Low and high must be implicitly convertible to one of these types or an
 	// error is returned.
 	declared := [][]types.IType{
-		[]types.IType{types.Integer, types.Integer},
-		[]types.IType{types.Long, types.Long},
-		[]types.IType{types.Decimal, types.Decimal},
-		[]types.IType{types.Quantity, types.Quantity},
-		[]types.IType{types.Date, types.Date},
-		[]types.IType{types.DateTime, types.DateTime},
-		[]types.IType{types.Time, types.Time}}
+		{types.Integer, types.Integer},
+		{types.Long, types.Long},
+		{types.Decimal, types.Decimal},
+		{types.Quantity, types.Quantity},
+		{types.Date, types.Date},
+		{types.DateTime, types.DateTime},
+		{types.Time, types.Time}}
 	overloads := []convert.Overload[func() *model.Interval]{}
 	for _, o := range declared {
 		overload := convert.Overload[func() *model.Interval]{
@@ -1211,7 +1211,7 @@ func unquoteString(s string) string {
 			replace = `\`
 		}
 		if replace != "" {
-			s = s[0:i] + replace + s[i+2:len(s)]
+			s = s[0:i] + replace + s[i+2:]
 		}
 	}
 	return s

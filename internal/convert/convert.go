@@ -416,7 +416,7 @@ func OperandImplicitConverter(invokedType types.IType, declaredType types.IType,
 			break
 		}
 		wrapped := &model.Query{
-			Source: []*model.AliasedSource{&model.AliasedSource{
+			Source: []*model.AliasedSource{{
 				Alias:      "X",
 				Source:     opToWrap,
 				Expression: model.ResultType(i),

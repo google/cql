@@ -427,16 +427,16 @@ func TestParserTopologicalSortMultipleLibraries(t *testing.T) {
 				"library lib1",
 			},
 			want: []*model.Library{
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1"},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib2", Qualified: "lib2"},
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1"}},
 					},
 				},
-				&model.Library{
+				{
 					// Unnamed Library
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1"}},
@@ -459,23 +459,23 @@ func TestParserTopologicalSortMultipleLibraries(t *testing.T) {
 				"library lib1",
 			},
 			want: []*model.Library{
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1"},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib2", Qualified: "lib2"},
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1"}},
 					},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib3", Qualified: "lib3"},
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib2", Qualified: "lib2"}},
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1"}},
 					},
 				},
-				&model.Library{
+				{
 					// Unnamed Library
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib3", Qualified: "lib3"}},
@@ -491,16 +491,16 @@ func TestParserTopologicalSortMultipleLibraries(t *testing.T) {
 				"include lib1 version '1.0'",
 			},
 			want: []*model.Library{
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"},
 				},
-				&model.Library{
+				{
 					// Unnamed Library
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"}},
 					},
 				},
-				&model.Library{
+				{
 					// Unnamed Library
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"}},
@@ -515,10 +515,10 @@ func TestParserTopologicalSortMultipleLibraries(t *testing.T) {
 				"include lib1",
 			},
 			want: []*model.Library{
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"},
 				},
-				&model.Library{
+				{
 					// Unnamed Library
 					Includes: []*model.Include{
 						{Identifier: &model.LibraryIdentifier{Local: "lib1", Qualified: "lib1", Version: "1.0"}},
@@ -619,21 +619,21 @@ func TestParserTopologicalSortLibrariesIncludeCorrectVersion(t *testing.T) {
 					include lib1`),
 			},
 			wantTopLevelLibs: []*model.Library{
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{
 						Qualified: "lib1",
 						Local:     "lib1",
 						Version:   "1.0",
 					},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{
 						Qualified: "lib1",
 						Local:     "lib1",
 						Version:   "1.2",
 					},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{
 						Local:     "measure1",
 						Qualified: "measure1",
@@ -661,20 +661,20 @@ func TestParserTopologicalSortLibrariesIncludeCorrectVersion(t *testing.T) {
 					include lib1`),
 			},
 			wantTopLevelLibs: []*model.Library{
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{
 						Qualified: "lib1",
 						Local:     "lib1",
 					},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{
 						Qualified: "lib1",
 						Local:     "lib1",
 						Version:   "1.0",
 					},
 				},
-				&model.Library{
+				{
 					Identifier: &model.LibraryIdentifier{
 						Local:     "measure1",
 						Qualified: "measure1",
@@ -748,7 +748,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				context Patient`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -783,7 +783,7 @@ func TestParserSingleLibrary(t *testing.T) {
         define TestPatient: ["Patient"]`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -817,7 +817,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				private valueset "Private Diabetes": 'https://example.com/diabetes_value_set'`),
 			want: &model.Library{
 				CodeSystems: []*model.CodeSystemDef{
-					&model.CodeSystemDef{
+					{
 						Name:        "cs",
 						ID:          "https://example.com/codesystem",
 						AccessLevel: "PUBLIC",
@@ -825,24 +825,24 @@ func TestParserSingleLibrary(t *testing.T) {
 					},
 				},
 				Valuesets: []*model.ValuesetDef{
-					&model.ValuesetDef{
+					{
 						Name:        "Diabetes",
 						ID:          "https://example.com/diabetes_value_set",
 						Element:     &model.Element{ResultType: types.ValueSet},
 						AccessLevel: "PUBLIC",
 					},
-					&model.ValuesetDef{
+					{
 						Name:        "Versioned Diabetes",
 						ID:          "https://example.com/diabetes_value_set",
 						Version:     "1.0.0",
 						Element:     &model.Element{ResultType: types.ValueSet},
 						AccessLevel: "PUBLIC",
 					},
-					&model.ValuesetDef{
+					{
 						Name: "CodeSystems Diabetes",
 						ID:   "https://example.com/diabetes_value_set",
 						CodeSystems: []*model.CodeSystemRef{
-							&model.CodeSystemRef{
+							{
 								Name:       "cs",
 								Expression: model.ResultType(types.CodeSystem),
 							},
@@ -850,13 +850,13 @@ func TestParserSingleLibrary(t *testing.T) {
 						Element:     &model.Element{ResultType: types.ValueSet},
 						AccessLevel: "PUBLIC",
 					},
-					&model.ValuesetDef{
+					{
 						Name:        "Public Diabetes",
 						ID:          "https://example.com/diabetes_value_set",
 						Element:     &model.Element{ResultType: types.ValueSet},
 						AccessLevel: "PUBLIC",
 					},
-					&model.ValuesetDef{
+					{
 						Name:        "Private Diabetes",
 						ID:          "https://example.com/diabetes_value_set",
 						Element:     &model.Element{ResultType: types.ValueSet},
@@ -875,26 +875,26 @@ func TestParserSingleLibrary(t *testing.T) {
 				`),
 			want: &model.Library{
 				CodeSystems: []*model.CodeSystemDef{
-					&model.CodeSystemDef{
+					{
 						Name:        "cs",
 						ID:          "https://example.com/codesystem",
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.CodeSystem},
 					},
-					&model.CodeSystemDef{
+					{
 						Name:        "cs2",
 						ID:          "https://example.com/codesystem_2",
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.CodeSystem},
 					},
-					&model.CodeSystemDef{
+					{
 						Name:        "cs_with_version",
 						ID:          "https://example.com/codesystem_versioned",
 						Version:     "1.0",
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.CodeSystem},
 					},
-					&model.CodeSystemDef{
+					{
 						Name:        "cs_private",
 						ID:          "https://example.com/codesystem_private",
 						AccessLevel: "PRIVATE",
@@ -912,7 +912,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				`),
 			want: &model.Library{
 				CodeSystems: []*model.CodeSystemDef{
-					&model.CodeSystemDef{
+					{
 						Name:        "cs_with_version",
 						ID:          "https://example.com/codesystem_versioned",
 						Version:     "1.0",
@@ -921,7 +921,7 @@ func TestParserSingleLibrary(t *testing.T) {
 					},
 				},
 				Codes: []*model.CodeDef{
-					&model.CodeDef{
+					{
 						Name: "c",
 						Code: "1234",
 						CodeSystem: &model.CodeSystemRef{
@@ -931,7 +931,7 @@ func TestParserSingleLibrary(t *testing.T) {
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.Code},
 					},
-					&model.CodeDef{
+					{
 						Name: "c_with_display",
 						Code: "12345",
 						CodeSystem: &model.CodeSystemRef{
@@ -957,7 +957,7 @@ func TestParserSingleLibrary(t *testing.T) {
 			`),
 			want: &model.Library{
 				CodeSystems: []*model.CodeSystemDef{
-					&model.CodeSystemDef{
+					{
 						Name:        "cs",
 						ID:          "https://example.com/codesystem",
 						AccessLevel: "PUBLIC",
@@ -965,7 +965,7 @@ func TestParserSingleLibrary(t *testing.T) {
 					},
 				},
 				Codes: []*model.CodeDef{
-					&model.CodeDef{
+					{
 						Name: "c",
 						Code: "1234",
 						CodeSystem: &model.CodeSystemRef{
@@ -975,7 +975,7 @@ func TestParserSingleLibrary(t *testing.T) {
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.Code},
 					},
-					&model.CodeDef{
+					{
 						Name: "c2",
 						Code: "456",
 						CodeSystem: &model.CodeSystemRef{
@@ -987,14 +987,14 @@ func TestParserSingleLibrary(t *testing.T) {
 					},
 				},
 				Concepts: []*model.ConceptDef{
-					&model.ConceptDef{
+					{
 						Name: "con",
 						Codes: []*model.CodeRef{
-							&model.CodeRef{
+							{
 								Name:       "c",
 								Expression: model.ResultType(types.Code),
 							},
-							&model.CodeRef{
+							{
 								Name:       "c2",
 								Expression: model.ResultType(types.Code),
 							},
@@ -1002,10 +1002,10 @@ func TestParserSingleLibrary(t *testing.T) {
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.Concept},
 					},
-					&model.ConceptDef{
+					{
 						Name: "con_with_display",
 						Codes: []*model.CodeRef{
-							&model.CodeRef{
+							{
 								Name:       "c",
 								Expression: model.ResultType(types.Code),
 							},
@@ -1014,10 +1014,10 @@ func TestParserSingleLibrary(t *testing.T) {
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.Concept},
 					},
-					&model.ConceptDef{
+					{
 						Name: "pvt_con",
 						Codes: []*model.CodeRef{
-							&model.CodeRef{
+							{
 								Name:       "c",
 								Expression: model.ResultType(types.Code),
 							},
@@ -1036,7 +1036,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				`),
 			want: &model.Library{
 				CodeSystems: []*model.CodeSystemDef{
-					&model.CodeSystemDef{
+					{
 						Name:        "cs",
 						ID:          "https://example.com/codesystem",
 						AccessLevel: "PUBLIC",
@@ -1069,7 +1069,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1104,7 +1104,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1162,12 +1162,12 @@ func TestParserSingleLibrary(t *testing.T) {
 				Identifier: nil,
 				Usings:     nil,
 				Parameters: []*model.ParameterDef{
-					&model.ParameterDef{
+					{
 						Name:        "Defined Type",
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.Integer},
 					},
-					&model.ParameterDef{
+					{
 						Name:        "Default And Inferred Type",
 						AccessLevel: "PUBLIC",
 						Default: &model.Interval{
@@ -1179,12 +1179,12 @@ func TestParserSingleLibrary(t *testing.T) {
 						},
 						Element: &model.Element{ResultType: &types.Interval{PointType: types.DateTime}},
 					},
-					&model.ParameterDef{
+					{
 						Name:        "Public",
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: types.Integer},
 					},
-					&model.ParameterDef{
+					{
 						Name:        "Private",
 						AccessLevel: "PRIVATE",
 						Element:     &model.Element{ResultType: types.Integer},
@@ -1250,7 +1250,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				define Y: X`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1291,7 +1291,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				define Y: X.category.coding`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1340,7 +1340,7 @@ func TestParserSingleLibrary(t *testing.T) {
 			define Y: from (X.status) O`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1367,7 +1367,7 @@ func TestParserSingleLibrary(t *testing.T) {
 							Expression: &model.Query{
 								Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.ObservationStatus"}}),
 								Source: []*model.AliasedSource{
-									&model.AliasedSource{
+									{
 										Alias: "O",
 										Source: &model.Property{
 											Source:     &model.ExpressionRef{Name: "X", Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}})},
@@ -1393,7 +1393,7 @@ func TestParserSingleLibrary(t *testing.T) {
 			define Y: from X O`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1420,7 +1420,7 @@ func TestParserSingleLibrary(t *testing.T) {
 							Expression: &model.Query{
 								Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}}),
 								Source: []*model.AliasedSource{
-									&model.AliasedSource{
+									{
 										Alias:      "O",
 										Source:     &model.ExpressionRef{Name: "X", Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}})},
 										Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Observation"}}),
@@ -1440,7 +1440,7 @@ func TestParserSingleLibrary(t *testing.T) {
 			define X: [Condition] O return O.code.coding.display`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1455,7 +1455,7 @@ func TestParserSingleLibrary(t *testing.T) {
 							Expression: &model.Query{
 								Expression: model.ResultType(&types.List{ElementType: &types.List{ElementType: &types.Named{TypeName: "FHIR.string"}}}),
 								Source: []*model.AliasedSource{
-									&model.AliasedSource{
+									{
 										Alias: "O",
 										Source: &model.Retrieve{
 											DataType:     "{http://hl7.org/fhir}Condition",
@@ -1504,7 +1504,7 @@ func TestParserSingleLibrary(t *testing.T) {
 				`),
 			want: &model.Library{
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -1802,7 +1802,7 @@ func TestParserMultipleLibraries(t *testing.T) {
 							Expression: &model.Query{
 								Expression: model.ResultType(types.Integer),
 								Source: []*model.AliasedSource{
-									&model.AliasedSource{
+									{
 										Alias:      "P",
 										Source:     &model.ExpressionRef{Name: "public def", LibraryName: "Helpers", Expression: model.ResultType(types.Integer)},
 										Expression: model.ResultType(types.Integer),
@@ -1837,7 +1837,7 @@ func TestParserMultipleLibraries(t *testing.T) {
 							Expression: &model.Query{
 								Expression: model.ResultType(types.Integer),
 								Source: []*model.AliasedSource{
-									&model.AliasedSource{
+									{
 										Alias:      "P",
 										Source:     model.NewLiteral("4", types.Integer),
 										Expression: model.ResultType(types.Integer),
@@ -1908,30 +1908,30 @@ func TestParameters(t *testing.T) {
 		{
 			name: "Literal Int",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "4",
+				{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "4",
 			},
 			want: map[result.DefKey]model.IExpression{
-				result.DefKey{
+				{
 					Name:    "lit",
 					Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: model.NewLiteral("4", types.Integer)},
 		},
 		{
 			name: "Literal String",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "'Hello'",
+				{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "'Hello'",
 			},
 			want: map[result.DefKey]model.IExpression{
-				result.DefKey{
+				{
 					Name:    "lit",
 					Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: model.NewLiteral("Hello", types.String)},
 		},
 		{
 			name: "List",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "list", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "{1, 2}",
+				{Name: "list", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "{1, 2}",
 			},
 			want: map[result.DefKey]model.IExpression{
-				result.DefKey{Name: "list", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: &model.List{
+				{Name: "list", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: &model.List{
 					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
 					List: []model.IExpression{
 						model.NewLiteral("1", types.Integer),
@@ -1943,10 +1943,10 @@ func TestParameters(t *testing.T) {
 		{
 			name: "Interval",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "interval", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0)",
+				{Name: "interval", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "Interval[@2013-01-01T00:00:00.0, @2014-01-01T00:00:00.0)",
 			},
 			want: map[result.DefKey]model.IExpression{
-				result.DefKey{
+				{
 					Name:    "interval",
 					Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: &model.Interval{
 					Low:           model.NewLiteral("@2013-01-01T00:00:00.0", types.DateTime),
@@ -1980,28 +1980,28 @@ func TestMalformedParameters(t *testing.T) {
 		{
 			name: "InvocationTerm",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "invo",
+				{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "invo",
 			},
 			errContains: "must be a interval",
 		},
 		{
 			name: "Expression Definition",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "define population: 4",
+				{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "define population: 4",
 			},
 			errContains: "must be a single",
 		},
 		{
 			name: "Multiple Literals",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "4 15",
+				{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "4 15",
 			},
 			errContains: "must be a single",
 		},
 		{
 			name: "No Literals",
 			passedParams: map[result.DefKey]string{
-				result.DefKey{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "",
+				{Name: "lit", Library: result.LibKey{Name: "Highly.Qualified", Version: "1.0"}}: "",
 			},
 			errContains: "mismatched input",
 		},
@@ -2043,7 +2043,7 @@ func TestRealisticCQL(t *testing.T) {
 					Version:   "1.0.0",
 				},
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
@@ -2099,14 +2099,14 @@ func TestRealisticCQL(t *testing.T) {
 					Version:   "1.2.3",
 				},
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
 					},
 				},
 				Parameters: []*model.ParameterDef{
-					&model.ParameterDef{
+					{
 						Name:        "Measurement Period",
 						AccessLevel: "PUBLIC",
 						Element:     &model.Element{ResultType: &types.Interval{PointType: types.Date}},
@@ -2233,14 +2233,14 @@ func TestRealisticCQL(t *testing.T) {
 					Version:   "1.2.3",
 				},
 				Usings: []*model.Using{
-					&model.Using{
+					{
 						LocalIdentifier: "FHIR",
 						Version:         "4.0.1",
 						URI:             "http://hl7.org/fhir",
 					},
 				},
 				Parameters: []*model.ParameterDef{
-					&model.ParameterDef{
+					{
 						Element:     &model.Element{ResultType: &types.Interval{PointType: types.DateTime}},
 						Name:        "Measurement Period",
 						AccessLevel: "PUBLIC",
@@ -2295,7 +2295,7 @@ func TestRealisticCQL(t *testing.T) {
 								UnaryExpression: &model.UnaryExpression{
 									Operand: &model.Query{
 										Source: []*model.AliasedSource{
-											&model.AliasedSource{
+											{
 												Alias: "chd",
 												Source: &model.Retrieve{
 													DataType:     "{http://hl7.org/fhir}Condition",
@@ -2364,7 +2364,7 @@ func TestRealisticCQL(t *testing.T) {
 									Expression: model.ResultType(&types.Named{TypeName: "FHIR.Observation"}),
 									Operand: &model.Query{
 										Source: []*model.AliasedSource{
-											&model.AliasedSource{
+											{
 												Alias: "bp",
 												Source: &model.Retrieve{
 													DataType:     "{http://hl7.org/fhir}Observation",

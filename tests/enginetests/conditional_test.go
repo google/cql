@@ -163,11 +163,11 @@ func TestCase(t *testing.T) {
 			wantModel: &model.Case{
 				Comparand: nil,
 				CaseItem: []*model.CaseItem{
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("false", types.Boolean),
 						Then: model.NewLiteral("9", types.Integer),
 					},
-					&model.CaseItem{
+					{
 						When: model.NewLiteral("true", types.Boolean),
 						Then: model.NewLiteral("4", types.Integer),
 					},

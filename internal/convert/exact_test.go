@@ -32,11 +32,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Multiple Operands",
 			invoked: []types.IType{types.String, &types.Interval{PointType: types.Date}, &types.List{ElementType: types.Integer}},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Too Short",
 					Operands: []types.IType{types.String, &types.Interval{PointType: types.Date}},
 				},
-				Overload[string]{
+				{
 					Result: "Too Long",
 					Operands: []types.IType{
 						types.String,
@@ -45,7 +45,7 @@ func TestExactOverloadMatch(t *testing.T) {
 						&types.Named{TypeName: "Patient"},
 					},
 				},
-				Overload[string]{
+				{
 					Result: "Just Right",
 					Operands: []types.IType{
 						types.String,
@@ -60,11 +60,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Single Operand",
 			invoked: []types.IType{types.String},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Just Right",
 					Operands: []types.IType{types.String},
 				},
-				Overload[string]{
+				{
 					Result:   "Wrong Type",
 					Operands: []types.IType{types.Integer},
 				},
@@ -75,11 +75,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "No Operands",
 			invoked: []types.IType{},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Too Long",
 					Operands: []types.IType{types.Integer},
 				},
-				Overload[string]{
+				{
 					Result:   "Just Right",
 					Operands: []types.IType{},
 				},
@@ -90,11 +90,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "SubType Is Exact Match",
 			invoked: []types.IType{types.Integer, types.Date},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{types.Any, types.Date},
 				},
-				Overload[string]{
+				{
 					Result:   "One Simple Conversion",
 					Operands: []types.IType{types.Decimal, types.Date},
 				},
@@ -105,15 +105,15 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Conversions Followed By Exact Match",
 			invoked: []types.IType{types.Integer, types.Date},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Conversion 1",
 					Operands: []types.IType{types.Long, types.DateTime},
 				},
-				Overload[string]{
+				{
 					Result:   "Conversion 2",
 					Operands: []types.IType{types.Decimal, types.DateTime},
 				},
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{types.Integer, types.Date},
 				},
@@ -124,11 +124,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Exact Match beats SubType match",
 			invoked: []types.IType{types.CodeSystem, types.CodeSystem},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{types.CodeSystem, types.CodeSystem},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{types.Any, types.Any},
 				},
@@ -140,11 +140,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Can disambiguate Any between List<Any> and Any",
 			invoked: []types.IType{&types.List{ElementType: types.Any}, types.Any},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{&types.List{ElementType: types.Any}, types.Any},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
 				},
@@ -155,11 +155,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Can disambiguate List<Any> between List<Any> and Any",
 			invoked: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{&types.List{ElementType: types.Any}, types.Any},
 				},
@@ -170,11 +170,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Can disambiguate three layer deep list of Any from Any",
 			invoked: []types.IType{&types.List{ElementType: &types.List{ElementType: &types.List{ElementType: types.Any}}}},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{&types.List{ElementType: &types.List{ElementType: &types.List{ElementType: types.Any}}}},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{types.Any},
 				},
@@ -185,11 +185,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Chooses the most specific match between two sub types",
 			invoked: []types.IType{&types.List{ElementType: types.Integer}},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{&types.List{ElementType: types.Any}},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{types.Any},
 				},
@@ -201,11 +201,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Can disambiguate Any between Interval<Integer> and Any",
 			invoked: []types.IType{&types.Interval{PointType: types.Integer}, types.Any},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{&types.Interval{PointType: types.Integer}, types.Any},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
 				},
@@ -216,11 +216,11 @@ func TestExactOverloadMatch(t *testing.T) {
 			name:    "Can disambiguate Interval<Integer> between Interval<Integer> and Any",
 			invoked: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Exact Match",
 					Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
 				},
-				Overload[string]{
+				{
 					Result:   "SubType",
 					Operands: []types.IType{&types.Interval{PointType: types.Integer}, types.Any},
 				},
@@ -254,11 +254,11 @@ func TestExactOverloadMatch_Error(t *testing.T) {
 			name:    "Conversions No Match",
 			invoked: []types.IType{types.Integer, types.Date},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "One Simple Conversion",
 					Operands: []types.IType{types.Decimal, types.Date},
 				},
-				Overload[string]{
+				{
 					Result:   "Two Simple Conversion",
 					Operands: []types.IType{types.Decimal, types.DateTime},
 				},
@@ -269,15 +269,15 @@ func TestExactOverloadMatch_Error(t *testing.T) {
 			name:    "Single No Match",
 			invoked: []types.IType{types.String},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Wrong Type",
 					Operands: []types.IType{types.Integer},
 				},
-				Overload[string]{
+				{
 					Result:   "Too Short",
 					Operands: []types.IType{},
 				},
-				Overload[string]{
+				{
 					Result:   "Too Long",
 					Operands: []types.IType{types.String, types.String},
 				},
@@ -292,11 +292,11 @@ func TestExactOverloadMatch_Error(t *testing.T) {
 				&types.List{ElementType: types.Integer},
 			},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Too Short",
 					Operands: []types.IType{types.String, &types.Interval{PointType: types.DateTime}},
 				},
-				Overload[string]{
+				{
 					Result: "Too Long",
 					Operands: []types.IType{
 						types.String,
@@ -305,7 +305,7 @@ func TestExactOverloadMatch_Error(t *testing.T) {
 						&types.Named{TypeName: "Patient"},
 					},
 				},
-				Overload[string]{
+				{
 					Result: "Wrong Type",
 					Operands: []types.IType{
 						types.Integer,
@@ -320,11 +320,11 @@ func TestExactOverloadMatch_Error(t *testing.T) {
 			name:    "Ambiguous Match",
 			invoked: []types.IType{types.String, types.String},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Ambiguous 1",
 					Operands: []types.IType{types.Any, types.String},
 				},
-				Overload[string]{
+				{
 					Result:   "Ambiguous 2",
 					Operands: []types.IType{types.Any, types.String},
 				},
@@ -335,7 +335,7 @@ func TestExactOverloadMatch_Error(t *testing.T) {
 			name:    "Unsupported ResultType",
 			invoked: []types.IType{types.Unset},
 			overloads: []Overload[string]{
-				Overload[string]{
+				{
 					Result:   "Overload",
 					Operands: []types.IType{types.String},
 				},

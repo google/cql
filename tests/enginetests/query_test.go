@@ -46,7 +46,7 @@ func TestQuery(t *testing.T) {
 			wantModel: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "E",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 						Source: &model.Retrieve{
@@ -68,7 +68,7 @@ func TestQuery(t *testing.T) {
 			wantSourceExpression: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "E",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 						Source: &model.Retrieve{
@@ -389,7 +389,7 @@ func TestQuery(t *testing.T) {
 			wantModel: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: types.Integer}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias: "l",
 						Source: &model.List{
 							List: []model.IExpression{

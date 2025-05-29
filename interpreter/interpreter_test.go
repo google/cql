@@ -113,30 +113,30 @@ func helperLib(t *testing.T) *model.Library {
 			Version:   "1.0",
 		},
 		Usings: []*model.Using{
-			&model.Using{
+			{
 				LocalIdentifier: "FHIR",
 				Version:         "4.0.1",
 				URI:             "http://hl7.org/fhir",
 			},
 		},
 		Parameters: []*model.ParameterDef{
-			&model.ParameterDef{Name: "param true", AccessLevel: model.Public, Element: &model.Element{ResultType: types.Boolean}},
-			&model.ParameterDef{Name: "private param false", AccessLevel: model.Private, Element: &model.Element{ResultType: types.Boolean}},
-			&model.ParameterDef{Name: "param interval", AccessLevel: model.Public, Element: &model.Element{ResultType: &types.Interval{PointType: types.DateTime}}},
-			&model.ParameterDef{
+			{Name: "param true", AccessLevel: model.Public, Element: &model.Element{ResultType: types.Boolean}},
+			{Name: "private param false", AccessLevel: model.Private, Element: &model.Element{ResultType: types.Boolean}},
+			{Name: "param interval", AccessLevel: model.Public, Element: &model.Element{ResultType: &types.Interval{PointType: types.DateTime}}},
+			{
 				Name:        "param default",
 				AccessLevel: model.Public,
 				Default:     &model.Literal{Value: "2", Expression: model.ResultType(types.Integer)},
 				Element:     &model.Element{ResultType: types.Integer}},
 		},
 		Valuesets: []*model.ValuesetDef{
-			&model.ValuesetDef{
+			{
 				Name:        "public valueset",
 				ID:          "PublicValueset",
 				Version:     "1.0",
 				AccessLevel: "PUBLIC",
 			},
-			&model.ValuesetDef{
+			{
 				Name:        "private valueset",
 				ID:          "PrivateValueset",
 				Version:     "1.0",
@@ -144,7 +144,7 @@ func helperLib(t *testing.T) *model.Library {
 			},
 		},
 		CodeSystems: []*model.CodeSystemDef{
-			&model.CodeSystemDef{
+			{
 				Name:        "public codesystem",
 				ID:          "PublicCodeSystem",
 				Version:     "1.0",
@@ -164,7 +164,7 @@ func helperLib(t *testing.T) *model.Library {
 						},
 						Element: &model.Element{ResultType: types.Integer},
 					},
-					Operands: []model.OperandDef{model.OperandDef{Name: "A", Expression: &model.Expression{Element: &model.Element{ResultType: types.Integer}}}},
+					Operands: []model.OperandDef{{Name: "A", Expression: &model.Expression{Element: &model.Element{ResultType: types.Integer}}}},
 				},
 				&model.FunctionDef{
 					ExpressionDef: &model.ExpressionDef{
@@ -177,7 +177,7 @@ func helperLib(t *testing.T) *model.Library {
 						},
 						Element: &model.Element{ResultType: types.Integer},
 					},
-					Operands: []model.OperandDef{model.OperandDef{Name: "A", Expression: &model.Expression{Element: &model.Element{ResultType: types.Integer}}}},
+					Operands: []model.OperandDef{{Name: "A", Expression: &model.Expression{Element: &model.Element{ResultType: types.Integer}}}},
 				},
 				&model.ExpressionDef{
 					Name:        "public def",
@@ -288,7 +288,7 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 							AccessLevel: "PUBLIC",
 							Expression: &model.Query{
 								Source: []*model.AliasedSource{
-									&model.AliasedSource{
+									{
 										Alias: "O",
 										Source: &model.List{
 											List: []model.IExpression{
@@ -309,7 +309,7 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 		{
 			name: "Failed retrieve with mismatched URI",
 			tree: &model.Library{
-				Usings: []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
+				Usings: []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
 						&model.ExpressionDef{
@@ -329,14 +329,14 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 		{
 			name: "Incorrect Using Local Identifier",
 			tree: &model.Library{
-				Usings: []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FIRE"}},
+				Usings: []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FIRE"}},
 			},
 			errContains: "FIRE 4.0.1 data model not found",
 		},
 		{
 			name: "Incorrect Using Version",
 			tree: &model.Library{
-				Usings: []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.2", LocalIdentifier: "FHIR"}},
+				Usings: []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.2", LocalIdentifier: "FHIR"}},
 			},
 			errContains: "FHIR 4.0.2 data model not found",
 		},
@@ -363,8 +363,8 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 		{
 			name: "Retrieve Observations without ValuesetRef",
 			tree: &model.Library{
-				Usings:    []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
-				Valuesets: []*model.ValuesetDef{&model.ValuesetDef{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
+				Usings:    []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
+				Valuesets: []*model.ValuesetDef{{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
 						&model.ExpressionDef{
@@ -386,8 +386,8 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 		{
 			name: "Retrieve Observations with incorrect CodeProperty",
 			tree: &model.Library{
-				Usings:    []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
-				Valuesets: []*model.ValuesetDef{&model.ValuesetDef{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
+				Usings:    []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
+				Valuesets: []*model.ValuesetDef{{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
 						&model.ExpressionDef{
@@ -409,8 +409,8 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 		{
 			name: "Retrieve Observations with missing CodeProperty",
 			tree: &model.Library{
-				Usings:    []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
-				Valuesets: []*model.ValuesetDef{&model.ValuesetDef{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
+				Usings:    []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
+				Valuesets: []*model.ValuesetDef{{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
 						&model.ExpressionDef{
@@ -432,8 +432,8 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 		{
 			name: "Retrieve Observations with missing ValueSet",
 			tree: &model.Library{
-				Usings:    []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
-				Valuesets: []*model.ValuesetDef{&model.ValuesetDef{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
+				Usings:    []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
+				Valuesets: []*model.ValuesetDef{{Name: "Test Glucose", ID: "https://example.com/glucose", Version: "1.0.0"}},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
 						&model.ExpressionDef{
@@ -556,7 +556,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			tree: &model.Library{
 				Identifier: &model.LibraryIdentifier{Qualified: "example.measure", Version: "1.0"},
 				Includes: []*model.Include{
-					&model.Include{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
+					{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
 				},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
@@ -576,7 +576,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			tree: &model.Library{
 				Identifier: &model.LibraryIdentifier{Qualified: "example.measure", Version: "1.0"},
 				Includes: []*model.Include{
-					&model.Include{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
+					{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
 				},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
@@ -595,7 +595,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			tree: &model.Library{
 				Identifier: &model.LibraryIdentifier{Qualified: "example.measure", Version: "1.0"},
 				Includes: []*model.Include{
-					&model.Include{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
+					{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
 				},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
@@ -614,7 +614,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			tree: &model.Library{
 				Identifier: &model.LibraryIdentifier{Qualified: "example.measure", Version: "1.0"},
 				Includes: []*model.Include{
-					&model.Include{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
+					{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
 				},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
@@ -633,7 +633,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			tree: &model.Library{
 				Identifier: &model.LibraryIdentifier{Qualified: "example.measure", Version: "1.0"},
 				Includes: []*model.Include{
-					&model.Include{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
+					{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
 				},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
@@ -652,7 +652,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			tree: &model.Library{
 				Identifier: &model.LibraryIdentifier{Qualified: "example.measure", Version: "1.0"},
 				Includes: []*model.Include{
-					&model.Include{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
+					{Identifier: &model.LibraryIdentifier{Local: "helpers", Qualified: "example.helpers", Version: "1.0"}},
 				},
 				Statements: &model.Statements{
 					Defs: []model.IExpressionDef{
@@ -670,7 +670,7 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 			name: "Unnamed lib with parameter defs",
 			tree: &model.Library{
 				Parameters: []*model.ParameterDef{
-					&model.ParameterDef{
+					{
 						Name:        "param in unnamed",
 						AccessLevel: model.Public,
 					},
@@ -696,12 +696,12 @@ func TestFailingEvalMultipleLibraries(t *testing.T) {
 type InvalidRetriever struct{}
 
 func (i *InvalidRetriever) Retrieve(_ context.Context, _ string) ([]*r4pb.ContainedResource, error) {
-	return []*r4pb.ContainedResource{&r4pb.ContainedResource{}}, nil
+	return []*r4pb.ContainedResource{{}}, nil
 }
 
 func TestInvalidContainedResource(t *testing.T) {
 	tree := &model.Library{
-		Usings: []*model.Using{&model.Using{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
+		Usings: []*model.Using{{URI: "http://hl7.org/fhir", Version: "4.0.1", LocalIdentifier: "FHIR"}},
 		Statements: &model.Statements{
 			Defs: []model.IExpressionDef{
 				&model.ExpressionDef{

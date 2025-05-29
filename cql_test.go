@@ -70,7 +70,7 @@ func TestCQL(t *testing.T) {
 			wantSourceExpression: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "E",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 						Source: &model.Retrieve{
@@ -205,7 +205,7 @@ func TestCQL_ParseErrors(t *testing.T) {
 			retriever: enginetests.BuildRetriever(t),
 			parserConfig: cql.ParseConfig{
 				Parameters: map[result.DefKey]string{
-					result.DefKey{Name: "param name", Library: result.LibKey{Name: "TESTLIB", Version: "1.0.0"}}: "invalid value",
+					{Name: "param name", Library: result.LibKey{Name: "TESTLIB", Version: "1.0.0"}}: "invalid value",
 				},
 				DataModels: [][]byte{fhirDataModel(t)},
 			},
@@ -311,7 +311,7 @@ func TestCQL_MultipleEvals(t *testing.T) {
 			wantSourceExpression: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "E",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 						Source: &model.Retrieve{

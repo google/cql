@@ -1005,7 +1005,7 @@ func TestDefs(t *testing.T) {
 			t.Fatalf("r.PublicDefs() unexpected err: %v", err)
 		}
 		want := map[result.LibKey]map[string]result.Value{
-			result.LibKey{Name: "example.measure", Version: "1.0"}: map[string]result.Value{"public def": newOrFatal(4, t)},
+			{Name: "example.measure", Version: "1.0"}: {"public def": newOrFatal(4, t)},
 		}
 		if diff := cmp.Diff(got, want); diff != "" {
 			t.Errorf("r.PublicDefs() returned unexpected diff (-got +want):\n%s", diff)
@@ -1018,11 +1018,11 @@ func TestDefs(t *testing.T) {
 			t.Fatalf("r.Defs() unexpected err: %v", err)
 		}
 		want := map[result.LibKey]map[string]result.Value{
-			result.LibKey{Name: "example.measure", Version: "1.0"}: map[string]result.Value{
+			{Name: "example.measure", Version: "1.0"}: {
 				"public def":  newOrFatal(4, t),
 				"private def": newOrFatal(5, t),
 			},
-			result.LibKey{Name: "UnnamedLibrary-0", Version: "1.0"}: map[string]result.Value{
+			{Name: "UnnamedLibrary-0", Version: "1.0"}: {
 				"public def":  newOrFatal(4, t),
 				"private def": newOrFatal(5, t),
 			},

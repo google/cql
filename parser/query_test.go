@@ -96,12 +96,12 @@ func TestQuery(t *testing.T) {
 					},
 				},
 				Let: []*model.LetClause{
-					&model.LetClause{
+					{
 						Expression: model.NewLiteral("4", types.Integer),
 						Identifier: "A",
 						Element:    &model.Element{ResultType: types.Integer},
 					},
-					&model.LetClause{
+					{
 						Expression: model.NewLiteral("5", types.Integer),
 						Identifier: "B",
 						Element:    &model.Element{ResultType: types.Integer},
@@ -217,11 +217,11 @@ func TestQuery(t *testing.T) {
 					Expression: &model.Tuple{
 						Expression: model.ResultType(&types.Tuple{ElementTypes: map[string]types.IType{"O": &types.Named{TypeName: "FHIR.Observation"}, "P": &types.Named{TypeName: "FHIR.Patient"}}}),
 						Elements: []*model.TupleElement{
-							&model.TupleElement{
+							{
 								Name:  "O",
 								Value: &model.AliasRef{Name: "O", Expression: model.ResultType(&types.Named{TypeName: "FHIR.Observation"})},
 							},
-							&model.TupleElement{
+							{
 								Name:  "P",
 								Value: &model.AliasRef{Name: "P", Expression: model.ResultType(&types.Named{TypeName: "FHIR.Patient"})},
 							},
@@ -253,11 +253,11 @@ func TestQuery(t *testing.T) {
 					Expression: &model.Tuple{
 						Expression: model.ResultType(&types.Tuple{ElementTypes: map[string]types.IType{"O": types.Integer, "P": types.String}}),
 						Elements: []*model.TupleElement{
-							&model.TupleElement{
+							{
 								Name:  "O",
 								Value: &model.AliasRef{Name: "O", Expression: model.ResultType(types.Integer)},
 							},
-							&model.TupleElement{
+							{
 								Name:  "P",
 								Value: &model.AliasRef{Name: "P", Expression: model.ResultType(types.String)},
 							},
@@ -633,7 +633,7 @@ func TestQuery(t *testing.T) {
 			want: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Patient"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "P",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Patient"}}),
 						Source: &model.Retrieve{

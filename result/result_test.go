@@ -65,14 +65,14 @@ func TestLibraries_ProtoAndBack(t *testing.T) {
 			},
 			wantProto: &crpb.Libraries{
 				Libraries: []*crpb.Library{
-					&crpb.Library{
+					{
 						Name:    proto.String("TESTLIB"),
 						Version: proto.String("1.0.0"),
 						ExprDefs: map[string]*crpb.Value{
-							"TESTRESULT": &crpb.Value{
+							"TESTRESULT": {
 								Value: &crpb.Value_IntegerValue{IntegerValue: 1},
 							},
-							"TESTRESULT2": &crpb.Value{
+							"TESTRESULT2": {
 								Value: &crpb.Value_IntegerValue{IntegerValue: 2},
 							},
 						},
@@ -88,20 +88,20 @@ func TestLibraries_ProtoAndBack(t *testing.T) {
 			},
 			wantProto: &crpb.Libraries{
 				Libraries: []*crpb.Library{
-					&crpb.Library{
+					{
 						Name:    proto.String("TESTLIB"),
 						Version: proto.String("1.0.0"),
 						ExprDefs: map[string]*crpb.Value{
-							"TESTRESULT": &crpb.Value{
+							"TESTRESULT": {
 								Value: &crpb.Value_IntegerValue{IntegerValue: 1},
 							},
 						},
 					},
-					&crpb.Library{
+					{
 						Name:    proto.String("TESTLIB"),
 						Version: proto.String("2.0.0"),
 						ExprDefs: map[string]*crpb.Value{
-							"TESTRESULT": &crpb.Value{
+							"TESTRESULT": {
 								Value: &crpb.Value_IntegerValue{IntegerValue: 4},
 							},
 						},
