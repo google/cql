@@ -375,13 +375,13 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlStringOperatorsTest.xml": XMLTestFileExclusions{
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Matches",
 				"Substring",
 			},
 			NamesExcludes: []string{
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
 				"DateTimeToString1",
 				"DateTimeToString2",
+				"MatchesWordsAndSpacesFalse",
 				// The spec test is incorrect, fix pending in
 				// https://github.com/cqframework/cql-tests/pull/35.
 				"CombineEmptyList",
