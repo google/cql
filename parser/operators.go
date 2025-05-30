@@ -286,6 +286,21 @@ func (p *Parser) loadSystemOperators() error {
 				}
 			},
 		},
+		{
+			name: "Substring",
+			operands: [][]types.IType{
+				{types.String, types.Integer},
+				{types.String, types.Integer, types.Integer},
+			},
+			model: func() model.IExpression {
+				return &model.Substring{
+					// NaryExpression is used here because Substring can have 2 or 3 operands.
+					NaryExpression: &model.NaryExpression{
+						Expression: model.ResultType(types.String),
+					},
+				}
+			},
+		},
 		// CONVERT QUANTITY OPERATOR
 		{
 			name: "ConvertQuantity",

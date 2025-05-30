@@ -1410,6 +1410,17 @@ func (i *interpreter) naryOverloads(m model.INaryExpression) ([]convert.Overload
 				Result:   evalRound,
 			},
 		}, nil
+	case *model.Substring:
+		return []convert.Overload[evalNarySignature]{
+			{
+				Operands: []types.IType{types.String, types.Integer},
+				Result:   evalSubstring,
+			},
+			{
+				Operands: []types.IType{types.String, types.Integer, types.Integer},
+				Result:   evalSubstring,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Nary Expression %v", m.GetName())
 	}

@@ -1054,9 +1054,9 @@ type Union struct{ *BinaryExpression }
 type Split struct{ *BinaryExpression }
 
 // Substring ELM Expression https://cql.hl7.org/09-b-cqlreference.html#substring
-// Substring is an OperatorExpression in ELM, but we're modeling it as a BinaryExpression since in CQL
-// it takes two or three arguments (string, start, length).
-type Substring struct{ *BinaryExpression }
+// Substring is an OperatorExpression in ELM. It takes two or three arguments (string, start, length).
+// We model it as a NaryExpression to handle both overloads.
+type Substring struct{ *NaryExpression }
 
 // Indexer ELM Expression https://cql.hl7.org/04-logicalspecification.html#indexer.
 type Indexer struct{ *BinaryExpression }
@@ -1641,6 +1641,9 @@ func (i *Indexer) GetName() string { return "Indexer" }
 
 // GetName returns the name of the system operator.
 func (a *IndexOf) GetName() string { return "IndexOf" }
+
+// GetName returns the name of the system operator.
+func (s *Substring) GetName() string { return "Substring" }
 
 // GetName returns the name of the system operator.
 func (m *Median) GetName() string { return "Median" }

@@ -448,3 +448,93 @@ func evalMatches(m model.IBinaryExpression, argString, patternString result.Valu
 	res := match != ""
 	return result.New(res)
 }
+
+// Substring(stringToSub String, startIndex Integer) String
+// Substring(stringToSub String, startIndex Integer, length Integer) String
+// https://cql.hl7.org/09-b-cqlreference.html#substring
+func evalSubstring(m model.INaryExpression, operands []result.Value) (result.Value, error) {
+	if len(operands) < 2 || len(operands) > 3 {
+		return result.Value{}, fmt.Errorf("substring expects 2 or 3 arguments, got %d", len(operands))
+	}
+
+	// Check for null operands first
+	if result.IsNull(operands[0]) || result.IsNull(operands[1]) {
+		return result.New(nil)
+	}
+
+	stringToSub, startIndex, err := extractSubstringBaseArgs(operands)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	runes := []rune(stringToSub)
+	stringLen := int32(len(runes))
+
+	// Special case: If string is empty and startIndex is 0, return empty string
+	if stringLen == 0 && startIndex == 0 {
+		return result.New("")
+	}
+
+	// Rule: If startIndex is less than 0 or greater than or equal to the length of the stringToSub, the result is null.
+	if startIndex < 0 || startIndex >= stringLen {
+		return result.New(nil)
+	}
+
+	// Handle three-argument form: Substring(stringToSub, startIndex, length)
+	if len(operands) == 3 {
+		return substringWithLength(runes, startIndex, operands[2])
+	}
+
+	// Handle two-argument form: Substring(stringToSub, startIndex)
+	// Rule: If length is not specified, the result is the substring of stringToSub starting at startIndex.
+	return result.New(string(runes[startIndex:]))
+}
+
+// extractSubstringBaseArgs extracts and validates the first two arguments for Substring
+// Note: This assumes operands are already checked for null
+func extractSubstringBaseArgs(operands []result.Value) (string, int32, error) {
+	// Operand 0: stringToSub (String)
+	stringToSub, err := result.ToString(operands[0])
+	if err != nil {
+		return "", 0, fmt.Errorf("could not convert stringToSub to string: %w", err)
+	}
+
+	// Operand 1: startIndex (Integer)
+	startIndex, err := result.ToInt32(operands[1])
+	if err != nil {
+		return "", 0, fmt.Errorf("could not convert startIndex to int32: %w", err)
+	}
+
+	return stringToSub, startIndex, nil
+}
+
+// substringWithLength handles the three-argument form of Substring
+func substringWithLength(runes []rune, startIndex int32, lengthOperand result.Value) (result.Value, error) {
+	if result.IsNull(lengthOperand) {
+		return result.New(nil)
+	}
+
+	length, err := result.ToInt32(lengthOperand)
+	if err != nil {
+		return result.Value{}, fmt.Errorf("could not convert length to int32: %w", err)
+	}
+
+	// Rule: If length is less than 0, the result is null.
+	if length < 0 {
+		return result.New(nil)
+	}
+
+	// Rule: If length is 0, the result is an empty string.
+	if length == 0 {
+		return result.New("")
+	}
+
+	stringLen := int32(len(runes))
+	endIndex := startIndex + length
+	// Rule: If length is greater than the remaining characters, include characters to the end.
+	if endIndex > stringLen {
+		endIndex = stringLen
+	}
+
+	return result.New(string(runes[startIndex:endIndex]))
+}
