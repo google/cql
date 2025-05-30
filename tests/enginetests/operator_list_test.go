@@ -1374,7 +1374,7 @@ func TestProperlyIncludesPointList(t *testing.T) {
 		{
 			name:       "{1, 2} properly includes null as Integer",
 			cql:        "{1, 2} properly includes null as Integer",
-			wantResult: newOrFatal(t, nil),
+			wantResult: newOrFatal(t, false),
 		},
 		{
 			name:       "null as List<Integer> properly includes 1",
@@ -1389,6 +1389,176 @@ func TestProperlyIncludesPointList(t *testing.T) {
 		{
 			name:       "Functional syntax: Properly Includes list",
 			cql:        "ProperlyIncludes({1, 2}, 1)",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
+func TestProperlyIncludedInListList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Properly Included In List",
+			cql:  "{1, 2} properly included in {1, 2, 3}",
+			wantModel: &model.ProperlyIncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.Integer),
+								model.NewLiteral("2", types.Integer),
+							},
+						},
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.Integer),
+								model.NewLiteral("2", types.Integer),
+								model.NewLiteral("3", types.Integer),
+							},
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "{1, 2, 3} properly included in {1, 2}",
+			cql:        "{1, 2, 3} properly included in {1, 2}",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "{1, 2} properly included in {1, 2}",
+			cql:        "{1, 2} properly included in {1, 2}",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "null as List<Integer> properly included in {1, 2}",
+			cql:        "null as List<Integer> properly included in {1, 2}",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "{1, 2} properly included in null as List<Integer>",
+			cql:        "{1, 2} properly included in null as List<Integer>",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "{@2019} properly included in {@2019, @2020}",
+			cql:        "{@2019} properly included in {@2019, @2020}",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Functional syntax: Properly Includes list",
+			cql:        "ProperlyIncludedIn({1, 2}, {1, 2, 3})",
+			wantResult: newOrFatal(t, true),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
+func TestProperlyIncludedInPointList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Properly Included In Point",
+			cql:  "2 properly included in {1, 2, 3}",
+			wantModel: &model.ProperlyIncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("2", types.Integer),
+						&model.List{
+							Expression: model.ResultType(&types.List{ElementType: types.Integer}),
+							List: []model.IExpression{
+								model.NewLiteral("1", types.Integer),
+								model.NewLiteral("2", types.Integer),
+								model.NewLiteral("3", types.Integer),
+							},
+						},
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "3 properly included in {1, 2}",
+			cql:        "3 properly included in {1, 2}",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "1 properly included in {1}",
+			cql:        "1 properly included in {1}",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "1 properly included in null as List<Integer>",
+			cql:        "1 properly included in null as List<Integer>",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "null as Integer properly included in {1}",
+			cql:        "null as Integer properly included in {1}",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@2019 properly included in {@2019, @2020}",
+			cql:        "@2019 properly included in {@2019, @2020}",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Functional syntax: Properly Includes In list",
+			cql:        "ProperlyIncludedIn(1, {1, 2})",
 			wantResult: newOrFatal(t, true),
 		},
 	}

@@ -206,10 +206,10 @@ func TestBuiltInFunctions(t *testing.T) {
 					Operand: &model.Instance{
 						ClassType: types.Code,
 						Elements: []*model.InstanceElement{
-							&model.InstanceElement{Name: "code", Value: model.NewLiteral("foo", types.String)},
-							&model.InstanceElement{Name: "system", Value: model.NewLiteral("bar", types.String)},
-							&model.InstanceElement{Name: "version", Value: model.NewLiteral("1.0", types.String)},
-							&model.InstanceElement{Name: "display", Value: model.NewLiteral("severed leg", types.String)},
+							{Name: "code", Value: model.NewLiteral("foo", types.String)},
+							{Name: "system", Value: model.NewLiteral("bar", types.String)},
+							{Name: "version", Value: model.NewLiteral("1.0", types.String)},
+							{Name: "display", Value: model.NewLiteral("severed leg", types.String)},
 						},
 						Expression: model.ResultType(types.Code),
 					},
@@ -391,7 +391,7 @@ func TestBuiltInFunctions(t *testing.T) {
 							Expression: model.ResultType(types.Concept),
 							ClassType:  types.Concept,
 							Elements: []*model.InstanceElement{
-								&model.InstanceElement{
+								{
 									Name: "codes",
 									Value: &model.List{
 										Expression: model.ResultType(&types.List{ElementType: types.Code}),
@@ -400,8 +400,8 @@ func TestBuiltInFunctions(t *testing.T) {
 												Expression: model.ResultType(types.Code),
 												ClassType:  types.Code,
 												Elements: []*model.InstanceElement{
-													&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
-													&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+													{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+													{Name: "code", Value: model.NewLiteral("1", types.String)},
 												},
 											},
 										},
@@ -413,8 +413,8 @@ func TestBuiltInFunctions(t *testing.T) {
 							Expression: model.ResultType(types.Code),
 							ClassType:  types.Code,
 							Elements: []*model.InstanceElement{
-								&model.InstanceElement{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
-								&model.InstanceElement{Name: "code", Value: model.NewLiteral("1", types.String)},
+								{Name: "system", Value: model.NewLiteral("http://example.com", types.String)},
+								{Name: "code", Value: model.NewLiteral("1", types.String)},
 							},
 						},
 					},
@@ -788,8 +788,21 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "PositionOf",
+			cql:  "PositionOf('B','ABC')",
+			want: &model.PositionOf{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("B", types.String),
+						model.NewLiteral("ABC", types.String),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
 			name: "Length",
-			cql: "Length('ABC')",
+			cql:  "Length('ABC')",
 			want: &model.Length{
 				UnaryExpression: &model.UnaryExpression{
 					Operand:    model.NewLiteral("ABC", types.String),
@@ -799,21 +812,61 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "Upper",
-			cql: "Upper('abc')",
+			cql:  "Upper('abc')",
 			want: &model.Upper{
 				UnaryExpression: &model.UnaryExpression{
-					Operand: model.NewLiteral("abc", types.String),
+					Operand:    model.NewLiteral("abc", types.String),
 					Expression: model.ResultType(types.String),
 				},
 			},
 		},
 		{
 			name: "Lower",
-			cql: "Lower('ABC')",
+			cql:  "Lower('ABC')",
 			want: &model.Lower{
 				UnaryExpression: &model.UnaryExpression{
-					Operand: model.NewLiteral("ABC", types.String),
+					Operand:    model.NewLiteral("ABC", types.String),
 					Expression: model.ResultType(types.String),
+				},
+			},
+		},
+		{
+			name: "StartsWith",
+			cql:  "StartsWith('Excellent', 'Ex')",
+			want: &model.StartsWith{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("Excellent", types.String),
+						model.NewLiteral("Ex", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "ReplaceMatches",
+			cql:  "ReplaceMatches('ABCDE', 'C', 'XYZ')",
+			want: &model.ReplaceMatches{
+				NaryExpression: &model.NaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("ABCDE", types.String),
+						model.NewLiteral("C", types.String),
+						model.NewLiteral("XYZ", types.String),
+					},
+					Expression: model.ResultType(types.String),
+				},
+			},
+		},
+		{
+			name: "Matches",
+			cql:  "Matches('1,2three', '\\d,\\d\\w+')",
+			want: &model.Matches{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1,2three", types.String),
+						model.NewLiteral("\\d,\\d\\w+", types.String),
+					},
+					Expression: model.ResultType(types.Boolean),
 				},
 			},
 		},
@@ -1453,6 +1506,32 @@ func TestBuiltInFunctions(t *testing.T) {
 						},
 					},
 					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludedIn List<T> for point type",
+			cql:  "ProperlyIncludedIn(1, {1, 2, 3})",
+			want: &model.ProperlyIncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("1", types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+		},
+		{
+			name: "ProperlyIncludedIn List List",
+			cql:  "ProperlyIncludedIn({1, 2, 3}, {1, 2, 3})",
+			want: &model.ProperlyIncludedIn{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+						model.NewList([]string{"1", "2", "3"}, types.Integer),
+					},
+					Expression: model.ResultType(types.Boolean),
 				},
 			},
 		},

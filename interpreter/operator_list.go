@@ -329,7 +329,7 @@ func evalLengthList(m model.IUnaryExpression, listObj result.Value) (result.Valu
 // properly includes(element Targument List<T>, element T) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#properly-includes-1
 func evalProperlyIncludes(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
-	if result.IsNull(lObj) || result.IsNull(rObj) {
+	if result.IsNull(lObj) {
 		return result.New(nil)
 	}
 	l, err := result.ToSlice(lObj)
@@ -366,6 +366,22 @@ func evalProperlyIncludesList(m model.IBinaryExpression, lObj, rObj result.Value
 		}
 	}
 	return result.New(true)
+}
+
+// properly included in(element T, argument List<T>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#properly-included-in-1
+// Note: The docs are a bit ambiguous on this point, but the point type for this operator has the
+// order of the arguments reversed from properly includes for the same overload.
+func evalProperlyIncludedIn(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	return evalProperlyIncludes(m, rObj, lObj)
+}
+
+// properly included in(argument List<T>, argument List<T>) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#properly-included-in-1
+// Note: Similar to the point overload, the order of the arguments is reversed from properly
+// includes for the same overload.
+func evalProperlyIncludedInList(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	return evalProperlyIncludesList(m, rObj, lObj)
 }
 
 // singleton from(argument List<T>) T

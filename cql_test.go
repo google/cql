@@ -70,7 +70,7 @@ func TestCQL(t *testing.T) {
 			wantSourceExpression: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "E",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 						Source: &model.Retrieve{
@@ -186,7 +186,7 @@ func TestCQL_ParseErrors(t *testing.T) {
 				LibKey: result.LibKey{Name: "Unnamed Library", IsUnnamed: true /* Version is ignored*/},
 				Errors: []*parser.ParsingError{
 					{
-						Message: "could not resolve Add(System.Integer, System.String): no matching overloads",
+						Message: "could not resolve Add(System.Integer, System.String): no matching overloads available overloads: [Add(System.Integer, System.Integer), Add(System.Long, System.Long), Add(System.Decimal, System.Decimal), Add(System.Quantity, System.Quantity), Add(System.String, System.String), Add(System.Date, System.Quantity), Add(System.DateTime, System.Quantity), Add(System.Time, System.Quantity)]",
 						Line:    1,
 						Column:  12,
 					},
@@ -205,7 +205,7 @@ func TestCQL_ParseErrors(t *testing.T) {
 			retriever: enginetests.BuildRetriever(t),
 			parserConfig: cql.ParseConfig{
 				Parameters: map[result.DefKey]string{
-					result.DefKey{Name: "param name", Library: result.LibKey{Name: "TESTLIB", Version: "1.0.0"}}: "invalid value",
+					{Name: "param name", Library: result.LibKey{Name: "TESTLIB", Version: "1.0.0"}}: "invalid value",
 				},
 				DataModels: [][]byte{fhirDataModel(t)},
 			},
@@ -311,7 +311,7 @@ func TestCQL_MultipleEvals(t *testing.T) {
 			wantSourceExpression: &model.Query{
 				Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 				Source: []*model.AliasedSource{
-					&model.AliasedSource{
+					{
 						Alias:      "E",
 						Expression: model.ResultType(&types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}}),
 						Source: &model.Retrieve{

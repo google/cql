@@ -95,7 +95,7 @@ func TestLoadModelInfo(t *testing.T) {
 				PatientClassName:             "FHIR.Patient",
 				PatientBirthDatePropertyName: "birthDate.value",
 				TypeInfos: []*typeInfoXML{
-					&typeInfoXML{
+					{
 						BaseType:        "FHIR.DomainResource",
 						Name:            "FakeCondition",
 						Namespace:       "FHIR",
@@ -105,30 +105,30 @@ func TestLoadModelInfo(t *testing.T) {
 						Label:           "FakeCondition",
 						Retrievable:     true,
 						Elements: []*element{
-							&element{Name: "clinicalStatus", ElementType: "FHIR.CodeableConcept"},
-							&element{Name: "fakeCode", ElementType: "FHIR.CodeableConcept"},
-							&element{
+							{Name: "clinicalStatus", ElementType: "FHIR.CodeableConcept"},
+							{Name: "fakeCode", ElementType: "FHIR.CodeableConcept"},
+							{
 								Name: "event",
 								ElementTypeSpecifier: &elementTypeSpecifier{
 									ElementType: "FHIR.CodeableConcept",
 									XSIType:     "ListTypeSpecifier"},
 							},
-							&element{
+							{
 								Name: "link",
 								ElementTypeSpecifier: &elementTypeSpecifier{
 									ElementTypeSpecifier: &elementTypeSpecifier{Namespace: "FHIR", Name: "Bundle.Link", XSIType: "NamedTypeSpecifier"},
 									XSIType:              "ListTypeSpecifier"},
 							},
-							&element{
+							{
 								Name: "subject",
 								ElementTypeSpecifier: &elementTypeSpecifier{
 									Choices: []*choice{
-										&choice{
+										{
 											Namespace: "FHIR",
 											Name:      "CodeableConcept",
 											XSIType:   "NamedTypeSpecifier",
 										},
-										&choice{
+										{
 											Namespace: "FHIR",
 											Name:      "Reference",
 											XSIType:   "NamedTypeSpecifier",
@@ -138,37 +138,37 @@ func TestLoadModelInfo(t *testing.T) {
 							},
 						},
 					},
-					&typeInfoXML{
+					{
 						BaseType:    "FHIR.Element",
 						Name:        "AggregationMode",
 						Namespace:   "FHIR",
 						XSIType:     "ClassInfo",
 						Retrievable: false,
 						Elements: []*element{
-							&element{Name: "value", ElementType: "System.String"},
+							{Name: "value", ElementType: "System.String"},
 						},
 					},
 				},
 				ConversionInfos: []*conversionInfo{
-					&conversionInfo{
+					{
 						FunctionName: "FHIRHelpers.ToCode",
 						FromType:     "FHIR.Coding",
 						ToType:       "System.Code",
 					},
-					&conversionInfo{
+					{
 						FunctionName: "FHIRHelpers.ToConcept",
 						FromType:     "FHIR.CodeableConcept",
 						ToType:       "System.Concept",
 					},
 				},
 				ContextInfos: []*contextInfo{
-					&contextInfo{
+					{
 						Name:             "Patient",
 						KeyElement:       "id",
 						BirthDateElement: "birthDate.value",
 						ContextType:      &contextType{Namespace: "FHIR", Name: "Patient"},
 					},
-					&contextInfo{
+					{
 						Name:        "Encounter",
 						KeyElement:  "id",
 						ContextType: &contextType{Namespace: "FHIR", Name: "Encounter", ModelName: "modelName"},

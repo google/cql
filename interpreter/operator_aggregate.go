@@ -1239,7 +1239,7 @@ func (i *interpreter) evalStdDevQuantity(m model.IUnaryExpression, operand resul
 		}
 		sum += (v.Value - mean.Value) * (v.Value - mean.Value)
 	}
-	
+
 	// Round to 8 decimal places to match CQL expected precision
 	stdDev := math.Sqrt(sum / float64(count-1))
 	roundedStdDev := math.Round(stdDev*100000000) / 100000000
@@ -1864,7 +1864,7 @@ func (i *interpreter) evalGeometricMeanDecimal(m model.IUnaryExpression, operand
 	// Calculate nth root (Power(product, 1/count))
 	power := 1.0 / float64(len(values))
 	geometricMean := math.Pow(product, power)
-	
+
 	// Round to 8 decimal places to match CQL expected precision
 	roundedMean := math.Round(geometricMean*100000000) / 100000000
 	return result.New(roundedMean)
@@ -1922,7 +1922,7 @@ func (i *interpreter) evalGeometricMeanQuantity(m model.IUnaryExpression, operan
 	// Calculate nth root (Power(product, 1/count))
 	power := 1.0 / float64(len(values))
 	geometricMean := math.Pow(product, power)
-	
+
 	// Round to 8 decimal places to match CQL expected precision
 	roundedMean := math.Round(geometricMean*100000000) / 100000000
 	return result.New(result.Quantity{Value: roundedMean, Unit: unit})

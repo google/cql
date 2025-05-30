@@ -896,7 +896,6 @@ type Product struct{ *UnaryExpression }
 // 2. expand(argument Interval<T>, per Quantity) List<T>
 type Expand struct{ *BinaryExpression }
 
-
 // Collapse ELM expression from https://cql.hl7.org/09-b-cqlreference.html#collapse
 // Has two signatures:
 // collapse(argument List<Interval<T>>) List<Interval<T>>
@@ -914,9 +913,8 @@ type Width struct{ *UnaryExpression }
 
 var _ IUnaryExpression = &Width{}
 
-
 // Duration ELM Expression from https://cql.hl7.org/04-logicalspecification.html#duration.
-type Duration struct{ 
+type Duration struct {
 	*UnaryExpression
 	Precision DateTimePrecision
 }
@@ -1130,6 +1128,9 @@ type IncludedIn BinaryExpressionWithPrecision
 // ProperlyIncludes ELM expression from https://cql.hl7.org/09-b-cqlreference.html#properly-includes-1.
 type ProperlyIncludes BinaryExpressionWithPrecision
 
+// ProperlyIncludedIn ELM expression from https://cql.hl7.org/09-b-cqlreference.html#properly-included-in-1.
+type ProperlyIncludedIn BinaryExpressionWithPrecision
+
 // InCodeSystem is https://cql.hl7.org/09-b-cqlreference.html#in-codesystem.
 // This is not technically 1:1 with the ELM definition. The ELM defines Code, CodeSystem and
 // CodeSystemExpression arguments, the last being seemingly impossible to set for for now we're
@@ -1192,11 +1193,23 @@ type EndsWith struct{ *BinaryExpression }
 // LastPositionOf is https://cql.hl7.org/09-b-cqlreference.html#lastpositionof
 type LastPositionOf struct{ *BinaryExpression }
 
+// StartsWith is https://cql.hl7.org/09-b-cqlreference.html#startswith
+type StartsWith struct{ *BinaryExpression }
+
 // Upper is https://cql.hl7.org/09-b-cqlreference.html#Upper
-type Upper struct{ *UnaryExpression}
+type Upper struct{ *UnaryExpression }
 
 // Lower is https://cql.hl7.org/09-b-cqlreference.html#lower
-type Lower struct{ *UnaryExpression}
+type Lower struct{ *UnaryExpression }
+
+// PositionOf is https://cql.hl7.org/09-b-cqlreference.html#positionof
+type PositionOf struct{ *BinaryExpression }
+
+// ReplaceMatches is https://cql.hl7.org/09-b-cqlreference.html#replacematches
+type ReplaceMatches struct{ *NaryExpression }
+
+// Matches is https://cql.hl7.org/09-b-cqlreference.html#matches
+type Matches struct{ *BinaryExpression }
 
 // Combine is https://cql.hl7.org/04-logicalspecification.html#combine.
 // In ELM Combine is an OperatorExpression, but we're modeling it as a NaryExpression since in CQL
@@ -1528,6 +1541,9 @@ func (a *InValueSet) GetName() string { return "InValueSet" }
 func (p *ProperlyIncludes) GetName() string { return "ProperlyIncludes" }
 
 // GetName returns the name of the system operator.
+func (p *ProperlyIncludedIn) GetName() string { return "ProperlyIncludedIn" }
+
+// GetName returns the name of the system operator.
 func (a *Contains) GetName() string { return "Contains" }
 
 // GetName returns the name of the system operator.
@@ -1560,10 +1576,22 @@ func (a *EndsWith) GetName() string { return "EndsWith" }
 func (a *LastPositionOf) GetName() string { return "LastPositionOf" }
 
 // GetName returns the name of the system operator.
-func (a *Upper) GetName() string { return "Upper"}
+func (a *StartsWith) GetName() string { return "StartsWith" }
 
 // GetName returns the name of the system operator.
-func (a *Lower) GetName() string{ return "Lower"}
+func (a *Upper) GetName() string { return "Upper" }
+
+// GetName returns the name of the system operator.
+func (a *Lower) GetName() string { return "Lower" }
+
+// GetName returns the name of the system operator.
+func (a *PositionOf) GetName() string { return "PositionOf" }
+
+// GetName returns the name of the system operator.
+func (a *ReplaceMatches) GetName() string { return "ReplaceMatches" }
+
+// GetName returns the name of the system operator.
+func (a *Matches) GetName() string { return "Matches" }
 
 // GetName returns the name of the system operator.
 func (a *Date) GetName() string { return "Date" }

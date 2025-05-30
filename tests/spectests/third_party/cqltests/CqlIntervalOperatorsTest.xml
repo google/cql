@@ -1016,6 +1016,14 @@
 			<expression>Interval[1, 10] overlaps Interval[4, 10]</expression>
 			<output>true</output>
 		</test>
+		<test name="IntegerIntervalOverlapsTrue2">
+			<expression>Interval[4, 10] overlaps Interval[4, 10]</expression>
+			<output>true</output>
+		</test>
+		<test name="IntegerIntervalOverlapsTrue3">
+			<expression>Interval[10, 15] overlaps Interval[4, 10]</expression>
+			<output>true</output>
+		</test>
 		<test name="IntegerIntervalOverlapsFalse">
 			<expression>Interval[1, 10] overlaps Interval[11, 20]</expression>
 			<output>false</output>
@@ -1044,6 +1052,26 @@
 			<expression>Interval[DateTime(2012, 1, 5), DateTime(2012, 1, 25)] overlaps Interval[DateTime(2012, 1, 26), DateTime(2012, 1, 28)]</expression>
 			<output>false</output>
 		</test>
+		<test name="DateTimeOverlapsPrecisionLeftPossiblyStartsDuringRight">
+			<expression>Interval[DateTime(2012, 2, 25), DateTime(2012, 3, 26)] overlaps Interval[DateTime(2012, 1, 10), DateTime(2012, 2)]</expression>
+			<output>null</output>
+		</test>
+		<test name="DateTimeOverlapsPrecisioLeftPossiblyEndsDuringRight">
+			<expression>Interval[DateTime(2012, 1, 25), DateTime(2012, 2, 26)] overlaps Interval[DateTime(2012, 2), DateTime(2012, 3, 28)]</expression>
+			<output>null</output>
+		</test>
+		<test name="DateTimeOverlapsPrecisionLeftPossiblyStartsAndEndsDuringRight">
+			<expression>Interval[DateTime(2012, 2), DateTime(2012, 3)] overlaps Interval[DateTime(2011, 1, 10), DateTime(2012)]</expression>
+			<output>null</output>
+		</test>
+		<test name="DateTimeOverlapsPrecisionRightPossiblyStartsDuringLeftButEndsDuringLeft">
+			<expression>Interval[DateTime(2012), DateTime(2013, 3)] overlaps Interval[DateTime(2012, 2), DateTime(2013, 2)]</expression>
+			<output>true</output>
+		</test>
+		<test name="DateTimeOverlapsPrecisionRightStartsDuringLeftAndPossiblyEndsDuringLeft">
+			<expression>Interval[DateTime(2012, 2), DateTime(2013)] overlaps Interval[DateTime(2012, 3), DateTime(2013, 2)]</expression>
+			<output>true</output>
+		</test>
 		<test name="TimeOverlapsTrue">
 			<expression>Interval[@T10:00:00.000, @T19:59:59.999] overlaps Interval[@T12:00:00.000, @T21:59:59.999]</expression>
 			<output>true</output>
@@ -1064,6 +1092,10 @@
 		</test>
 		<test name="IntegerIntervalOverlapsBeforeFalse">
 			<expression>Interval[4, 10] overlaps before Interval[1, 10]</expression>
+			<output>false</output>
+		</test>
+		<test name="IntegerIntervalOverlapsBeforeFalse2">
+			<expression>Interval[4, 10] overlaps before Interval[4, 10]</expression>
 			<output>false</output>
 		</test>
 		<test name="DecimalIntervalOverlapsBeforeTrue">
@@ -1110,6 +1142,10 @@
 		</test>
 		<test name="IntegerIntervalOverlapsAfterFalse">
 			<expression>Interval[4, 10] overlaps after Interval[1, 10]</expression>
+			<output>false</output>
+		</test>
+		<test name="IntegerIntervalOverlapsAfterFalse2">
+			<expression>Interval[4, 10] overlaps after Interval[4, 10]</expression>
 			<output>false</output>
 		</test>
 		<test name="DecimalIntervalOverlapsAfterTrue">

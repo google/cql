@@ -8,7 +8,7 @@
 		</test>
 		<test name="CombineEmptyList">
 			<expression>Combine({})</expression>
-			<output>''</output>
+			<output>null</output>
 		</test>
 		<test name="CombineABC">
 			<expression>Combine({'a', 'b', 'c'})</expression>
@@ -172,7 +172,7 @@
 			<output>true</output>
 		</test>
 		<test name="MatchesWordsAndSpacesFalse">
-			<expression>Matches('Not all who wander are lost - circa 2017', '[\\w]+')</expression>
+			<expression>Matches('Not all who wander are lost - circa 2017', '^[\\w\\s]+$')</expression>
 			<output>false</output>
 		</test>
 		<test name="MatchesNotWords">

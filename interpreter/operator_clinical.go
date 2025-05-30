@@ -26,7 +26,6 @@ import (
 
 // CLINICAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#clinical-operators-3
 
-
 // CalculateAgeIn[Years|Months|Weeks|Days|Hours|Minutes|Seconds](birthDate Date|DateTime) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#calculateage
 func evalCalculateAge(u model.IUnaryExpression, birthObj result.Value) (result.Value, error) {
@@ -43,7 +42,7 @@ func evalCalculateAge(u model.IUnaryExpression, birthObj result.Value) (result.V
 	if err != nil {
 		return result.Value{}, err
 	}
-	
+
 	// Use current time as asOf time
 	asOf := result.DateTime{Date: time.Now()}
 	return calculateAgeAt(birth, asOf, p)
@@ -117,15 +116,15 @@ func calculateAgeAt(birth, asOf result.DateTime, p model.DateTimePrecision) (res
 	if p == model.DAY {
 		return result.New(int(asOf.Date.Sub(birth.Date).Hours() / 24))
 	}
-	
+
 	if p == model.HOUR {
 		return result.New(int(asOf.Date.Sub(birth.Date).Hours()))
 	}
-	
+
 	if p == model.MINUTE {
 		return result.New(int(asOf.Date.Sub(birth.Date).Minutes()))
 	}
-	
+
 	if p == model.SECOND {
 		return result.New(int(asOf.Date.Sub(birth.Date).Seconds()))
 	}

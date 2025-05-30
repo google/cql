@@ -37,19 +37,19 @@ func TestNDJSONSink(t *testing.T) {
 		{
 			name: "Successful Rows",
 			outputs: []*cbpb.BeamResult{
-				&cbpb.BeamResult{
+				{
 					Id:                  proto.String("1"),
 					EvaluationTimestamp: timestamppb.New(time.Date(2023, time.November, 1, 1, 20, 30, 1e8, time.UTC)),
 					Result: &crpb.Libraries{
 						Libraries: []*crpb.Library{
-							&crpb.Library{
+							{
 								Name:    proto.String("TESTLIB"),
 								Version: proto.String("1.0.0"),
 								ExprDefs: map[string]*crpb.Value{
-									"HasDiabetes": &crpb.Value{
+									"HasDiabetes": {
 										Value: &crpb.Value_BooleanValue{BooleanValue: false},
 									},
-									"HasHypertension": &crpb.Value{
+									"HasHypertension": {
 										Value: &crpb.Value_BooleanValue{BooleanValue: false},
 									},
 								},
@@ -57,19 +57,19 @@ func TestNDJSONSink(t *testing.T) {
 						},
 					},
 				},
-				&cbpb.BeamResult{
+				{
 					Id:                  proto.String("2"),
 					EvaluationTimestamp: timestamppb.New(time.Date(2023, time.December, 2, 1, 20, 30, 1e8, time.UTC)),
 					Result: &crpb.Libraries{
 						Libraries: []*crpb.Library{
-							&crpb.Library{
+							{
 								Name:    proto.String("TESTLIB"),
 								Version: proto.String("1.0.0"),
 								ExprDefs: map[string]*crpb.Value{
-									"HasDiabetes": &crpb.Value{
+									"HasDiabetes": {
 										Value: &crpb.Value_BooleanValue{BooleanValue: true},
 									},
-									"HasHypertension": &crpb.Value{
+									"HasHypertension": {
 										Value: &crpb.Value_BooleanValue{BooleanValue: true},
 									},
 								},

@@ -211,7 +211,7 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 		return []convert.Overload[evalUnarySignature]{
 			{
 				Operands: []types.IType{types.String},
-				Result: evalLengthString,
+				Result:   evalLengthString,
 			},
 			{
 				Operands: []types.IType{&types.List{ElementType: types.Any}},
@@ -780,14 +780,14 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 		return []convert.Overload[evalUnarySignature]{
 			{
 				Operands: []types.IType{types.String},
-				Result: evalUpper,
+				Result:   evalUpper,
 			},
 		}, nil
 	case *model.Lower:
 		return []convert.Overload[evalUnarySignature]{
 			{
 				Operands: []types.IType{types.String},
-				Result: evalLower,
+				Result:   evalLower,
 			},
 		}, nil
 	case *model.UnitConversion:
@@ -1213,6 +1213,17 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalProperlyIncludesList,
 			},
 		}, nil
+	case *model.ProperlyIncludedIn:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Any, &types.List{ElementType: types.Any}},
+				Result:   evalProperlyIncludedIn,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				Result:   evalProperlyIncludedInList,
+			},
+		}, nil
 	case *model.Skip:
 		return []convert.Overload[evalBinarySignature]{
 			{
@@ -1239,6 +1250,27 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{types.String, types.String},
 				Result:   evalLastPositionOf,
+			},
+		}, nil
+	case *model.StartsWith:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String},
+				Result:   evalStartsWith,
+			},
+		}, nil
+	case *model.PositionOf:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String},
+				Result:   evalPositionOf,
+			},
+		}, nil
+	case *model.Matches:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String},
+				Result:   evalMatches,
 			},
 		}, nil
 	default:
@@ -1377,6 +1409,13 @@ func (i *interpreter) naryOverloads(m model.INaryExpression) ([]convert.Overload
 			{
 				Operands: []types.IType{&types.List{ElementType: types.String}, types.String},
 				Result:   i.evalCombine,
+			},
+		}, nil
+	case *model.ReplaceMatches:
+		return []convert.Overload[evalNarySignature]{
+			{
+				Operands: []types.IType{types.String, types.String, types.String},
+				Result:   evalReplaceMatches,
 			},
 		}, nil
 	case *model.Round:

@@ -437,10 +437,10 @@ func TestTupleAndInstanceSelector(t *testing.T) {
 			wantModel: &model.Instance{
 				ClassType: types.Code,
 				Elements: []*model.InstanceElement{
-					&model.InstanceElement{Name: "code", Value: model.NewLiteral("foo", types.String)},
-					&model.InstanceElement{Name: "system", Value: model.NewLiteral("bar", types.String)},
-					&model.InstanceElement{Name: "version", Value: model.NewLiteral("1.0", types.String)},
-					&model.InstanceElement{Name: "display", Value: model.NewLiteral("severed leg", types.String)},
+					{Name: "code", Value: model.NewLiteral("foo", types.String)},
+					{Name: "system", Value: model.NewLiteral("bar", types.String)},
+					{Name: "version", Value: model.NewLiteral("1.0", types.String)},
+					{Name: "display", Value: model.NewLiteral("severed leg", types.String)},
 				},
 				Expression: model.ResultType(types.Code),
 			},
@@ -469,7 +469,7 @@ func TestTupleAndInstanceSelector(t *testing.T) {
 			name: "Concept Instance",
 			cql:  "Concept{codes: {Code{code: 'foo', system: 'bar', version: '1.0' }}, display: 'display' }",
 			wantResult: newOrFatal(t, result.Concept{
-				Codes:   []*result.Code{&result.Code{Code: "foo", System: "bar", Version: "1.0"}},
+				Codes:   []*result.Code{{Code: "foo", System: "bar", Version: "1.0"}},
 				Display: "display",
 			}),
 		},
@@ -479,7 +479,7 @@ func TestTupleAndInstanceSelector(t *testing.T) {
 			wantResult: newOrFatal(t, result.ValueSet{
 				ID:          "id",
 				Version:     "1.0",
-				CodeSystems: []result.CodeSystem{result.CodeSystem{ID: "id", Version: "1.0"}},
+				CodeSystems: []result.CodeSystem{{ID: "id", Version: "1.0"}},
 			}),
 		},
 		{
@@ -502,8 +502,8 @@ func TestTupleAndInstanceSelector(t *testing.T) {
 			cql:  "Tuple { apple: 'red', banana: 4 as Choice<Integer, String> }",
 			wantModel: &model.Tuple{
 				Elements: []*model.TupleElement{
-					&model.TupleElement{Name: "apple", Value: model.NewLiteral("red", types.String)},
-					&model.TupleElement{
+					{Name: "apple", Value: model.NewLiteral("red", types.String)},
+					{
 						Name: "banana",
 						Value: &model.As{
 							UnaryExpression: &model.UnaryExpression{

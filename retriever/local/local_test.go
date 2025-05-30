@@ -60,7 +60,7 @@ func TestRetrieverFromR4Bundle(t *testing.T) {
 				 ]
 			}`,
 			wantResources: []*r4pb.ContainedResource{
-				&r4pb.ContainedResource{
+				{
 					OneofResource: &r4pb.ContainedResource_Patient{
 						Patient: &r4patientpb.Patient{Id: &r4datapb.Id{Value: "1"}},
 					},
@@ -110,12 +110,12 @@ func TestRetrieverFromR4Bundle(t *testing.T) {
 				 ]
 			}`,
 			wantResources: []*r4pb.ContainedResource{
-				&r4pb.ContainedResource{
+				{
 					OneofResource: &r4pb.ContainedResource_Patient{
 						Patient: &r4patientpb.Patient{Id: &r4datapb.Id{Value: "1"}},
 					},
 				},
-				&r4pb.ContainedResource{
+				{
 					OneofResource: &r4pb.ContainedResource_Patient{
 						Patient: &r4patientpb.Patient{Id: &r4datapb.Id{Value: "2"}},
 					},

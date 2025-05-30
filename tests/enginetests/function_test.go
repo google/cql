@@ -76,7 +76,7 @@ func TestLocalFunctions(t *testing.T) {
 			wantModels: []model.IExpressionDef{
 				&model.FunctionDef{
 					Operands: []model.OperandDef{
-						model.OperandDef{Name: "a", Expression: model.ResultType(types.Integer)},
+						{Name: "a", Expression: model.ResultType(types.Integer)},
 					},
 					ExpressionDef: &model.ExpressionDef{
 						Name: "FuncWithOperand",
@@ -116,8 +116,8 @@ func TestLocalFunctions(t *testing.T) {
 			wantModels: []model.IExpressionDef{
 				&model.FunctionDef{
 					Operands: []model.OperandDef{
-						model.OperandDef{Name: "a", Expression: model.ResultType(types.Integer)},
-						model.OperandDef{Name: "b", Expression: model.ResultType(types.String)},
+						{Name: "a", Expression: model.ResultType(types.Integer)},
+						{Name: "b", Expression: model.ResultType(types.String)},
 					},
 					Fluent: true,
 					ExpressionDef: &model.ExpressionDef{
@@ -273,7 +273,7 @@ func TestFailingFunctions(t *testing.T) {
 			wantModels: []model.IExpressionDef{
 				&model.FunctionDef{
 					Operands: []model.OperandDef{
-						model.OperandDef{Name: "a", Expression: model.ResultType(types.Integer)},
+						{Name: "a", Expression: model.ResultType(types.Integer)},
 					},
 					External: true,
 					ExpressionDef: &model.ExpressionDef{

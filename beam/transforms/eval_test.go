@@ -84,38 +84,38 @@ func TestCQLEvalFn(t *testing.T) {
 				 ]
 			}`).GetBundle(),
 			wantResult: []*cbpb.BeamResult{
-				&cbpb.BeamResult{
+				{
 					Id:                  proto.String("1"),
 					EvaluationTimestamp: timestamppb.New(time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)),
 					Result: &crpb.Libraries{
 						Libraries: []*crpb.Library{
-							&crpb.Library{
+							{
 								Name:    proto.String("EvalTest"),
 								Version: proto.String("1.0"),
 								ExprDefs: map[string]*crpb.Value{
-									"HasDiabetes": &crpb.Value{
+									"HasDiabetes": {
 										Value: &crpb.Value_BooleanValue{BooleanValue: true},
 									},
-									"HasHypertension": &crpb.Value{
+									"HasHypertension": {
 										Value: &crpb.Value_BooleanValue{BooleanValue: true},
 									},
-									"DiabetesVS": &crpb.Value{
+									"DiabetesVS": {
 										Value: &crpb.Value_ValueSetValue{
 											ValueSetValue: &crpb.ValueSet{Id: proto.String("urn:example:diabetes"), Version: proto.String("")},
 										},
 									},
-									"HypertensionVS": &crpb.Value{
+									"HypertensionVS": {
 										Value: &crpb.Value_ValueSetValue{
 											ValueSetValue: &crpb.ValueSet{Id: proto.String("urn:example:hypertension"), Version: proto.String("")},
 										},
 									},
 								},
 							},
-							&crpb.Library{
+							{
 								Name:    proto.String("BeamMetadata"),
 								Version: proto.String("1.0.0"),
 								ExprDefs: map[string]*crpb.Value{
-									"ID": &crpb.Value{
+									"ID": {
 										Value: &crpb.Value_StringValue{StringValue: "1"},
 									},
 								},
@@ -159,7 +159,7 @@ func TestCQLEvalFn(t *testing.T) {
 				 ]
 			}`).GetBundle(),
 			wantError: []*cbpb.BeamError{
-				&cbpb.BeamError{
+				{
 					ErrorMessage: proto.String("failed during CQL evaluation: EvalTest 1.0, could not find ValueSet{urn:example:nosuchvalueset, } resource not loaded"),
 					SourceUri:    proto.String("bundle:bundle1"),
 				},

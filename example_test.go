@@ -66,7 +66,7 @@ func Example() {
 	// be accepted, such as 400 or List<Choice<Integer, String>>{1, 'stringParam'}. In this example we
 	// override the MeasurementPeriod parameter to an interval between 2017 and 2019.
 	parameters := map[result.DefKey]string{
-		result.DefKey{
+		{
 			Library: result.LibKey{Name: "Example", Version: "1.2.3"},
 			Name:    "MeasurementPeriod",
 		}: "Interval[@2017, @2019]"}

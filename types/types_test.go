@@ -652,16 +652,16 @@ func TestProtoAndBack(t *testing.T) {
 			name: "Choice",
 			typ:  &Choice{ChoiceTypes: []IType{Integer, String}},
 			want: &ctpb.CQLType{Type: &ctpb.CQLType_ChoiceType{ChoiceType: &ctpb.ChoiceType{ChoiceTypes: []*ctpb.CQLType{
-				&ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
-				&ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_STRING.Enum()}}},
+				{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
+				{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_STRING.Enum()}}},
 			}}}},
 		},
 		{
 			name: "Tuple",
 			typ:  &Tuple{ElementTypes: map[string]IType{"apple": Integer, "banana": String}},
 			want: &ctpb.CQLType{Type: &ctpb.CQLType_TupleType{TupleType: &ctpb.TupleType{ElementTypes: map[string]*ctpb.CQLType{
-				"apple":  &ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
-				"banana": &ctpb.CQLType{Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_STRING.Enum()}}},
+				"apple":  {Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_INTEGER.Enum()}}},
+				"banana": {Type: &ctpb.CQLType_SystemType{SystemType: &ctpb.SystemType{Type: ctpb.SystemType_TYPE_STRING.Enum()}}},
 			}}}},
 		},
 		{
