@@ -1232,7 +1232,6 @@ func TestStartsWith(t *testing.T) {
 		{
 			name: "StartsWithTrue",
 			cql:  "StartsWith('Appendix','App')",
-			cql:  "StartsWith('Appendix','App')",
 			wantModel: &model.StartsWith{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
