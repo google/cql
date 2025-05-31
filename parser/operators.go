@@ -293,8 +293,10 @@ func (p *Parser) loadSystemOperators() error {
 				{types.Quantity, types.String},
 			},
 			model: func() model.IExpression {
-				return &model.BinaryExpression{
-					Expression: model.ResultType(types.Quantity),
+				return &model.ConvertQuantity{
+					BinaryExpression: &model.BinaryExpression{
+						Expression: model.ResultType(types.Quantity),
+					},
 				}
 			},
 		},

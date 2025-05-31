@@ -756,6 +756,11 @@ func TestAdd(t *testing.T) {
 			wantResult: newOrFatal(t, result.Quantity{Value: 20, Unit: model.DAYUNIT}),
 		},
 		{
+			name:       "Quantity with different units",
+			cql:        "1 'm' + 1 'cm'",
+			wantResult: newOrFatal(t, result.Quantity{Value: 1.01, Unit: model.Unit("m")}),
+		},
+		{
 			name:       "Quantity via class instances",
 			cql:        "Quantity{value: 11, unit: 'day'} + 9 'day'",
 			wantResult: newOrFatal(t, result.Quantity{Value: 20, Unit: model.DAYUNIT}),
@@ -978,6 +983,11 @@ func TestSubtract(t *testing.T) {
 			cql:        "10.1 'day' - 1.1 'day'",
 			wantResult: newOrFatal(t, result.Quantity{Value: 9, Unit: model.DAYUNIT}),
 		},
+		{
+			name:       "Quantity with different units",
+			cql:        "1 'm' - 1 'cm'",
+			wantResult: newOrFatal(t, result.Quantity{Value: 0.99, Unit: model.Unit("m")}),
+		},
 		// Tests for Date and Quantity
 		// TODO(b/301606416): Add more tests for DateTime + Quantity
 		{
@@ -1044,6 +1054,13 @@ func TestMultiply(t *testing.T) {
 				},
 			},
 			wantResult: newOrFatal(t, 4.0),
+		},
+		// While this is technically correct, we should convert compatible units if possible in the
+		// future.
+		{
+			name:       "Quantity",
+			cql:        "2 'm' * 200 'cm'",
+			wantResult: newOrFatal(t, result.Quantity{Value: 400, Unit: model.Unit("m.cm")}),
 		},
 	}
 
@@ -1312,6 +1329,13 @@ func TestTruncatedDivide(t *testing.T) {
 			name:       "Quantity",
 			cql:        "10.1 day div 1.1 day",
 			wantResult: newOrFatal(t, result.Quantity{Value: 9.0, Unit: model.ONEUNIT}),
+		},
+		// While this is technically correct, we should convert compatible units if possible in the
+		// future.
+		{
+			name:       "Quantities with different units",
+			cql:        "100 'm' div 2 'cm'",
+			wantResult: newOrFatal(t, result.Quantity{Value: 50, Unit: model.Unit("m/cm")}),
 		},
 		{
 			name:       "Divide by zero",

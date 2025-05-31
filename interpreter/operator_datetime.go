@@ -23,6 +23,7 @@ import (
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
+	"github.com/google/cql/ucum"
 )
 
 // DATETIME OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#datetime-operators-2
@@ -282,13 +283,22 @@ func beforeOrEqualDateTimeWithPrecision(l, r result.DateTime, p model.DateTimePr
 // CanConvertQuantity(left Quantity, right String) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#canconvertquantity
 // Returns whether or not a Quantity can be converted into the given unit string.
-// This is not a required function to implement, and for the time being we are
-// choosing to not implement unit conversion so this function always returns false.
 func evalCanConvertQuantity(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
 	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
-	return result.New(false)
+	l, err := result.ToQuantity(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	r, err := result.ToString(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if _, err := ucum.ConvertUnit(l.Value, string(l.Unit), r); err != nil {
+		return result.New(false)
+	}
+	return result.New(true)
 }
 
 // difference in _precision_ between(left Date, right Date) Integer

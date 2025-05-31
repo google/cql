@@ -180,6 +180,75 @@ func TestAs_EvalErrors(t *testing.T) {
 	}
 }
 
+func TestConvertQuantity(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "ConvertQuantity cm to m",
+			cql:  "ConvertQuantity(1 'cm', 'm')",
+			wantModel: &model.ConvertQuantity{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.Quantity{Value: 1, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+						model.NewLiteral("m", types.String),
+					},
+					Expression: model.ResultType(types.Quantity),
+				},
+			},
+			wantResult: newOrFatal(t, result.Quantity{Value: 0.01, Unit: "m"}),
+		},
+		{
+			name:       "ConvertQuantity m to cm",
+			cql:        "ConvertQuantity(1 'm', 'cm')",
+			wantResult: newOrFatal(t, result.Quantity{Value: 100, Unit: "cm"}),
+		},
+		{
+			name:       "ConvertQuantity to same unit",
+			cql:        "ConvertQuantity(1 'cm', 'cm')",
+			wantResult: newOrFatal(t, result.Quantity{Value: 1, Unit: "cm"}),
+		},
+		{
+			name:       "ConvertQuantity Invalid Unit",
+			cql:        "ConvertQuantity(1 'cm', 'invalid')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "ConvertQuantity left null",
+			cql:        "ConvertQuantity(null as Quantity, 'm')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "ConvertQuantity right null",
+			cql:        "ConvertQuantity(1 'cm', null as String)",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestToDate(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -597,6 +666,11 @@ func TestToQuantity(t *testing.T) {
 		{
 			name:       "Invalid String Missing only unit to Quantity",
 			cql:        "ToQuantity('\\'cm\\')",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Invalid String unit not valid to Quantity",
+			cql:        "ToQuantity('1.0\\'asdf\\'')",
 			wantResult: newOrFatal(t, nil),
 		},
 	}

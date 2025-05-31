@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
+	"github.com/google/cql/ucum"
 )
 
 var decimalStringRegex = regexp.MustCompile(`(\+|\-)?\d+(\.\d+)?`)
@@ -432,7 +434,9 @@ func evalToQuantityString(m model.IUnaryExpression, opObj result.Value) (result.
 		// trim off quotations
 		unit = found[2][1 : len(found[2])-1]
 	}
-	// TODO(b/319156186): When UCUM values are supported we should validate the unit value as well.
+	if valid, _ := ucum.ValidateUnit(unit, true, true); !valid {
+		return result.New(nil)
+	}
 	return result.New(result.Quantity{Value: f, Unit: model.Unit(unit)})
 }
 
@@ -447,8 +451,39 @@ func (i *interpreter) stringToDate(input string, inputType types.System) (result
 // unqoteSingle returns the unquoted version of the string, if it's quoted with single quotes,
 // otherwise returns the input string.
 func unqoteSingle(str string) string {
-	if string(str[0]) == "'" && string(str[len(str)-1]) == "'" {
+	if len(str) > 0 && strings.HasPrefix(str, "'") && strings.HasSuffix(str, "'") {
 		return str[1 : len(str)-1]
 	}
 	return str
+}
+
+// ConvertQuantity(argument Quantity, to Unit) Quantity
+// https://cql.hl7.org/09-b-cqlreference.html#convertquantity
+func evalConvertQuantity(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	quantity, err := result.ToQuantity(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	toUnit, err := result.ToString(rObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// If the units are the same, no conversion needed.
+	if quantity.Unit == model.Unit(toUnit) {
+		return lObj, nil
+	}
+
+	newVal, err := ucum.ConvertUnit(quantity.Value, string(quantity.Unit), toUnit)
+	if err != nil {
+		return result.New(nil)
+	}
+
+	return result.New(result.Quantity{
+		Value: newVal,
+		Unit:  model.Unit(toUnit),
+	})
 }

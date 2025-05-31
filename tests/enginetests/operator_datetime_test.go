@@ -67,11 +67,10 @@ func TestCanConvertQuantity(t *testing.T) {
 			cql:        "CanConvertQuantity(null, 'y')",
 			wantResult: newOrFatal(t, nil),
 		},
-		// CanConvertQuantity is unsupported, should return false for all cases.
 		{
 			name:       "CanConvertQuantity(1 year, 'mo')",
 			cql:        "CanConvertQuantity(1 year, 'mo')",
-			wantResult: newOrFatal(t, false),
+			wantResult: newOrFatal(t, true),
 		},
 	}
 	for _, tc := range tests {

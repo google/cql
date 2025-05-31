@@ -550,11 +550,11 @@ func TestParserExpressions(t *testing.T) {
 		},
 		{
 			name: "Quantity value property",
-			cql:  "6'gm/cm3'.value",
+			cql:  "6'm/cm3'.value",
 			want: &model.Property{
 				Source: &model.Quantity{
 					Value:      6,
-					Unit:       "gm/cm3",
+					Unit:       "m/cm3",
 					Expression: model.ResultType(types.Quantity),
 				},
 				Path:       "value",
@@ -722,8 +722,8 @@ func TestParserExpressions(t *testing.T) {
 		},
 		{
 			name: "Literal Quantity",
-			cql:  "6'gm/cm3'",
-			want: &model.Quantity{Value: 6, Unit: "gm/cm3", Expression: model.ResultType(types.Quantity)},
+			cql:  "6'm/cm3'",
+			want: &model.Quantity{Value: 6, Unit: "m/cm3", Expression: model.ResultType(types.Quantity)},
 		},
 		{
 			name: "Literal Quantity temporal",

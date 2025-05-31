@@ -57,7 +57,6 @@ Language:
 - No support for related context retrieves
 - No support for uncertainties
 - No support for importing or exporting ELM
-- No support for Quantity unit conversion
 
 ## Getting Started
 

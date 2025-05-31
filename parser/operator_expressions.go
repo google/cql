@@ -680,13 +680,34 @@ func (v *visitor) VisitConversionExpressionTerm(ctx *cql.ConversionExpressionTer
 			if node, ok := ctx.GetChild(i).(antlr.TerminalNode); ok && node.GetText() == "to" && i+1 < ctx.GetChildCount() {
 				// Found the "to" keyword, next child might be the destination unit
 				if destUnitNode := ctx.GetChild(i + 1); destUnitNode != nil {
-					destUnit := v.VisitExpression(destUnitNode)
-					return &model.BinaryExpression{
-						Operands: []model.IExpression{
-							expr,     // Source quantity
-							destUnit, // Destination unit
+					// Get the target unit
+					var targetUnit model.Unit
+					if ctx.Unit() != nil {
+						var err error
+						targetUnit, err = v.VisitUnit(ctx.Unit())
+						if err != nil {
+							return v.badExpression(err.Error(), ctx)
+						}
+					} else {
+						// If no direct Unit context, try to parse it from a string literal.
+						destUnitExpr := v.VisitExpression(destUnitNode)
+						if literalExpr, ok := destUnitExpr.(*model.Literal); ok && literalExpr.GetResultType() == types.String {
+							// Strip quotes from string literal if present
+							unitStr := literalExpr.Value
+							if len(unitStr) > 2 && unitStr[0] == '\'' && unitStr[len(unitStr)-1] == '\'' {
+								unitStr = unitStr[1 : len(unitStr)-1]
+							}
+							targetUnit = model.Unit(unitStr)
+						} else {
+							return v.badExpression("unit conversion target must be a string literal", ctx)
+						}
+					}
+
+					return &model.ConvertQuantity{
+						BinaryExpression: &model.BinaryExpression{
+							Operands:   []model.IExpression{expr, model.NewLiteral(string(targetUnit), types.String)},
+							Expression: model.ResultType(types.Quantity),
 						},
-						Expression: model.ResultType(types.Quantity),
 					}
 				}
 			}
