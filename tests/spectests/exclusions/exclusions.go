@@ -29,7 +29,10 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 	return map[string]XMLTestFileExclusions{
 		"CqlAggregateFunctionsTest.xml": {
 			GroupExcludes: []string{},
-			NamesExcludes: []string{},
+			NamesExcludes: []string{
+				// TODO: b/344002938 - xml test seems wrong, asserts ml when it should be mL.
+				"SumTestQuantity",
+			},
 		},
 		"CqlAggregateTest.xml": {
 			GroupExcludes: []string{},
@@ -45,15 +48,9 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"LowBoundary",
 			},
 			NamesExcludes: []string{
-				// TODO: b/342061715 - Unsupported operator.
-				"Multiply1CMBy2CM",
-				"Power2DToNeg2DEquivalence",
-				// TODO: b/342061606 - Unit conversion is not supported.
-				"Divide1Q1",
-				"Divide10Q5I",
+				// TODO: b/342061606 - Unit conversion.
 				"TruncatedDivide10By5DQuantity",
 				"TruncatedDivide414By206DQuantity",
-				"TruncatedDivide10By0DQuantity",
 				// TODO: b/342061783 - Got unexpected result.
 				"Subtract2And11D",
 				"TruncatedDivide10d1ByNeg3D1Quantity",
@@ -68,42 +65,16 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			NamesExcludes: []string{
 				// TODO: b/342061715 - Unsupported operator.
 				"DateTimeDayCompare",
-				"GreaterCM0CM0",
-				"GreaterCM0CM1",
-				"GreaterCM0NegCM1",
-				"GreaterM1CM1",
-				"GreaterM1CM10",
 				"TimeGreaterTrue",
 				"TimeGreaterFalse",
-				"GreaterOrEqualCM0CM0",
-				"GreaterOrEqualCM0CM1",
-				"GreaterOrEqualCM0NegCM1",
-				"GreaterOrEqualM1CM1",
-				"GreaterOrEqualM1CM10",
 				"TimeGreaterEqTrue",
 				"TimeGreaterEqTrue2",
 				"TimeGreaterEqFalse",
-				"LessCM0CM0",
-				"LessCM0CM1",
-				"LessCM0NegCM1",
-				"LessM1CM1",
-				"LessM1CM10",
 				"TimeLessTrue",
 				"TimeLessFalse",
-				"LessOrEqualCM0CM0",
-				"LessOrEqualCM0CM1",
-				"LessOrEqualCM0NegCM1",
-				"LessOrEqualM1CM1",
-				"LessOrEqualM1CM10",
 				"TimeLessEqTrue",
 				"TimeLessEqTrue2",
 				"TimeLessEqFalse",
-				"EquivFloat1Float1",
-				"EquivFloat1Float2",
-				"EquivFloat1Int1",
-				"EquivFloat1Int2",
-				"EquivEqCM1CM1",
-				"EquivEqCM1M01",
 				"EquivTupleJohnJohn",
 				"EquivTupleJohnJohnWithNulls",
 				"EquivTupleJohnJane",
@@ -111,9 +82,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"EquivTime10A10A",
 				"EquivTime10A10P",
 				// TODO: b/342061783 - Got unexpected result.
-				"QuantityEqCM1M01",
 				"TupleEqJohn1John1WithNullName",
-				"QuantityNotEqCM1M01",
 				"TupleNotEqJohn1John1WithNullName",
 			},
 		},
@@ -326,10 +295,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TimeInFalse",
 				"TimeInNull",
 				"Issue32Interval",
-				"DecimalIntervalEquivalentTrue",
-				"DecimalIntervalEquivalentFalse",
-				"QuantityIntervalEquivalentTrue",
-				"QuantityIntervalEquivalentFalse",
 				"TimeEquivalentTrue",
 				"TimeEquivalentFalse",
 				"TestOnOrAfterDateTrue",
@@ -374,6 +339,7 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"NotEqual123AndABC",
 				"NotEqual123AndString123",
 				// TODO: b/342061783 - Got unexpected result.
+				"quantityList",
 				"ProperContainsTimeNull",
 				"ProperInTimeNull",
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
@@ -422,6 +388,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				// TODO: b/343515613 - fails with unexpected result. Technically not supported.
 				"StringUnicodeTest",
 				// TODO: b/343515819 - fails with unexpected result.
+				"QuantityTest",
+				"QuantityTest2",
 				"StringTestEscapeQuotes",
 			},
 		},

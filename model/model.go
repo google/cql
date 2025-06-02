@@ -105,7 +105,6 @@ const (
 // Unit represents the unit for a QuantityValue.
 type Unit string
 
-// TODO(b/319155752) Add support for UCUM values.
 const (
 	// UNSETUNIT represents unknown unit.
 	UNSETUNIT Unit = ""
@@ -970,6 +969,11 @@ type CanConvertQuantity struct{ *BinaryExpression }
 
 var _ IBinaryExpression = &CanConvertQuantity{}
 
+// ConvertQuantity ELM expression from https://cql.hl7.org/09-b-cqlreference.html#convertquantity.
+type ConvertQuantity struct{ *BinaryExpression }
+
+var _ IBinaryExpression = &ConvertQuantity{}
+
 // Equal ELM Expression from https://cql.hl7.org/04-logicalspecification.html#equal.
 type Equal struct{ *BinaryExpression }
 
@@ -1656,6 +1660,9 @@ func (t *Take) GetName() string { return "Take" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationStdDev) GetName() string { return "PopulationStdDev" }
+
+// GetName returns the name of the system operator
+func (u *ConvertQuantity) GetName() string { return "ConvertQuantity" }
 
 // GetName returns the name of the system operator.
 func (m *PopulationVariance) GetName() string { return "PopulationVariance" }

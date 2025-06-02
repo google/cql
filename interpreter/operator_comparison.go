@@ -18,6 +18,8 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -25,6 +27,7 @@ import (
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
+	"github.com/google/cql/ucum"
 )
 
 // COMPARISON OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#comparison-operators-4
@@ -36,7 +39,49 @@ func (i *interpreter) evalEqual(_ model.IBinaryExpression, lObj, rObj result.Val
 	if result.IsNull(lObj) || result.IsNull(rObj) {
 		return result.New(nil)
 	}
+
+	// Special handling for Quantity types with different units
+	_, lIsQuantity := lObj.GolangValue().(result.Quantity)
+	_, rIsQuantity := rObj.GolangValue().(result.Quantity)
+	if lIsQuantity && rIsQuantity {
+		return evalEqualQuantity(nil, lObj, rObj)
+	}
+
 	return result.New(lObj.Equal(rObj))
+}
+
+// =(left Quantity, right Quantity) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#equal
+// If either unit is invalid, returns null.
+func evalEqualQuantity(_ model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, r, err := applyToValues(lObj, rObj, result.ToQuantity)
+	if err != nil {
+		return result.Value{}, err
+	}
+	// If units are the same, compare values directly
+	if l.Unit == r.Unit {
+		return result.New(l.Value == r.Value)
+	}
+
+	// If units are different, try to convert
+	fromVal := l.Value
+	fromUnit := string(l.Unit)
+	toUnit := string(r.Unit)
+
+	// Try to convert left value to right unit for comparison.
+	// It's not clear if this should return null for all failures here, for incompatible DateTime
+	// unites this is true, but for other units it may not be.
+	convertedVal, err := ucum.ConvertUnit(fromVal, fromUnit, toUnit)
+	if err != nil {
+		return result.New(nil)
+	}
+
+	// Compare with converted value using epsilon comparison for floating point values.
+	const epsilon = 1e-10
+	return result.New(math.Abs(convertedVal-r.Value) < epsilon)
 }
 
 // =(left DateTime, right DateTime) Boolean
@@ -183,6 +228,33 @@ func (i *interpreter) evalEquivalentList(_ model.IBinaryExpression, lObj, rObj r
 	return result.New(true)
 }
 
+// getDecimalPrecision returns the number of significant digits after the decimal point.
+// It trims trailing zeros according to the CQL specification.
+func getDecimalPrecision(value float64) int {
+	// Convert to string to determine precision.
+	str := strconv.FormatFloat(value, 'f', -1, 64)
+
+	// Find the decimal point.
+	decimalPos := strings.IndexRune(str, '.')
+	if decimalPos == -1 {
+		return 0
+	}
+
+	// Extract the decimal part and trim trailing zeros.
+	decimalPart := strings.TrimRight(str[decimalPos+1:], "0")
+	return len(decimalPart)
+}
+
+// roundToDecimalPlaces rounds a float64 to the specified number of decimal places.
+func roundToDecimalPlaces(num float64, places int) float64 {
+	if places <= 0 {
+		return math.Round(num)
+	}
+
+	factor := math.Pow(10, float64(places))
+	return math.Round(num*factor) / factor
+}
+
 // ~(left String, right String) Boolean
 // https://cql.hl7.org/09-b-cqlreference.html#equivalent
 func evalEquivalentString(_ model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
@@ -211,6 +283,41 @@ func equivalentString(input string) string {
 		}
 	}
 	return out.String()
+}
+
+// ~(left Quantity, right Quantity) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#equivalent
+func evalEquivalentQuantity(_ model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) && result.IsNull(rObj) {
+		return result.New(true)
+	}
+	if result.IsNull(lObj) != result.IsNull(rObj) {
+		return result.New(false)
+	}
+
+	l, r, err := applyToValues(lObj, rObj, result.ToQuantity)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// If units are the same, compare values directly.
+	if l.Unit == r.Unit {
+		return result.New(l.Value == r.Value)
+	}
+
+	// Try to convert l to r's unit for comparison.
+	fromVal := l.Value
+	fromUnit := string(l.Unit)
+	toUnit := string(r.Unit)
+
+	// Convert left value to right unit.
+	convertedVal, err := ucum.ConvertUnit(fromVal, fromUnit, toUnit)
+	if err != nil {
+		return result.New(nil)
+	}
+	// Compare with converted value using epsilon comparison.
+	const epsilon = 1e-10
+	return result.New(math.Abs(convertedVal-r.Value) < epsilon)
 }
 
 // ~(left Interval<T>, right Interval<T>) Boolean
@@ -456,4 +563,38 @@ func compare[n cmp.Ordered](m model.IBinaryExpression, l, r n) (result.Value, er
 		return result.New(l >= r)
 	}
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", m)
+}
+
+// op(left Quantity, right Quantity) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#less
+// https://cql.hl7.org/09-b-cqlreference.html#less-or-equal
+// https://cql.hl7.org/09-b-cqlreference.html#greater
+// https://cql.hl7.org/09-b-cqlreference.html#greater-or-equal
+func evalCompareQuantity(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+
+	l, r, err := applyToValues(lObj, rObj, result.ToQuantity)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// If units are the same, compare values directly.
+	// In the future we should calculate the smaller unit instead.
+	if l.Unit == r.Unit {
+		return compare(m, l.Value, r.Value)
+	}
+
+	// If units are different, try to convert.
+	fromVal := l.Value
+	fromUnit := string(l.Unit)
+	toUnit := string(r.Unit)
+
+	// Try to convert left value to right unit for comparison.
+	convertedVal, err := ucum.ConvertUnit(fromVal, fromUnit, toUnit)
+	if err != nil {
+		return result.New(nil)
+	}
+	return compare(m, convertedVal, r.Value)
 }

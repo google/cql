@@ -920,6 +920,14 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalEquivalentSimpleType,
 			},
 			{
+				Operands: []types.IType{types.Decimal, types.Decimal},
+				Result:   evalEquivalentSimpleType,
+			},
+			{
+				Operands: []types.IType{types.Quantity, types.Quantity},
+				Result:   evalEquivalentQuantity,
+			},
+			{
 				Operands: []types.IType{types.String, types.String},
 				Result:   evalEquivalentString,
 			},
@@ -976,6 +984,10 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Operands: []types.IType{types.DateTime, types.DateTime},
 				Result:   evalCompareDateTime,
 			},
+			{
+				Operands: []types.IType{types.Quantity, types.Quantity},
+				Result:   evalCompareQuantity,
+			},
 		}, nil
 	case *model.After, *model.Before, *model.SameOrAfter, *model.SameOrBefore:
 		return []convert.Overload[evalBinarySignature]{
@@ -1020,6 +1032,13 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{types.Quantity, types.String},
 				Result:   evalCanConvertQuantity,
+			},
+		}, nil
+	case *model.ConvertQuantity:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Quantity, types.String},
+				Result:   evalConvertQuantity,
 			},
 		}, nil
 	case *model.DifferenceBetween:

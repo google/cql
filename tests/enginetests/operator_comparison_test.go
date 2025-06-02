@@ -82,6 +82,26 @@ func TestEqual(t *testing.T) {
 			wantResult: newOrFatal(t, false),
 		},
 		{
+			name:       "Quantity equal",
+			cql:        "1 'm' = 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Quantity not equal",
+			cql:        "1 'm' = 2 'm'",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Quantity with different units equal",
+			cql:        "1 'm' = 100 'cm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Quantity with different units not equal",
+			cql:        "1 'm' = 2 'cm'",
+			wantResult: newOrFatal(t, false),
+		},
+		{
 			name:       "DateTimes equal",
 			cql:        "@2024-02-29T01:20:30.101-07:00 = @2024-02-29T01:20:30.101-07:00",
 			wantResult: newOrFatal(t, true),
@@ -346,6 +366,21 @@ func TestEquivalent(t *testing.T) {
 		{
 			name:       "Not equivalent Long",
 			cql:        "1L ~ 2L",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "Equivalent Quantity",
+			cql:        "1 'm' ~ 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Equivalent Quantity with different units",
+			cql:        "1 'm' ~ 100 'cm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Not equivalent Quantity",
+			cql:        "1 'm' ~ 2 'm'",
 			wantResult: newOrFatal(t, false),
 		},
 		{
@@ -941,6 +976,26 @@ func TestGreater(t *testing.T) {
 			wantResult: newOrFatal(t, nil),
 		},
 		{
+			name:       "1.1 'm' > 1 'm'",
+			cql:        "1.1 'm' > 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "1 'm' > 1 'cm'",
+			cql:        "1 'm' > 1 'cm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "1 'm' > 1 'm'",
+			cql:        "1 'm' > 1 'm'",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "1 'cm' > 1 'm'",
+			cql:        "1 'cm' > 1 'm'",
+			wantResult: newOrFatal(t, false),
+		},
+		{
 			name:       "@2020 > @2019",
 			cql:        "@2020 > @2019",
 			wantResult: newOrFatal(t, true),
@@ -1104,6 +1159,21 @@ func TestGreaterOrEqual(t *testing.T) {
 			name:       "2.0 >= null",
 			cql:        "2.0 >= null",
 			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "1 'm' >= 1 'm'",
+			cql:        "1 'm' >= 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "1 'm' >= 1 'cm'",
+			cql:        "1 'm' >= 1 'cm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "1 'cm' >= 1 'm'",
+			cql:        "1 'cm' >= 1 'm'",
+			wantResult: newOrFatal(t, false),
 		},
 		{
 			name:       "@2020 >= @2019",
@@ -1271,6 +1341,21 @@ func TestLess(t *testing.T) {
 			wantResult: newOrFatal(t, nil),
 		},
 		{
+			name:       "1 'm' < 1 'm'",
+			cql:        "1 'm' < 1 'm'",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "1 'm' < 1 'cm'",
+			cql:        "1 'm' < 1 'cm'",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "1 'cm' < 1 'm'",
+			cql:        "1 'cm' < 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
 			name:       "@2020 < @2019",
 			cql:        "@2020 < @2019",
 			wantResult: newOrFatal(t, false),
@@ -1434,6 +1519,21 @@ func TestLessOrEqual(t *testing.T) {
 			name:       "2.0 <= null",
 			cql:        "2.0 <= null",
 			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "1 'm' <= 1 'm'",
+			cql:        "1 'm' <= 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "1 'cm' <= 1 'm'",
+			cql:        "1 'cm' <= 1 'm'",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "1 'm' <= 1 'cm'",
+			cql:        "1 'm' <= 1 'cm'",
+			wantResult: newOrFatal(t, false),
 		},
 		{
 			name:       "@2020 <= @2019",

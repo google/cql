@@ -108,6 +108,19 @@ func TestBuiltInFunctions(t *testing.T) {
 			},
 		},
 		{
+			name: "ConvertQuantity",
+			cql:  dedent.Dedent(`ConvertQuantity(1 'cm', 'm')`),
+			want: &model.ConvertQuantity{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						&model.Quantity{Value: 1, Unit: "cm", Expression: model.ResultType(types.Quantity)},
+						model.NewLiteral("m", types.String),
+					},
+					Expression: model.ResultType(types.Quantity),
+				},
+			},
+		},
+		{
 			name: "ToBoolean",
 			cql:  "ToBoolean(5)",
 			want: &model.ToBoolean{
