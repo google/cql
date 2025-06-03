@@ -1150,7 +1150,6 @@ func TestPositionOf(t *testing.T) {
 			cql:        "PositionOf('B', '')",
 			wantResult: newOrFatal(t, -1),
 		},
-	}
 		{
 			name: "PositionOfFound",
 			cql:  "PositionOf('B','ABC')",
@@ -1364,4 +1363,3 @@ func TestMatches(t *testing.T) {
 		})
 	}
 }
-
