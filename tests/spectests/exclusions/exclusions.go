@@ -370,7 +370,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 		"CqlStringOperatorsTest.xml": {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
-				"Substring",
 			},
 			NamesExcludes: []string{
 				// TODO: b/346880550 - These test appear to have incorrect assertions.
