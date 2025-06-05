@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -32,6 +31,7 @@ func TestServerHandler(t *testing.T) {
 		name       string
 		cql        string
 		data       string
+		libraries  []string
 		bodyJSON   string
 		wantOutput string
 	}{
@@ -86,6 +86,38 @@ func TestServerHandler(t *testing.T) {
 				}
 			]`,
 		},
+		{
+			name: "CQL with multiple libraries",
+			cql: dedent.Dedent(`
+			library Main version '1.0.0'
+			include HelperLib version '1.0.0' called Helper
+			define result: Helper.ConstantValue + 10`),
+			libraries: []string{dedent.Dedent(`
+			library HelperLib version '1.0.0'
+			define public ConstantValue: 42`)},
+			wantOutput: `[
+				{
+					"libName": "HelperLib",
+					"libVersion": "1.0.0",
+					"expressionDefinitions": {
+						"ConstantValue": {
+							"@type": "System.Integer",
+							"value": 42
+						}
+					}
+				},
+				{
+					"libName": "Main",
+					"libVersion": "1.0.0",
+					"expressionDefinitions": {
+						"result": {
+								"@type": "System.Integer",
+								"value": 52
+							}
+					}
+				}
+			]`,
+		},
 	}
 
 	for _, tc := range tests {
@@ -97,7 +129,23 @@ func TestServerHandler(t *testing.T) {
 			server := httptest.NewServer(h)
 			defer server.Close()
 
-			bodyJSON := fmt.Sprintf(`{"cql": %q, "data": %q}`, tc.cql, tc.data)
+			// Build the request body using anonymous struct
+			reqBody := struct {
+				CQL       string   `json:"cql"`
+				Data      string   `json:"data"`
+				Libraries []string `json:"libraries"`
+			}{
+				CQL:       tc.cql,
+				Data:      tc.data,
+				Libraries: tc.libraries,
+			}
+
+			bodyBytes, err := json.Marshal(reqBody)
+			if err != nil {
+				t.Fatalf("json.Marshal(%v) returned an unexpected error: %v", reqBody, err)
+			}
+			bodyJSON := string(bodyBytes)
+
 			resp, err := http.Post(server.URL+"/eval_cql", "application/json", strings.NewReader(bodyJSON))
 			if err != nil {
 				t.Fatalf("http.Post(%v) with body %v returned an unexpected error: %v", server.URL, bodyJSON, err)
@@ -109,7 +157,7 @@ func TestServerHandler(t *testing.T) {
 			}
 			got := string(body)
 			if !cmp.Equal(normalizeJSON(t, got), normalizeJSON(t, tc.wantOutput)) {
-				t.Errorf("POST to /eval_cql to CQL server with body %v returned %v, want %v", tc.bodyJSON, got, tc.wantOutput)
+				t.Errorf("POST to /eval_cql to CQL server with body %s returned %v, want %v", bodyJSON, got, tc.wantOutput)
 			}
 		})
 	}
