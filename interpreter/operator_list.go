@@ -500,6 +500,42 @@ func (i *interpreter) evalIndexerList(m model.IBinaryExpression, lObj, rObj resu
 	return list[idx], nil
 }
 
+// Union(left List<T>, right List<T>) List<T>
+// https://cql.hl7.org/09-b-cqlreference.html#union-1
+func evalUnion(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	staticType := &types.List{ElementType: types.Any}
+	var l []result.Value
+	var r []result.Value
+	var err error
+	if !result.IsNull(lObj) {
+		staticType = lObj.GolangValue().(result.List).StaticType
+		l, err = result.ToSlice(lObj)
+		if err != nil {
+			return result.Value{}, err
+		}
+	}
+	if !result.IsNull(rObj) {
+		staticType = rObj.GolangValue().(result.List).StaticType
+		r, err = result.ToSlice(rObj)
+		if err != nil {
+			return result.Value{}, err
+		}
+	}
+	var unionList []result.Value
+	for _, elemObj := range l {
+		unionList = append(unionList, elemObj)
+	}
+	for _, elemObj := range r {
+		if !valueInList(elemObj, l) {
+			unionList = append(unionList, elemObj)
+		}
+	}
+	return result.New(result.List{
+		Value:      unionList,
+		StaticType: staticType,
+	})
+}
+
 // valueInList returns true if the value is in the list using equality scemantics.
 func valueInList(value result.Value, list []result.Value) bool {
 	for _, elemObj := range list {

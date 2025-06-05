@@ -1238,6 +1238,13 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalTake,
 			},
 		}, nil
+	case *model.Union:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				Result:   evalUnion,
+			},
+		}, nil
 	case *model.EndsWith:
 		return []convert.Overload[evalBinarySignature]{
 			{

@@ -1586,14 +1586,14 @@ func TestBuiltInFunctions(t *testing.T) {
 		},
 		{
 			name: "Union",
-			cql:  "Union({1}, {'hi'})",
+			cql:  "Union({1}, {2})",
 			want: &model.Union{
 				BinaryExpression: &model.BinaryExpression{
 					Operands: []model.IExpression{
 						model.NewList([]string{"1"}, types.Integer),
-						model.NewList([]string{"hi"}, types.String),
+						model.NewList([]string{"2"}, types.Integer),
 					},
-					Expression: model.ResultType(&types.List{ElementType: &types.Choice{ChoiceTypes: []types.IType{types.Integer, types.String}}}),
+					Expression: model.ResultType(&types.List{ElementType: types.Integer}),
 				},
 			},
 		},

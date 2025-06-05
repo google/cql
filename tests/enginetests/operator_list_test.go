@@ -2078,3 +2078,88 @@ func TestIndexerList(t *testing.T) {
 		})
 	}
 }
+
+func TestUnionList(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Union on two equal lists",
+			cql:  "{'a', 'b'} union {'a', 'b'}",
+			wantModel: &model.Union{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(&types.List{ElementType: types.String}),
+					Operands: []model.IExpression{
+						model.NewList([]string{"a", "b"}, types.String),
+						model.NewList([]string{"a", "b"}, types.String),
+					},
+				},
+			},
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, "a"), newOrFatal(t, "b")}, StaticType: &types.List{ElementType: types.String}}),
+		},
+		{
+			name:       "Union where right is a superset of left",
+			cql:        "{1} union {1, 2}",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Union where left is a superset of right",
+			cql:        "{1, 2} union {1}",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Union with both empty lists",
+			cql:        "{} union {}",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Any}}),
+		},
+		{
+			name:       "Union with right null",
+			cql:        "{1, 2} union null",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Union with left null",
+			cql:        "null union {1, 2}",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Union with both null",
+			cql:        "null as List<Integer> union null as List<Integer>",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{}, StaticType: &types.List{ElementType: types.Any}}),
+		},
+		{
+			name:       "Union with symbolic operator",
+			cql:        "{1, 2} | {1}",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+		{
+			name:       "Union functional form",
+			cql:        "Union({1, 2}, {1})",
+			wantResult: newOrFatal(t, result.List{Value: []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))}, StaticType: &types.List{ElementType: types.Integer}}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}

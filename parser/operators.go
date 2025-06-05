@@ -1949,7 +1949,7 @@ func (p *Parser) loadSystemOperators() error {
 		},
 		{
 			name:     "Union",
-			operands: [][]types.IType{{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}}},
+			operands: [][]types.IType{{convert.GenericList, convert.GenericList}},
 			model: func() model.IExpression {
 				return &model.Union{
 					BinaryExpression: &model.BinaryExpression{},

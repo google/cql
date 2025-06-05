@@ -318,7 +318,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"Descendents",
-				"Union",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operator.
