@@ -120,6 +120,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 			return nil, err
 		}
 		t.Expression = model.ResultType(&types.List{ElementType: listElemType})
+	case *model.Width:
+		pointType := resolved.WrappedOperands[0].GetResultType().(*types.Interval)
+		t.Expression = model.ResultType(pointType.PointType)
 	case *model.End:
 		pointType := resolved.WrappedOperands[0].GetResultType().(*types.Interval)
 		t.Expression = model.ResultType(pointType.PointType)
@@ -269,20 +272,15 @@ func (p *Parser) loadSystemOperators() error {
 		{
 			name: "Width",
 			operands: [][]types.IType{
+				{&types.Interval{PointType: types.Any}},
 				{&types.Interval{PointType: types.Integer}},
 				{&types.Interval{PointType: types.Long}},
 				{&types.Interval{PointType: types.Decimal}},
 				{&types.Interval{PointType: types.Quantity}},
-				{&types.Interval{PointType: types.String}},
-				{&types.Interval{PointType: types.Date}},
-				{&types.Interval{PointType: types.DateTime}},
-				{&types.Interval{PointType: types.Time}},
 			},
 			model: func() model.IExpression {
 				return &model.Width{
-					UnaryExpression: &model.UnaryExpression{
-						Expression: model.ResultType(types.Integer),
-					},
+					UnaryExpression: &model.UnaryExpression{},
 				}
 			},
 		},

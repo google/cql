@@ -1848,6 +1848,88 @@ func TestIntervalContains(t *testing.T) {
 	}
 }
 
+func TestIntervalWidth(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "width of inclusive interval",
+			cql:  "width of Interval[1, 4]",
+			wantModel: &model.Width{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("1", types.Integer),
+						High:          model.NewLiteral("4", types.Integer),
+						LowInclusive:  true,
+						HighInclusive: true,
+						Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "width of interval non-inclusive bounds",
+			cql:        "width of Interval(1, 4)",
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "width of interval with null bounds",
+			cql:        "width of Interval(null, 4)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "width of interval with null bounds",
+			cql:        "width of Interval(1, null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "width of interval with null bounds",
+			cql:        "width of Interval(null as Integer, null as Integer)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "width of interval with decimal",
+			cql:        "Round(width of Interval[1.0, 4.0], 1)",
+			wantResult: newOrFatal(t, 3.0),
+		},
+		{
+			name:       "width of interval with long",
+			cql:        "width of Interval[1L, 4L]",
+			wantResult: newOrFatal(t, int64(3)),
+		},
+		{
+			name:       "width of interval with quantity",
+			cql:        "width of Interval[1'cm', 4'cm']",
+			wantResult: newOrFatal(t, result.Quantity{Value: 3, Unit: "cm"}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestComparison_Error(t *testing.T) {
 	tests := []struct {
 		name                string

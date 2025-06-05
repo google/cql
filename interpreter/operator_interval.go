@@ -21,6 +21,7 @@ import (
 	"github.com/google/cql/model"
 	"github.com/google/cql/result"
 	"github.com/google/cql/types"
+	"github.com/google/cql/ucum"
 )
 
 // INTERVAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#interval-operators-3
@@ -578,4 +579,65 @@ func inInterval(lowCompare, highCompare comparison, lowInclusive, highInclusive 
 	// * Cases where Dates/DateTimes have insufficient precision for the comparison:
 	//   Date(2020) in Interval[Date(2020, 3), Date(2020, 4)]
 	return result.New(nil)
+}
+
+// width of(argument Interval<T>) T
+// https://cql.hl7.org/09-b-cqlreference.html#width
+func evalWidthInterval(m model.IUnaryExpression, intervalObj result.Value) (result.Value, error) {
+	if result.IsNull(intervalObj) {
+		return result.New(nil)
+	}
+	interval, err := result.ToInterval(intervalObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if interval.StaticType.PointType == types.Date || interval.StaticType.PointType == types.DateTime || interval.StaticType.PointType == types.Time {
+		return result.Value{}, fmt.Errorf("width operator does not support Date or Time types")
+	}
+	start, err := start(intervalObj, nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(start) {
+		return result.New(nil)
+	}
+	end, err := end(intervalObj, nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if result.IsNull(end) {
+		return result.New(nil)
+	}
+	switch start.RuntimeType() {
+	case types.Decimal:
+		startVal, endVal, err := applyToValues(start, end, result.ToFloat64)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(endVal - startVal)
+	case types.Integer:
+		startVal, endVal, err := applyToValues(start, end, result.ToInt32)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(endVal - startVal)
+	case types.Long:
+		startVal, endVal, err := applyToValues(start, end, result.ToInt64)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(endVal - startVal)
+	case types.Quantity:
+		startVal, endVal, err := applyToValues(start, end, result.ToQuantity)
+		if err != nil {
+			return result.Value{}, err
+		}
+		// for now naively convery left unit to right unit.
+		convertedStartVal, err := ucum.ConvertUnit(startVal.Value, string(startVal.Unit), string(endVal.Unit))
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(result.Quantity{Value: endVal.Value - convertedStartVal, Unit: endVal.Unit})
+	}
+	return result.Value{}, fmt.Errorf("internal error - unsupported point type in evalWidthInterval: %v", start.RuntimeType())
 }

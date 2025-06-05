@@ -1086,29 +1086,17 @@ func TestOperatorExpressions(t *testing.T) {
 		{
 			name: "Width Expression Term",
 			cql:  "width of Interval[1, 10]",
-			want: &model.UnaryExpression{
-				Operand: &model.Interval{
-					Low:           model.NewLiteral("1", types.Integer),
-					High:          model.NewLiteral("10", types.Integer),
-					Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
-					LowInclusive:  true,
-					HighInclusive: true,
+			want: &model.Width{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("1", types.Integer),
+						High:          model.NewLiteral("10", types.Integer),
+						Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+						LowInclusive:  true,
+						HighInclusive: true,
+					},
+					Expression: model.ResultType(types.Integer),
 				},
-				Expression: model.ResultType(types.Integer),
-			},
-		},
-		{
-			name: "Width Expression Term with Dates",
-			cql:  "width of Interval[@2010-01-01, @2020-01-01]",
-			want: &model.UnaryExpression{
-				Operand: &model.Interval{
-					Low:           model.NewLiteral("@2010-01-01", types.Date),
-					High:          model.NewLiteral("@2020-01-01", types.Date),
-					Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
-					LowInclusive:  true,
-					HighInclusive: true,
-				},
-				Expression: model.ResultType(types.Quantity),
 			},
 		},
 		{

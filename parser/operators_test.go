@@ -1324,6 +1324,22 @@ func TestBuiltInFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Width",
+			cql:  "Width(Interval[1, 4])",
+			want: &model.Width{
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("1", types.Integer),
+						High:          model.NewLiteral("4", types.Integer),
+						Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+						LowInclusive:  true,
+						HighInclusive: true,
+					},
+					Expression: model.ResultType(types.Integer),
+				},
+			},
+		},
 		// LIST OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#list-operators-2
 		{
 			name: "Except",

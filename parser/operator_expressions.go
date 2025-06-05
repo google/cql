@@ -558,21 +558,11 @@ func (v *visitor) VisitTimeBoundaryExpressionTerm(ctx *cql.TimeBoundaryExpressio
 }
 
 func (v *visitor) VisitWidthExpressionTerm(ctx *cql.WidthExpressionTermContext) model.IExpression {
-	// Get the interval operand
-	intervalExpr := v.VisitExpression(ctx.GetChild(2))
-
-	// Return a UnaryExpression for Width as expected by the tests
-	resultType := types.Integer
-	if intervalType, ok := intervalExpr.GetResultType().(*types.Interval); ok {
-		if intervalType.PointType == types.Date || intervalType.PointType == types.DateTime {
-			resultType = types.Quantity
-		}
+	m, err := v.parseFunction("", "Width", []antlr.Tree{ctx.GetChild(2)}, false)
+	if err != nil {
+		return v.badExpression(err.Error(), ctx)
 	}
-
-	return &model.UnaryExpression{
-		Operand:    intervalExpr,
-		Expression: model.ResultType(resultType),
-	}
+	return m
 }
 
 func (v *visitor) VisitSetAggregateExpressionTerm(ctx *cql.SetAggregateExpressionTermContext) model.IExpression {

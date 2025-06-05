@@ -790,6 +790,29 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalLower,
 			},
 		}, nil
+	case *model.Width:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Any}},
+				Result:   evalWidthInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Decimal}},
+				Result:   evalWidthInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Integer}},
+				Result:   evalWidthInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Long}},
+				Result:   evalWidthInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Quantity}},
+				Result:   evalWidthInterval,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}

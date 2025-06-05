@@ -238,7 +238,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"ProperlyIncludedIn",
 				"Starts",
 				"Union",
-				"Width",
 			},
 			NamesExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
