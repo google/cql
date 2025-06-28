@@ -15,8 +15,14 @@
 package ucum
 
 import (
+	"math"
 	"testing"
 )
+
+// almostEqual checks if two float64 values are approximately equal within a small tolerance
+func almostEqual(a, b float64) bool {
+	return math.Abs(a-b) < 1e-10
+}
 
 func TestConvertUnit(t *testing.T) {
 	tests := []struct {
@@ -32,6 +38,38 @@ func TestConvertUnit(t *testing.T) {
 		{"g to kg", 1000.0, "g", "kg", 1.0},
 		{"same units", 1.0, "m", "m", 1.0},
 		{"empty units", 1.0, "", "", 1.0}, // "" is treated as "1"
+		
+		// Clinical mass units
+		{"mg to g", 1000.0, "mg", "g", 1.0},
+		{"g to mg", 1.0, "g", "mg", 1000.0},
+		{"mg to kg", 1000000.0, "mg", "kg", 1.0},
+		{"kg to mg", 1.0, "kg", "mg", 1000000.0},
+		
+		// Clinical volume units
+		{"mL to L", 1000.0, "mL", "L", 1.0},
+		{"L to mL", 1.0, "L", "mL", 1000.0},
+		{"mL to dL", 100.0, "mL", "dL", 1.0},
+		{"dL to mL", 1.0, "dL", "mL", 100.0},
+		
+		// Clinical enzyme units
+		{"U to mU", 1.0, "U", "mU", 1000.0},
+		{"mU to U", 1000.0, "mU", "U", 1.0},
+		{"U to uU", 1.0, "U", "uU", 1000000.0},
+		{"uU to U", 1000000.0, "uU", "U", 1.0},
+		{"U to nU", 1.0, "U", "nU", 1000000000.0},
+		{"nU to U", 1000000000.0, "nU", "U", 1.0},
+		{"U to kU", 1000.0, "U", "kU", 1.0},
+		{"kU to U", 1.0, "kU", "U", 1000.0},
+		
+		// Clinical osmolality units
+		{"osm to mosm", 1.0, "osm", "mosm", 1000.0},
+		{"mosm to osm", 1000.0, "mosm", "osm", 1.0},
+		
+		// Clinical equivalents
+		{"eq to meq", 1.0, "eq", "meq", 1000.0},
+		{"meq to eq", 1000.0, "meq", "eq", 1.0},
+		{"eq to ueq", 1.0, "eq", "ueq", 1000000.0},
+		{"ueq to eq", 1000000.0, "ueq", "eq", 1.0},
 	}
 
 	for _, tt := range tests {
@@ -40,7 +78,7 @@ func TestConvertUnit(t *testing.T) {
 			if err != nil {
 				t.Errorf("ConvertUnit(%v, %q, %q) failed with error = %v", tt.fromVal, tt.fromUnit, tt.toUnit, err)
 			}
-			if val != tt.wantVal {
+			if !almostEqual(val, tt.wantVal) {
 				t.Errorf("ConvertUnit(%v, %q, %q) val = %v, want %v", tt.fromVal, tt.fromUnit, tt.toUnit, val, tt.wantVal)
 			}
 		})
@@ -147,6 +185,32 @@ func TestValidateUnit(t *testing.T) {
 		{"cql date unit minute when allowed", "minute", false, true},
 		{"cql date unit second when allowed", "second", false, true},
 		{"cql date unit millisecond when allowed", "millisecond", false, true},
+		
+		// Clinical units
+		{"clinical mass unit mg", "mg", false, false},
+		{"clinical volume unit mL", "mL", false, false},
+		{"clinical enzyme unit U", "U", false, false},
+		{"clinical enzyme unit mU", "mU", false, false},
+		{"clinical enzyme unit uU", "uU", false, false},
+		{"clinical enzyme unit nU", "nU", false, false},
+		{"clinical enzyme unit kU", "kU", false, false},
+		{"clinical osmolality unit osm", "osm", false, false},
+		{"clinical osmolality unit mosm", "mosm", false, false},
+		{"clinical equivalent unit eq", "eq", false, false},
+		{"clinical equivalent unit meq", "meq", false, false},
+		{"clinical equivalent unit ueq", "ueq", false, false},
+		
+		// Common clinical compound units
+		{"compound unit mg/dL", "mg/dL", false, false},
+		{"compound unit mg/mL", "mg/mL", false, false},
+		{"compound unit U/L", "U/L", false, false},
+		{"compound unit mU/mL", "mU/mL", false, false},
+		{"compound unit mg/L", "mg/L", false, false},
+		{"compound unit mL/h", "mL/h", false, false},
+		{"compound unit mg/h", "mg/h", false, false},
+		{"compound unit U/mL", "U/mL", false, false},
+		{"compound unit mosm/L", "mosm/L", false, false},
+		{"compound unit meq/L", "meq/L", false, false},
 	}
 
 	for _, tt := range tests {

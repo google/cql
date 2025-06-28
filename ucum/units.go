@@ -88,6 +88,11 @@ var commonUnitFactors = map[string]map[string]float64{
 		"oz":      0.03527396,
 		"[oz_av]": 0.03527396,
 	},
+	// Mass units (base: milligram) - common clinical base unit
+	"mg": {
+		"g":  0.001,
+		"kg": 0.000001,
+	},
 	// Volume units (base: liter)
 	"L": {
 		"mL":       1000,
@@ -100,6 +105,12 @@ var commonUnitFactors = map[string]map[string]float64{
 		"cup":      4.22675,
 		"[foz_us]": 33.814,
 	},
+	// Volume units (base: milliliter) - common clinical base unit
+	"mL": {
+		"L":  0.001,
+		"dL": 0.01,
+		"cL": 0.1,
+	},
 	// Time units (base: second)
 	"s": {
 		"min":  1 / 60.0,
@@ -109,6 +120,23 @@ var commonUnitFactors = map[string]map[string]float64{
 		"mo_g": 1 / 2592000.0, // Approximate
 		"a_g":  1 / 31536000.0,
 		"ms":   1000,
+	},
+	// Clinical/Enzyme units (base: enzyme unit U)
+	// 1 U = 1 micromole substrate catalyzed per minute (1 umol/min)
+	"U": {
+		"mU":  1000,      // milli enzyme units (1 mU = 1 nmol/min)
+		"uU":  1000000,   // micro enzyme units (1 uU = 1 pmol/min)
+		"nU":  1000000000, // nano enzyme units (1 nU = 1 fmol/min)
+		"kU":  0.001,     // kilo enzyme units
+	},
+	// Clinical osmolality units (base: osmole)
+	"osm": {
+		"mosm": 1000, // milliosmole
+	},
+	// Clinical equivalents (base: equivalent)
+	"eq": {
+		"meq": 1000,    // milliequivalent
+		"ueq": 1000000, // microequivalent
 	},
 }
 
