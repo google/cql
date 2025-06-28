@@ -16,6 +16,7 @@
 package terminology
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,6 +35,8 @@ var (
 	ErrIncorrectResourceType = errors.New("incorrect resource type")
 	// ErrNotInitialized indicates the terminology provider was not initialized.
 	ErrNotInitialized = errors.New("terminology provider not initialized, so no terminology operations can be performed")
+	// ErrCircularReference indicates a circular reference was detected in ValueSet compose.
+	ErrCircularReference = errors.New("circular reference detected in ValueSet compose")
 )
 
 const (
@@ -58,6 +61,7 @@ func NewLocalFHIRProvider(dir string) (*LocalFHIRProvider, error) {
 		valueSets:         make(map[resourceKey]fhirValueSet),
 		latestCodeSystems: make(map[string]fhirCodeSystem),
 		latestValuesets:   make(map[string]fhirValueSet),
+		expandedCache:     make(map[resourceKey][]*Code),
 	}
 
 	for _, file := range files {
@@ -96,6 +100,7 @@ func NewInMemoryFHIRProvider(jsons []string) (*LocalFHIRProvider, error) {
 		valueSets:         make(map[resourceKey]fhirValueSet),
 		latestCodeSystems: make(map[string]fhirCodeSystem),
 		latestValuesets:   make(map[string]fhirValueSet),
+		expandedCache:     make(map[resourceKey][]*Code),
 	}
 
 	for _, json := range jsons {
@@ -145,6 +150,7 @@ type LocalFHIRProvider struct {
 	valueSets         map[resourceKey]fhirValueSet
 	latestCodeSystems map[string]fhirCodeSystem
 	latestValuesets   map[string]fhirValueSet
+	expandedCache     map[resourceKey][]*Code
 }
 
 type resourceKey struct {
@@ -153,33 +159,76 @@ type resourceKey struct {
 }
 
 func (l *LocalFHIRProvider) findCodeSystem(codeSystemURL, codeSystemVersion string) (fhirCodeSystem, error) {
-	var vs fhirCodeSystem
+	var cs fhirCodeSystem
 	var ok bool
+	
+	// Normalize URL to handle http vs https protocol differences
+	normalizedURL := normalizeURL(codeSystemURL)
+	
 	if codeSystemVersion == "" {
-		vs, ok = l.latestCodeSystems[codeSystemURL]
+		// Try to find the CodeSystem with the normalized URL
+		for url, codeSystem := range l.latestCodeSystems {
+			if normalizeURL(url) == normalizedURL {
+				cs = codeSystem
+				ok = true
+				break
+			}
+		}
 	} else {
-		vs, ok = l.codeSystems[resourceKey{codeSystemURL, codeSystemVersion}]
+		// Try to find the CodeSystem with the normalized URL and version
+		for key, codeSystem := range l.codeSystems {
+			if normalizeURL(key.URL) == normalizedURL && key.Version == codeSystemVersion {
+				cs = codeSystem
+				ok = true
+				break
+			}
+		}
 	}
 
 	if !ok {
 		return fhirCodeSystem{}, fmt.Errorf("could not find CodeSystem{%s, %s} %w", codeSystemURL, codeSystemVersion, ErrResourceNotLoaded)
 	}
-	return vs, nil
+	return cs, nil
 }
 
 func (l *LocalFHIRProvider) findValueSet(valueSetURL, valueSetVersion string) (fhirValueSet, error) {
 	var vs fhirValueSet
 	var ok bool
+	
+	// Normalize URL to handle http vs https protocol differences
+	normalizedURL := normalizeURL(valueSetURL)
+	
 	if valueSetVersion == "" {
-		vs, ok = l.latestValuesets[valueSetURL]
+		// Try to find the ValueSet with the normalized URL
+		for url, valueSet := range l.latestValuesets {
+			if normalizeURL(url) == normalizedURL {
+				vs = valueSet
+				ok = true
+				break
+			}
+		}
 	} else {
-		vs, ok = l.valueSets[resourceKey{valueSetURL, valueSetVersion}]
+		// Try to find the ValueSet with the normalized URL and version
+		for key, valueSet := range l.valueSets {
+			if normalizeURL(key.URL) == normalizedURL && key.Version == valueSetVersion {
+				vs = valueSet
+				ok = true
+				break
+			}
+		}
 	}
 
 	if !ok {
 		return fhirValueSet{}, fmt.Errorf("could not find ValueSet{%s, %s} %w", valueSetURL, valueSetVersion, ErrResourceNotLoaded)
 	}
 	return vs, nil
+}
+
+// normalizeURL converts a URL to a protocol-insensitive form by removing http:// or https:// prefix
+func normalizeURL(url string) string {
+	url = strings.TrimPrefix(url, "http://")
+	url = strings.TrimPrefix(url, "https://")
+	return url
 }
 
 // AnyInValueSet returns true if any code is contained within the specified Valueset, otherwise
@@ -192,7 +241,8 @@ func (l *LocalFHIRProvider) AnyInValueSet(codes []Code, valuesetURL, valuesetVer
 		return false, ErrNotInitialized
 	}
 
-	r, err := l.findValueSet(valuesetURL, valuesetVersion)
+	// Expand the ValueSet to get all codes
+	expandedCodes, err := l.ExpandValueSet(valuesetURL, valuesetVersion)
 	if err != nil {
 		// The desired ValueSet didn't exist but found a CodeSystem with this key.
 		if _, err := l.findCodeSystem(valuesetURL, valuesetVersion); err == nil {
@@ -200,14 +250,20 @@ func (l *LocalFHIRProvider) AnyInValueSet(codes []Code, valuesetURL, valuesetVer
 		}
 		return false, err
 	}
-
+	
+	// Create a map of the expanded codes for efficient lookup
+	expandedCodeMap := make(map[codeKey]bool)
+	for _, code := range expandedCodes {
+		expandedCodeMap[code.key()] = true
+	}
+	
+	// Check if any of the input codes are in the expanded ValueSet
 	for _, c := range codes {
-		foundCode := r.code(c.key())
-		if foundCode != nil {
+		if expandedCodeMap[c.key()] {
 			return true, nil
 		}
 	}
-
+	
 	return false, nil
 }
 
@@ -242,18 +298,40 @@ func (l *LocalFHIRProvider) AnyInCodeSystem(codes []Code, codeSystemURL, codeSys
 
 // ExpandValueSet returns the expanded codes for the provided ValueSet id and version. If the
 // valueSetVersion is an empty string, this will use the 'latest' value set version based on a
-// simple version string comparison.
+// simple version string comparison. This method supports compose valuesets with recursive expansion.
 func (l *LocalFHIRProvider) ExpandValueSet(valueSetURL, valueSetVersion string) ([]*Code, error) {
 	if l == nil {
 		return nil, ErrNotInitialized
 	}
 
-	r, err := l.findValueSet(valueSetURL, valueSetVersion)
+	key := resourceKey{valueSetURL, valueSetVersion}
+	
+	// Check cache first
+	if cached, exists := l.expandedCache[key]; exists {
+		return cached, nil
+	}
+
+	vs, err := l.findValueSet(valueSetURL, valueSetVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.codes(), nil
+	// Try to use existing expansion first
+	if len(vs.Expansion.Codes) > 0 {
+		l.expandedCache[key] = vs.Expansion.Codes
+		return vs.Expansion.Codes, nil
+	}
+
+	// Expand from compose if no expansion exists
+	visited := make(map[string]bool)
+	expandedCodes, err := l.expandValueSetInternal(context.Background(), vs, visited)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	l.expandedCache[key] = expandedCodes
+	return expandedCodes, nil
 }
 
 // A base fhirResource that is used to store top level data from parsed json resources. This struct
@@ -263,9 +341,11 @@ type fhirResource struct {
 	ResourceType string `json:"resourceType"`
 	URL          string `json:"url"`
 	Version      string `json:"version"`
-	// Only one of the following two fields should be populated
+	// Only one of the following fields should be populated for CodeSystems
 	Concept   []*Code    `json:"concept"`
+	// The following fields are for ValueSets
 	Expansion *expansion `json:"expansion"`
+	Compose   *compose   `json:"compose"`
 }
 
 func (f *fhirResource) key() resourceKey {
@@ -286,6 +366,7 @@ type fhirValueSet struct {
 	Version      string `json:"version"`
 	CodeMap      map[codeKey]*Code
 	Expansion    expansion `json:"expansion"`
+	Compose      compose   `json:"compose"`
 }
 
 func (f *fhirValueSet) code(key codeKey) *Code {
@@ -297,11 +378,40 @@ func (f *fhirValueSet) key() resourceKey {
 }
 
 func (f *fhirValueSet) codes() []*Code {
-	return f.Expansion.Codes
+	// If we have expansion codes, return them
+	if len(f.Expansion.Codes) > 0 {
+		return f.Expansion.Codes
+	}
+	
+	// Otherwise, return codes from the CodeMap (for compose ValueSets)
+	// Always return a non-nil slice, even if empty
+	codes := make([]*Code, 0, len(f.CodeMap))
+	for _, code := range f.CodeMap {
+		codes = append(codes, code)
+	}
+	
+	// Ensure we never return nil, always return an empty slice if no codes
+	if codes == nil {
+		codes = []*Code{}
+	}
+	return codes
 }
 
 type expansion struct {
 	Codes []*Code `json:"contains"`
+}
+
+// compose represents the compose section of a FHIR ValueSet
+type compose struct {
+	Include []include `json:"include"`
+}
+
+// include represents an include section within compose
+type include struct {
+	ValueSet []string `json:"valueSet"`
+	Concept  []*Code  `json:"concept"`
+	System   string   `json:"system"`
+	// TODO: Add support for filters if needed
 }
 
 type fhirCodeSystem struct {
@@ -340,10 +450,26 @@ func buildFHIRValueSet(fr fhirResource) fhirValueSet {
 	if fr.Expansion != nil {
 		vs.Expansion = *fr.Expansion
 	}
+	if fr.Compose != nil {
+		vs.Compose = *fr.Compose
+	}
 
+	// Add codes from expansion (pre-expanded ValueSets)
 	for _, c := range vs.Expansion.Codes {
 		vs.CodeMap[c.key()] = c
 	}
+
+	// Add codes from compose (compose ValueSets)
+	for _, include := range vs.Compose.Include {
+		for _, concept := range include.Concept {
+			// Set the system for the concept if it's not already set
+			if concept.System == "" && include.System != "" {
+				concept.System = include.System
+			}
+			vs.CodeMap[concept.key()] = concept
+		}
+	}
+
 	return vs
 }
 
@@ -360,4 +486,87 @@ func buildFHIRCodeSystem(fr fhirResource) fhirCodeSystem {
 		cs.CodeMap[c.key()] = c
 	}
 	return cs
+}
+
+// expandValueSetInternal recursively expands a valueset from its compose definition
+func (l *LocalFHIRProvider) expandValueSetInternal(ctx context.Context, vs fhirValueSet, visited map[string]bool) ([]*Code, error) {
+	allCodes := make([]*Code, 0)
+	
+	// Check for circular reference
+	vsKey := normalizeURL(vs.URL)
+	if vs.Version != "" {
+		vsKey = vs.URL + "|" + vs.Version
+	}
+	
+	if visited[vsKey] {
+		return nil, fmt.Errorf("circular reference detected for ValueSet %s: %w", vsKey, ErrCircularReference)
+	}
+	
+	// Mark this ValueSet as being processed
+	visited[vsKey] = true
+	defer func() {
+		// Remove from visited when done processing
+		delete(visited, vsKey)
+	}()
+	
+	// Parse compose from the raw JSON if not already parsed
+	compose, err := l.parseCompose(vs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, include := range compose.Include {
+		// Check for context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		// Handle include.valueSet (recursive expansion)
+		for _, vsRef := range include.ValueSet {
+			refCodes, err := l.expandValueSetWithVisited(vsRef, "", visited)
+			if err != nil {
+				return nil, fmt.Errorf("failed to expand referenced valueset %s: %w", vsRef, err)
+			}
+			allCodes = append(allCodes, refCodes...)
+		}
+
+		// Handle include.concept (direct codes)
+		for _, concept := range include.Concept {
+			if concept != nil {
+				// Set the system if not already set
+				if concept.System == "" && include.System != "" {
+					concept.System = include.System
+				}
+				allCodes = append(allCodes, concept)
+			}
+		}
+
+		// TODO: Handle include.system with filters if needed
+		// This would require expanding all codes from a code system
+	}
+
+	return allCodes, nil
+}
+
+// expandValueSetWithVisited expands a ValueSet while tracking visited ValueSets to prevent circular references
+func (l *LocalFHIRProvider) expandValueSetWithVisited(valueSetURL, valueSetVersion string, visited map[string]bool) ([]*Code, error) {
+	vs, err := l.findValueSet(valueSetURL, valueSetVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to use existing expansion first
+	if len(vs.Expansion.Codes) > 0 {
+		return vs.Expansion.Codes, nil
+	}
+
+	// Expand from compose if no expansion exists
+	return l.expandValueSetInternal(context.Background(), vs, visited)
+}
+
+// parseCompose extracts compose information from a valueset
+func (l *LocalFHIRProvider) parseCompose(vs fhirValueSet) (compose, error) {
+	// For now, return the compose data that should be available in the valueset
+	// This will be properly implemented when we enhance the base parsing
+	return vs.Compose, nil
 }

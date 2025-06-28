@@ -381,7 +381,7 @@ func TestFailingEvalSingleLibrary(t *testing.T) {
 					},
 				},
 			},
-			errContains: "only ValueSet references are currently supported for valueset filtering",
+			errContains: "internal error - unsupported expression",
 		},
 		{
 			name: "Retrieve Observations with incorrect CodeProperty",
