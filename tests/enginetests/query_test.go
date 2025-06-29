@@ -617,6 +617,93 @@ func TestQuery(t *testing.T) {
 			cql:        "define TESTRESULT: (null as Code) l return l.code",
 			wantResult: newOrFatal(t, nil),
 		},
+		{
+			// Test case for the "could not resolve the local reference to M" bug fix
+			name: "Alias reference in where clause",
+			cql: dedent.Dedent(`
+			using FHIR version '4.0.1'
+			include FHIRHelpers version '4.0.1' called FHIRHelpers
+
+			define TESTRESULT: [Encounter] M where M.id = '1'`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Named{Value: RetrieveFHIRResource(t, "Encounter", "1"), RuntimeType: &types.Named{TypeName: "FHIR.Encounter"}}),
+				},
+				StaticType: &types.List{ElementType: &types.Named{TypeName: "FHIR.Encounter"}},
+			}),
+		},
+		{
+			// Test case for function alias resolution - reproduces the CDS_Connect_Commons issue
+			name: "Function with query alias",
+			cql: dedent.Dedent(`
+			define function TestFunction(IntList List<Integer>):
+			  IntList M
+			    where M > 5
+
+			define TESTRESULT: TestFunction({1, 6, 3, 8})`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 6),
+					newOrFatal(t, 8),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case for function with let clause and alias - closer to CDS_Connect_Commons pattern
+			name: "Function with let clause and query alias",
+			cql: dedent.Dedent(`
+			define function TestFunctionWithLet(IntList List<Integer>):
+			  IntList M
+			    let Threshold: 5
+			    where M > Threshold
+
+			define TESTRESULT: TestFunctionWithLet({1, 6, 3, 8})`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 6),
+					newOrFatal(t, 8),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case for multiple function calls with same alias - reproduces the real CDS_Connect_Commons issue
+			name: "Multiple functions with same alias name",
+			cql: dedent.Dedent(`
+			define function ActiveMedicationStatement(MedList List<Integer>):
+			  MedList M
+			    where M > 5
+
+			define function ActiveMedicationRequest(MedList List<Integer>):
+			  MedList M
+			    where M > 3
+
+			define TESTRESULT: 
+			  exists(ActiveMedicationStatement({1, 6, 3, 8}))
+			  or exists(ActiveMedicationRequest({1, 2, 4, 7}))`),
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			// Test case that reproduces the exact real-world error with FHIR retrievals and cross-library calls
+			name: "Cross library function calls with FHIR retrievals",
+			cql: dedent.Dedent(`
+			library TestCommons version '1.0.0'
+			using FHIR version '4.0.1'
+
+			define function ActiveMedicationStatement(MedList List<MedicationStatement>):
+			  MedList M
+			    where M.status.value = 'active'
+
+			define function ActiveMedicationRequest(MedList List<MedicationRequest>):
+			  MedList M
+			    where M.status.value = 'active'
+			
+			define TESTRESULT:
+			  exists(ActiveMedicationStatement([MedicationStatement]))
+			  or exists(ActiveMedicationRequest([MedicationRequest]))`),
+			wantResult: newOrFatal(t, false), // Both retrievals return empty lists, so exists() returns false
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

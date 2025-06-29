@@ -63,11 +63,12 @@ func (i *interpreter) evalQuery(q *model.Query) (result.Value, error) {
 		return result.Value{}, err
 	}
 
-	sourceObj, err := i.letClause(q.Let)
+	// Process let clauses with access to query aliases
+	letSourceObjs, err := i.letClauseWithAliases(iters, q.Let)
 	if err != nil {
 		return result.Value{}, err
 	}
-	sourceObjs = append(sourceObjs, sourceObj...)
+	sourceObjs = append(sourceObjs, letSourceObjs...)
 
 	for _, relationship := range q.Relationship {
 		var err error
@@ -178,6 +179,7 @@ func (i *interpreter) sourceClause(s []*model.AliasedSource) ([]iteration, []res
 		}
 		aliases = append(aliases, a)
 	}
+
 	return cartesianProduct(aliases), sourceObjs, nil
 }
 
@@ -218,6 +220,58 @@ func (i *interpreter) letClause(m []*model.LetClause) ([]result.Value, error) {
 
 		if err := i.refs.Alias(letClause.Identifier, obj); err != nil {
 			return nil, err
+		}
+	}
+
+	return sourceObjs, nil
+}
+
+// letClauseWithAliases processes let clauses with access to query aliases but without
+// modifying the iterations. This ensures let clauses can reference query aliases like "M"
+// while maintaining the original query behavior.
+func (i *interpreter) letClauseWithAliases(iters []iteration, letClauses []*model.LetClause) ([]result.Value, error) {
+	if len(letClauses) == 0 {
+		return nil, nil
+	}
+
+	sourceObjs := make([]result.Value, 0, len(letClauses))
+
+	// Use the first iteration to provide context for let clause evaluation
+	if len(iters) > 0 {
+		firstIter := iters[0]
+		i.refs.EnterScope()
+		
+		// Register aliases from first iteration to provide context
+		for _, alias := range firstIter {
+			if err := i.refs.Alias(alias.alias, alias.obj); err != nil {
+				i.refs.ExitScope()
+				return nil, err
+			}
+		}
+
+		// Evaluate let clauses with access to query aliases
+		for _, letClause := range letClauses {
+			obj, err := i.evalExpression(letClause.Expression)
+			if err != nil {
+				i.refs.ExitScope()
+				return nil, err
+			}
+			sourceObjs = append(sourceObjs, obj)
+			
+			// Register the let variable for subsequent let clauses
+			if err := i.refs.Alias(letClause.Identifier, obj); err != nil {
+				i.refs.ExitScope()
+				return nil, err
+			}
+		}
+		i.refs.ExitScope()
+
+		// Now register the let variables in the main query scope so they're available
+		// to where clauses and other query parts
+		for j, letClause := range letClauses {
+			if err := i.refs.Alias(letClause.Identifier, sourceObjs[j]); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -375,10 +429,12 @@ func (i *interpreter) returnClause(iters []iteration, returnClause *model.Return
 				return nil, err
 			}
 		}
+
 		retObj, err := i.evalExpression(returnClause.Expression)
 		if err != nil {
 			return nil, err
 		}
+
 		if returnClause.Distinct {
 			returnObjs = appendIfDistinct(returnObjs, retObj)
 		} else {
