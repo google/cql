@@ -1102,6 +1102,49 @@ func buildLibrary(t *testing.T, r *Resolver[model.IExpression, model.IExpression
 	}
 }
 
+func TestUpdateAlias(t *testing.T) {
+	r := NewResolver[string, string]()
+	r.SetCurrentUnnamed()
+	r.EnterScope()
+
+	// Create initial alias
+	if err := r.Alias("A", "initial_value"); err != nil {
+		t.Fatalf("Alias(A) returned unexpected error: %v", err)
+	}
+
+	// Verify initial value
+	got, err := r.ResolveLocal("A")
+	if err != nil {
+		t.Errorf("ResolveLocal(A) returned unexpected error: %v", err)
+	}
+	if got != "initial_value" {
+		t.Errorf("ResolveLocal(A) = %v, want %v", got, "initial_value")
+	}
+
+	// Update alias
+	if err := r.UpdateAlias("A", "updated_value"); err != nil {
+		t.Fatalf("UpdateAlias(A) returned unexpected error: %v", err)
+	}
+
+	// Verify updated value
+	got, err = r.ResolveLocal("A")
+	if err != nil {
+		t.Errorf("ResolveLocal(A) returned unexpected error: %v", err)
+	}
+	if got != "updated_value" {
+		t.Errorf("ResolveLocal(A) = %v, want %v", got, "updated_value")
+	}
+
+	// Test error case - update non-existent alias
+	err = r.UpdateAlias("NonExistent", "value")
+	if err == nil {
+		t.Errorf("UpdateAlias(NonExistent) expected error but got success")
+	}
+	if !strings.Contains(err.Error(), "does not exist") {
+		t.Errorf("UpdateAlias error should contain 'does not exist', got: %v", err)
+	}
+}
+
 func newFHIRModelInfo(t *testing.T) *modelinfo.ModelInfos {
 	t.Helper()
 	fhirMIBytes, err := embeddata.ModelInfos.ReadFile("third_party/cqframework/fhir-modelinfo-4.0.1.xml")

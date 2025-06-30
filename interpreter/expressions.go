@@ -308,6 +308,11 @@ func (i *interpreter) evalAliasRef(a *model.AliasRef) (result.Value, error) {
 }
 
 func (i *interpreter) evalIdentifierRef(r *model.IdentifierRef) (result.Value, error) {
+	// First try to resolve as a local reference (alias, variable, etc.)
+	if val, err := i.refs.ResolveLocal(r.Name); err == nil {
+		return val, nil
+	}
+
 	obj, err := i.refs.ScopedStruct()
 	if err != nil {
 		return result.Value{}, err

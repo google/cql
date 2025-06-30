@@ -230,7 +230,10 @@ func (v *visitor) parseSortClause(sc cql.ISortClauseContext, q *model.Query) (*m
 		v.refs.EnterStructScope(func() model.IExpression { return q.Source[0] })
 		defer v.refs.ExitStructScope()
 
+		// Set sort context flag to allow forward references in sort expressions
+		v.inSortContext = true
 		sortExpr := v.VisitExpression(sbi.ExpressionTerm())
+		v.inSortContext = false
 
 		switch t := sortExpr.(type) {
 		case *model.IdentifierRef:

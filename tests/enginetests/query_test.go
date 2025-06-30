@@ -704,6 +704,463 @@ func TestQuery(t *testing.T) {
 			  or exists(ActiveMedicationRequest([MedicationRequest]))`),
 			wantResult: newOrFatal(t, false), // Both retrievals return empty lists, so exists() returns false
 		},
+		{
+			// Test case for let clause accessing source alias - should fail with current implementation
+			name: "Let clause with source alias reference",
+			cql: dedent.Dedent(`
+			define function TestLetSourceAlias(nums List<Integer>):
+			  nums N
+			    let threshold: 5
+			    where N > threshold
+
+			define TESTRESULT: TestLetSourceAlias({1, 10, 15, 20})`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 10),
+					newOrFatal(t, 15),
+					newOrFatal(t, 20),
+				}, // Values where N > 5
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case for relationship clause with alias access
+			name: "Relationship clause with alias access",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({1, 2, 3}) A 
+			    with ({4, 5}) B 
+			      such that A + B > 6
+			    return A`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 2), // 2+4=6, 2+5=7 > 6
+					newOrFatal(t, 3), // 3+4=7, 3+5=8 > 6
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case for return clause accessing let variables
+			name: "Return clause accessing let variables",
+			cql: dedent.Dedent(`
+			define function TestReturnLet(nums List<Integer>):
+			  nums N
+			    let factor: 10
+			    return N * factor
+
+			define TESTRESULT: TestReturnLet({1, 2, 3})`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 10),
+					newOrFatal(t, 20),
+					newOrFatal(t, 30),
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case for aggregate clause with source alias
+			name: "Aggregate clause with source alias",
+			cql: dedent.Dedent(`
+			define function TestAggregateAlias(nums List<Integer>):
+			  nums N
+			    aggregate A starting 0: A + N
+
+			define TESTRESULT: TestAggregateAlias({1, 2, 3})`),
+			wantResult: newOrFatal(t, 6), // Sum of 1+2+3
+		},
+		{
+			// Test case for complex multi-clause with all scope issues
+			name: "Complex multi-clause with all scope management",
+			cql: dedent.Dedent(`
+			define function TestAllClauses(nums List<Integer>):
+			  nums N
+			    let threshold: 5,
+			        multiplier: 2
+			    with ({1, 2}) H
+			      such that N + H > threshold
+			    where N > threshold
+			    return N * multiplier
+
+			define TESTRESULT: TestAllClauses({1, 3, 6, 8, 10})`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 12), // 6*2, where 6>5 and 6+H>5 for some H
+					newOrFatal(t, 16), // 8*2, where 8>5 and 8+H>5 for some H
+					newOrFatal(t, 20), // 10*2, where 10>5 and 10+H>5 for some H
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case that should expose scope management issues - let clause referencing source alias
+			name: "Let clause referencing source alias directly",
+			cql: dedent.Dedent(`
+			define function TestLetWithSourceAlias(nums List<Integer>):
+			  nums N
+			    let doubled: N * 2
+			    where doubled > 10
+
+			define TESTRESULT: TestLetWithSourceAlias({1, 3, 6, 8})`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, 6), // 6*2=12 > 10
+					newOrFatal(t, 8), // 8*2=16 > 10
+				},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+		{
+			// Test case that reproduces the NCQA_CQLBase error - sort by tuple field
+			name: "Sort by tuple field from return clause",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({1, 3, 2}) I
+			    return Tuple {
+			      value: I,
+			      sortKey: I * 10
+			    }
+			    sort by sortKey asc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":   newOrFatal(t, 1),
+							"sortKey": newOrFatal(t, 10),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":   types.Integer,
+							"sortKey": types.Integer,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":   newOrFatal(t, 2),
+							"sortKey": newOrFatal(t, 20),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":   types.Integer,
+							"sortKey": types.Integer,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":   newOrFatal(t, 3),
+							"sortKey": newOrFatal(t, 30),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":   types.Integer,
+							"sortKey": types.Integer,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":   types.Integer,
+					"sortKey": types.Integer,
+				}}},
+			}),
+		},
+		{
+			// Test sorting by integer field in tuple
+			name: "Sort by integer field ascending",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({3, 1, 2}) I
+			    return Tuple {
+			      value: I,
+			      intField: I
+			    }
+			    sort by intField asc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 1),
+							"intField": newOrFatal(t, 1),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Integer,
+							"intField": types.Integer,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 2),
+							"intField": newOrFatal(t, 2),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Integer,
+							"intField": types.Integer,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 3),
+							"intField": newOrFatal(t, 3),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Integer,
+							"intField": types.Integer,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":    types.Integer,
+					"intField": types.Integer,
+				}}},
+			}),
+		},
+		{
+			// Test sorting by integer field descending
+			name: "Sort by integer field descending",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({1, 3, 2}) I
+			    return Tuple {
+			      value: I,
+			      intField: I
+			    }
+			    sort by intField desc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 3),
+							"intField": newOrFatal(t, 3),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Integer,
+							"intField": types.Integer,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 2),
+							"intField": newOrFatal(t, 2),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Integer,
+							"intField": types.Integer,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 1),
+							"intField": newOrFatal(t, 1),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Integer,
+							"intField": types.Integer,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":    types.Integer,
+					"intField": types.Integer,
+				}}},
+			}),
+		},
+		{
+			// Test sorting by decimal field
+			name: "Sort by decimal field ascending",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({3.2, 1.1, 2.5}) D
+			    return Tuple {
+			      value: D,
+			      decField: D
+			    }
+			    sort by decField asc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 1.1),
+							"decField": newOrFatal(t, 1.1),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Decimal,
+							"decField": types.Decimal,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 2.5),
+							"decField": newOrFatal(t, 2.5),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Decimal,
+							"decField": types.Decimal,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, 3.2),
+							"decField": newOrFatal(t, 3.2),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.Decimal,
+							"decField": types.Decimal,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":    types.Decimal,
+					"decField": types.Decimal,
+				}}},
+			}),
+		},
+		{
+			// Test sorting by string field
+			name: "Sort by string field ascending",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({'zebra', 'apple', 'banana'}) S
+			    return Tuple {
+			      value: S,
+			      strField: S
+			    }
+			    sort by strField asc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, "apple"),
+							"strField": newOrFatal(t, "apple"),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.String,
+							"strField": types.String,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, "banana"),
+							"strField": newOrFatal(t, "banana"),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.String,
+							"strField": types.String,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":    newOrFatal(t, "zebra"),
+							"strField": newOrFatal(t, "zebra"),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":    types.String,
+							"strField": types.String,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":    types.String,
+					"strField": types.String,
+				}}},
+			}),
+		},
+		{
+			// Test sorting by DateTime field
+			name: "Sort by DateTime field descending",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({@2015-01-01T10:00:00.000Z, @2013-01-01T10:00:00.000Z, @2014-01-01T10:00:00.000Z}) DT
+			    return Tuple {
+			      value: DT,
+			      dtField: DT
+			    }
+			    sort by dtField desc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":   newOrFatal(t, result.DateTime{Date: time.Date(2015, time.January, 1, 10, 0, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+							"dtField": newOrFatal(t, result.DateTime{Date: time.Date(2015, time.January, 1, 10, 0, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":   types.DateTime,
+							"dtField": types.DateTime,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":   newOrFatal(t, result.DateTime{Date: time.Date(2014, time.January, 1, 10, 0, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+							"dtField": newOrFatal(t, result.DateTime{Date: time.Date(2014, time.January, 1, 10, 0, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":   types.DateTime,
+							"dtField": types.DateTime,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":   newOrFatal(t, result.DateTime{Date: time.Date(2013, time.January, 1, 10, 0, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+							"dtField": newOrFatal(t, result.DateTime{Date: time.Date(2013, time.January, 1, 10, 0, 0, 0, time.UTC), Precision: model.MILLISECOND}),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":   types.DateTime,
+							"dtField": types.DateTime,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":   types.DateTime,
+					"dtField": types.DateTime,
+				}}},
+			}),
+		},
+		{
+			// Test sorting by Date field
+			name: "Sort by Date field ascending",
+			cql: dedent.Dedent(`
+			define TESTRESULT: 
+			  ({@2015-01-01, @2013-01-01, @2014-01-01}) D
+			    return Tuple {
+			      value: D,
+			      dateField: D
+			    }
+			    sort by dateField asc`),
+			wantResult: newOrFatal(t, result.List{
+				Value: []result.Value{
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":     newOrFatal(t, result.Date{Date: time.Date(2013, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+							"dateField": newOrFatal(t, result.Date{Date: time.Date(2013, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":     types.Date,
+							"dateField": types.Date,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":     newOrFatal(t, result.Date{Date: time.Date(2014, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+							"dateField": newOrFatal(t, result.Date{Date: time.Date(2014, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":     types.Date,
+							"dateField": types.Date,
+						}},
+					}),
+					newOrFatal(t, result.Tuple{
+						Value: map[string]result.Value{
+							"value":     newOrFatal(t, result.Date{Date: time.Date(2015, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+							"dateField": newOrFatal(t, result.Date{Date: time.Date(2015, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+						},
+						RuntimeType: &types.Tuple{ElementTypes: map[string]types.IType{
+							"value":     types.Date,
+							"dateField": types.Date,
+						}},
+					}),
+				},
+				StaticType: &types.List{ElementType: &types.Tuple{ElementTypes: map[string]types.IType{
+					"value":     types.Date,
+					"dateField": types.Date,
+				}}},
+			}),
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -720,10 +1177,10 @@ func TestQuery(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Eval returned unexpected error: %v", err)
 			}
-			gotResult := getTESTRESULTWithSources(t, results)
-			if diff := cmp.Diff(tc.wantResult, gotResult, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
 				t.Errorf("Eval diff (-want +got)\n%v", diff)
 			}
+			gotResult := getTESTRESULTWithSources(t, results)
 			if diff := cmp.Diff(tc.wantSourceExpression, gotResult.SourceExpression(), protocmp.Transform()); tc.wantSourceExpression != nil && diff != "" {
 				t.Errorf("Eval SourceExpression diff (-want +got)\n%v", diff)
 			}
