@@ -28,7 +28,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
-func TestFHIRCodingInValueSet(t *testing.T) {
+func TestExpansionInValueSet(t *testing.T) {
 	// Test data - a compose valueset that includes other valuesets
 	composeValueSetJSON := `{
 		"resourceType": "ValueSet",
