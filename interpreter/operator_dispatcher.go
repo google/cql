@@ -1470,6 +1470,57 @@ func (i *interpreter) naryOverloads(m model.INaryExpression) ([]convert.Overload
 				Result:   evalSubstring,
 			},
 		}, nil
+	case *model.Collapse:
+		return []convert.Overload[evalNarySignature]{
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Date}}},
+				Result:   i.evalCollapseIntervalDate,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Date}}, types.Quantity},
+				Result:   i.evalCollapseIntervalDate,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.DateTime}}},
+				Result:   i.evalCollapseIntervalDateTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.DateTime}}, types.Quantity},
+				Result:   i.evalCollapseIntervalDateTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Time}}},
+				Result:   i.evalCollapseIntervalTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Time}}, types.Quantity},
+				Result:   i.evalCollapseIntervalTime,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Integer}}},
+				Result:   i.evalCollapseIntervalInteger,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Integer}}, types.Quantity},
+				Result:   i.evalCollapseIntervalInteger,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Decimal}}},
+				Result:   i.evalCollapseIntervalDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Decimal}}, types.Quantity},
+				Result:   i.evalCollapseIntervalDecimal,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Quantity}}},
+				Result:   i.evalCollapseIntervalQuantity,
+			},
+			{
+				Operands: []types.IType{&types.List{ElementType: &types.Interval{PointType: types.Quantity}}, types.Quantity},
+				Result:   i.evalCollapseIntervalQuantity,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Nary Expression %v", m.GetName())
 	}
