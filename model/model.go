@@ -915,6 +915,12 @@ var _ IUnaryExpression = &Duration{}
 // Tail ELM Expression https://cql.hl7.org/09-b-cqlreference.html#tail.
 type Tail struct{ *UnaryExpression }
 
+// Descendants ELM expression from FHIRPath specification
+// Returns all descendant elements of a given element in a hierarchical structure
+type Descendants struct{ *UnaryExpression }
+
+var _ IUnaryExpression = &Descendants{}
+
 // BinaryExpression is a CQL expression that has two operands. The ELM representation may have
 // additional operands (ex BinaryExpressionWithPrecision).
 type BinaryExpression struct {
@@ -1657,6 +1663,9 @@ func (s *Skip) GetName() string { return "Skip" }
 
 // GetName returns the name of the system operator.
 func (t *Tail) GetName() string { return "Tail" }
+
+// GetName returns the name of the system operator.
+func (d *Descendants) GetName() string { return "Descendants" }
 
 // GetName returns the name of the system operator.
 func (t *Take) GetName() string { return "Take" }

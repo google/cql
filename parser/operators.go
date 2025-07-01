@@ -1935,6 +1935,61 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
+			name: "Descendants",
+			operands: [][]types.IType{
+				{types.Any},
+			},
+			model: func() model.IExpression {
+				return &model.Descendants{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(&types.List{ElementType: types.Any}),
+					},
+				}
+			},
+		},
+		{
+			name: "Descendents",
+			operands: [][]types.IType{
+				{types.Any},
+			},
+			model: func() model.IExpression {
+				return &model.Descendants{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(&types.List{ElementType: types.Any}),
+					},
+				}
+			},
+		},
+		// Fluent functions are defined as lowercase, not sure
+		// the best way to handle this for all the fluent functions
+		// but this is for the spectests which is lowercase according to the CQL spec
+		{
+			name: "descendants",
+			operands: [][]types.IType{
+				{types.Any},
+			},
+			model: func() model.IExpression {
+				return &model.Descendants{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(&types.List{ElementType: types.Any}),
+					},
+				}
+			},
+		},
+		{
+			name: "descendents",
+			operands: [][]types.IType{
+				{types.Any},
+			},
+			model: func() model.IExpression {
+				return &model.Descendants{
+					UnaryExpression: &model.UnaryExpression{
+						Expression: model.ResultType(&types.List{ElementType: types.Any}),
+					},
+				}
+			},
+		},
+		{
 			name: "Take",
 			operands: [][]types.IType{
 				{&types.List{ElementType: types.Any}, types.Integer},
