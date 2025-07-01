@@ -1224,6 +1224,34 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
 				Result:   evalIntersect,
 			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				Result:   i.evalIntersectIntervalInteger,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				Result:   i.evalIntersectIntervalLong,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				Result:   i.evalIntersectIntervalDecimal,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				Result:   i.evalIntersectIntervalQuantity,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				Result:   i.evalIntersectInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				Result:   i.evalIntersectInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				Result:   i.evalIntersectInterval,
+			},
 		}, nil
 	case *model.ProperlyIncludes:
 		return []convert.Overload[evalBinarySignature]{

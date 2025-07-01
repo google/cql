@@ -81,13 +81,22 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 		// For Except the left side is the result type.
 		t.Expression = model.ResultType(resolved.WrappedOperands[0].GetResultType())
 	case *model.Intersect:
-		listTypeLeft := resolved.WrappedOperands[0].GetResultType().(*types.List)
-		listTypeRight := resolved.WrappedOperands[1].GetResultType().(*types.List)
-		listElemType, err := convert.Intersect(listTypeLeft.ElementType, listTypeRight.ElementType)
-		if err != nil {
-			return nil, err
+		leftType := resolved.WrappedOperands[0].GetResultType()
+		rightType := resolved.WrappedOperands[1].GetResultType()
+		
+		// Check if this is a list intersect or interval intersect
+		if listTypeLeft, ok := leftType.(*types.List); ok {
+			// List intersect
+			listTypeRight := rightType.(*types.List)
+			listElemType, err := convert.Intersect(listTypeLeft.ElementType, listTypeRight.ElementType)
+			if err != nil {
+				return nil, err
+			}
+			t.Expression = model.ResultType(&types.List{ElementType: listElemType})
+		} else if intervalTypeLeft, ok := leftType.(*types.Interval); ok {
+			// Interval intersect - result type is the same interval type
+			t.Expression = model.ResultType(intervalTypeLeft)
 		}
-		t.Expression = model.ResultType(&types.List{ElementType: listElemType})
 	case *model.Avg:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
@@ -1831,8 +1840,17 @@ func (p *Parser) loadSystemOperators() error {
 			},
 		},
 		{
-			name:     "Intersect",
-			operands: [][]types.IType{{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}}},
+			name: "Intersect",
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+			},
 			model: func() model.IExpression {
 				return &model.Intersect{
 					BinaryExpression: &model.BinaryExpression{},
