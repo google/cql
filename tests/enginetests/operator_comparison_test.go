@@ -1623,3 +1623,247 @@ func TestLessOrEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestTimeComparison(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// Greater than tests
+		{
+			name: "@T14:30:25 > @T14:30:24",
+			cql:  "@T14:30:25 > @T14:30:24",
+			wantModel: &model.Greater{
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("@T14:30:25", types.Time),
+						model.NewLiteral("@T14:30:24", types.Time),
+					},
+					Expression: model.ResultType(types.Boolean),
+				},
+			},
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:24 > @T14:30:25",
+			cql:        "@T14:30:24 > @T14:30:25",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@T14:30:25 > @T14:30:25",
+			cql:        "@T14:30:25 > @T14:30:25",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@T14:30:25 > null",
+			cql:        "@T14:30:25 > null",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14 > @T14:30",
+			cql:        "@T14 > @T14:30",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T15:00:00.000 > @T14:59:59.999",
+			cql:        "@T15:00:00.000 > @T14:59:59.999",
+			wantResult: newOrFatal(t, true),
+		},
+		// Less than tests
+		{
+			name:       "@T14:30:24 < @T14:30:25",
+			cql:        "@T14:30:24 < @T14:30:25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:25 < @T14:30:24",
+			cql:        "@T14:30:25 < @T14:30:24",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@T14:30:25 < @T14:30:25",
+			cql:        "@T14:30:25 < @T14:30:25",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@T14:30:25 < null",
+			cql:        "@T14:30:25 < null",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14:30 < @T14",
+			cql:        "@T14:30 < @T14",
+			wantResult: newOrFatal(t, nil),
+		},
+		// Greater than or equal tests
+		{
+			name:       "@T14:30:25 >= @T14:30:25",
+			cql:        "@T14:30:25 >= @T14:30:25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:26 >= @T14:30:25",
+			cql:        "@T14:30:26 >= @T14:30:25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:24 >= @T14:30:25",
+			cql:        "@T14:30:24 >= @T14:30:25",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@T14:30:25 >= null",
+			cql:        "@T14:30:25 >= null",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14 >= @T14:30",
+			cql:        "@T14 >= @T14:30",
+			wantResult: newOrFatal(t, nil),
+		},
+		// Less than or equal tests
+		{
+			name:       "@T14:30:25 <= @T14:30:25",
+			cql:        "@T14:30:25 <= @T14:30:25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:24 <= @T14:30:25",
+			cql:        "@T14:30:24 <= @T14:30:25",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:26 <= @T14:30:25",
+			cql:        "@T14:30:26 <= @T14:30:25",
+			wantResult: newOrFatal(t, false),
+		},
+		{
+			name:       "@T14:30:25 <= null",
+			cql:        "@T14:30:25 <= null",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14:30 <= @T14",
+			cql:        "@T14:30 <= @T14",
+			wantResult: newOrFatal(t, nil),
+		},
+		// Hour precision tests
+		{
+			name:       "@T14 > @T13",
+			cql:        "@T14 > @T13",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T13 < @T14",
+			cql:        "@T13 < @T14",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14 >= @T14",
+			cql:        "@T14 >= @T14",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14 <= @T14",
+			cql:        "@T14 <= @T14",
+			wantResult: newOrFatal(t, true),
+		},
+		// Minute precision tests
+		{
+			name:       "@T14:30 > @T14:29",
+			cql:        "@T14:30 > @T14:29",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:29 < @T14:30",
+			cql:        "@T14:29 < @T14:30",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30 >= @T14:30",
+			cql:        "@T14:30 >= @T14:30",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30 <= @T14:30",
+			cql:        "@T14:30 <= @T14:30",
+			wantResult: newOrFatal(t, true),
+		},
+		// Second precision tests
+		{
+			name:       "@T14:30:25 > @T14:30:24",
+			cql:        "@T14:30:25 > @T14:30:24",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:24 < @T14:30:25",
+			cql:        "@T14:30:24 < @T14:30:25",
+			wantResult: newOrFatal(t, true),
+		},
+		// Millisecond precision tests
+		{
+			name:       "@T14:30:25.100 > @T14:30:25.099",
+			cql:        "@T14:30:25.100 > @T14:30:25.099",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:25.099 < @T14:30:25.100",
+			cql:        "@T14:30:25.099 < @T14:30:25.100",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:25.100 >= @T14:30:25.100",
+			cql:        "@T14:30:25.100 >= @T14:30:25.100",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "@T14:30:25.100 <= @T14:30:25.100",
+			cql:        "@T14:30:25.100 <= @T14:30:25.100",
+			wantResult: newOrFatal(t, true),
+		},
+		// Cross-precision tests (should return null)
+		{
+			name:       "@T14:30:25.100 > @T14:30:25",
+			cql:        "@T14:30:25.100 > @T14:30:25",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14:30 < @T14:30:25",
+			cql:        "@T14:30 < @T14:30:25",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14 >= @T14:30:25",
+			cql:        "@T14 >= @T14:30:25",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "@T14:30:25 <= @T14:30",
+			cql:        "@T14:30:25 <= @T14:30",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
