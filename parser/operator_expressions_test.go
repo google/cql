@@ -1146,29 +1146,35 @@ func TestOperatorExpressions(t *testing.T) {
 		{
 			name: "Duration Expression Term",
 			cql:  "duration in days of Interval[@2010-01-01, @2020-01-01]",
-			want: &model.UnaryExpression{
-				Operand: &model.Interval{
-					Low:           model.NewLiteral("@2010-01-01", types.Date),
-					High:          model.NewLiteral("@2020-01-01", types.Date),
-					Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
-					LowInclusive:  true,
-					HighInclusive: true,
+			want: &model.Duration{
+				Precision: model.DAY,
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("@2010-01-01", types.Date),
+						High:          model.NewLiteral("@2020-01-01", types.Date),
+						Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+						LowInclusive:  true,
+						HighInclusive: true,
+					},
+					Expression: model.ResultType(types.Integer),
 				},
-				Expression: model.ResultType(types.Integer),
 			},
 		},
 		{
 			name: "Duration Expression Term in Years",
 			cql:  "duration in years of Interval[@2010-01-01, @2020-01-01]",
-			want: &model.UnaryExpression{
-				Operand: &model.Interval{
-					Low:           model.NewLiteral("@2010-01-01", types.Date),
-					High:          model.NewLiteral("@2020-01-01", types.Date),
-					Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
-					LowInclusive:  true,
-					HighInclusive: true,
+			want: &model.Duration{
+				Precision: model.YEAR,
+				UnaryExpression: &model.UnaryExpression{
+					Operand: &model.Interval{
+						Low:           model.NewLiteral("@2010-01-01", types.Date),
+						High:          model.NewLiteral("@2020-01-01", types.Date),
+						Expression:    model.ResultType(&types.Interval{PointType: types.Date}),
+						LowInclusive:  true,
+						HighInclusive: true,
+					},
+					Expression: model.ResultType(types.Integer),
 				},
-				Expression: model.ResultType(types.Integer),
 			},
 		},
 		{
@@ -1224,23 +1230,29 @@ func TestOperatorExpressions(t *testing.T) {
 		{
 			name: "Duration Between Expression",
 			cql:  "duration in days between @2010-01-01 and @2020-01-01",
-			want: &model.BinaryExpression{
-				Operands: []model.IExpression{
-					model.NewLiteral("@2010-01-01", types.Date),
-					model.NewLiteral("@2020-01-01", types.Date),
+			want: &model.DurationBetween{
+				Precision: model.DAY,
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("@2010-01-01", types.Date),
+						model.NewLiteral("@2020-01-01", types.Date),
+					},
+					Expression: model.ResultType(types.Integer),
 				},
-				Expression: model.ResultType(types.Integer),
 			},
 		},
 		{
 			name: "Duration Between Expression in Months",
 			cql:  "duration in months between @2010-01-01 and @2020-01-01",
-			want: &model.BinaryExpression{
-				Operands: []model.IExpression{
-					model.NewLiteral("@2010-01-01", types.Date),
-					model.NewLiteral("@2020-01-01", types.Date),
+			want: &model.DurationBetween{
+				Precision: model.MONTH,
+				BinaryExpression: &model.BinaryExpression{
+					Operands: []model.IExpression{
+						model.NewLiteral("@2010-01-01", types.Date),
+						model.NewLiteral("@2020-01-01", types.Date),
+					},
+					Expression: model.ResultType(types.Integer),
 				},
-				Expression: model.ResultType(types.Integer),
 			},
 		},
 	}
