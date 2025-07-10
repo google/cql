@@ -254,11 +254,11 @@ func (i *interpreter) inValueSet(codeableConcept result.Value, codes model.IExpr
 	}
 
 	// Handle different types of codes expressions
-	switch codesGolang := codesValue.GolangValue().(type) {
+	switch cv := codesValue.GolangValue().(type) {
 	case result.ValueSet:
 		// ValueSet case - check membership in the valueset
 		for _, coding := range ccPB.GetCoding() {
-			in, err := i.terminologyProvider.AnyInValueSet([]terminology.Code{{System: coding.GetSystem().Value, Code: coding.GetCode().Value}}, codesGolang.ID, codesGolang.Version)
+			in, err := i.terminologyProvider.AnyInValueSet([]terminology.Code{{System: coding.GetSystem().Value, Code: coding.GetCode().Value}}, cv.ID, cv.Version)
 			if err != nil {
 				return false, err
 			}
@@ -271,7 +271,7 @@ func (i *interpreter) inValueSet(codeableConcept result.Value, codes model.IExpr
 	case result.Code:
 		// Single Code case - check if any coding matches the code
 		for _, coding := range ccPB.GetCoding() {
-			if coding.GetSystem().Value == codesGolang.System && coding.GetCode().Value == codesGolang.Code {
+			if coding.GetSystem().Value == cv.System && coding.GetCode().Value == cv.Code {
 				return true, nil
 			}
 		}
@@ -280,7 +280,7 @@ func (i *interpreter) inValueSet(codeableConcept result.Value, codes model.IExpr
 	case result.Concept:
 		// Concept case - check if any coding matches any code in the concept
 		for _, coding := range ccPB.GetCoding() {
-			for _, conceptCode := range codesGolang.Codes {
+			for _, conceptCode := range cv.Codes {
 				if coding.GetSystem().Value == conceptCode.System && coding.GetCode().Value == conceptCode.Code {
 					return true, nil
 				}
