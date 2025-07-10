@@ -88,11 +88,6 @@ var commonUnitFactors = map[string]map[string]float64{
 		"oz":      0.03527396,
 		"[oz_av]": 0.03527396,
 	},
-	// Mass units (base: milligram) - common clinical base unit
-	"mg": {
-		"g":  0.001,
-		"kg": 0.000001,
-	},
 	// Volume units (base: liter)
 	"L": {
 		"mL":       1000,
@@ -104,12 +99,6 @@ var commonUnitFactors = map[string]map[string]float64{
 		"pt":       2.11338,
 		"cup":      4.22675,
 		"[foz_us]": 33.814,
-	},
-	// Volume units (base: milliliter) - common clinical base unit
-	"mL": {
-		"L":  0.001,
-		"dL": 0.01,
-		"cL": 0.1,
 	},
 	// Time units (base: second)
 	"s": {
