@@ -498,6 +498,15 @@ func (v *visitor) VisitReferentialIdentifier(ctx cql.IReferentialIdentifierConte
 
 	modelFunc, err := v.refs.ResolveLocal(name)
 	if err != nil {
+		// Only create IdentifierRef for forward references in specific contexts where it's legitimate
+		// (like sort clauses referencing tuple fields from return clauses)
+		// For general invalid references, we should still return an error
+		if v.isInSortContext() {
+			return &model.IdentifierRef{
+				Name:       name,
+				Expression: model.ResultType(types.Any),
+			}
+		}
 		return v.badExpression(err.Error(), ctx)
 	}
 	return modelFunc()
@@ -1223,6 +1232,11 @@ func stringToTimeUnit(s string) model.Unit {
 		return model.MILLISECONDUNIT
 	}
 	return model.UNSETUNIT
+}
+
+// isInSortContext returns true if we're currently parsing within a sort context
+func (v *visitor) isInSortContext() bool {
+	return v.inSortContext
 }
 
 // unquoteString takes the given CQL string, removes the surrounding ' and unescapes it.
