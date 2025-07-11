@@ -29,7 +29,6 @@ func compareCodeSlices(t *testing.T, got, want []*Code) {
 		return
 	}
 
-	// Sort both slices by code value for comparison
 	sort.Slice(got, func(i, j int) bool { return got[i].Code < got[j].Code })
 	sort.Slice(want, func(i, j int) bool { return want[i].Code < want[j].Code })
 
@@ -250,12 +249,10 @@ func getSystemFilterTestValueSets() []string {
 
 func TestExpandValueSet(t *testing.T) {
 	tests := []struct {
-		name                string
-		valueSetURL         string
-		version             string
-		expectedCodes       []*Code
-		expectError         bool
-		expectSpecificError error
+		name          string
+		valueSetURL   string
+		version       string
+		expectedCodes []*Code
 	}{
 		{
 			name:        "existing expansion",
@@ -287,16 +284,8 @@ func TestExpandValueSet(t *testing.T) {
 				{System: "http://example.org/fhir/CodeSystem/grandchild", Code: "grandchild-code1", Display: "Grandchild Code 1"},
 			},
 		},
-		{
-			name:                "circular references",
-			valueSetURL:         "http://example.org/fhir/ValueSet/circular",
-			version:             "",
-			expectError:         true,
-			expectSpecificError: ErrCircularReference,
-		},
 	}
 
-	// Create provider with the test ValueSets
 	provider, err := NewInMemoryFHIRProvider(getMainTestValueSets())
 	if err != nil {
 		t.Fatalf("Failed to create provider: %v", err)
@@ -305,18 +294,6 @@ func TestExpandValueSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			codes, err := provider.ExpandValueSet(tt.valueSetURL, tt.version)
-			
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error, got nil")
-					return
-				}
-				if tt.expectSpecificError != nil && !errors.Is(err, tt.expectSpecificError) {
-					t.Errorf("Expected specific error %v, got: %v", tt.expectSpecificError, err)
-				}
-				return
-			}
-			
 			if err != nil {
 				t.Fatalf("ExpandValueSet failed: %v", err)
 			}
@@ -326,14 +303,47 @@ func TestExpandValueSet(t *testing.T) {
 	}
 }
 
+func TestExpandValueSetErrors(t *testing.T) {
+	tests := []struct {
+		name                string
+		valueSetURL         string
+		version             string
+		expectSpecificError error
+	}{
+		{
+			name:                "circular references",
+			valueSetURL:         "http://example.org/fhir/ValueSet/circular",
+			version:             "",
+			expectSpecificError: ErrCircularReference,
+		},
+	}
+
+	provider, err := NewInMemoryFHIRProvider(getMainTestValueSets())
+	if err != nil {
+		t.Fatalf("Failed to create provider: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := provider.ExpandValueSet(tt.valueSetURL, tt.version)
+			if err == nil {
+				t.Errorf("Expected error, got nil")
+				return
+			}
+			if tt.expectSpecificError != nil && !errors.Is(err, tt.expectSpecificError) {
+				t.Errorf("Expected specific error %v, got: %v", tt.expectSpecificError, err)
+			}
+		})
+	}
+}
+
 func TestAnyInValueSet(t *testing.T) {
 	tests := []struct {
-		name      string
-		codes     []Code
-		valueSet  string
-		version   string
-		expected  bool
-		wantError bool
+		name     string
+		codes    []Code
+		valueSet string
+		version  string
+		expected bool
 	}{
 		{
 			name: "code exists in parent",
@@ -382,14 +392,6 @@ func TestAnyInValueSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := provider.AnyInValueSet(tt.codes, tt.valueSet, tt.version)
-			
-			if tt.wantError {
-				if err == nil {
-					t.Errorf("Expected error, got nil")
-				}
-				return
-			}
-			
 			if err != nil {
 				t.Fatalf("AnyInValueSet failed: %v", err)
 			}
@@ -403,12 +405,10 @@ func TestAnyInValueSet(t *testing.T) {
 
 func TestExpandValueSetEdgeCases(t *testing.T) {
 	tests := []struct {
-		name                string
-		valueSetURL         string
-		version             string
-		expectError         bool
-		expectSpecificError error
-		expectedCodesCount  int
+		name               string
+		valueSetURL        string
+		version            string
+		expectedCodesCount int
 	}{
 		{
 			name:               "empty compose",
@@ -417,28 +417,13 @@ func TestExpandValueSetEdgeCases(t *testing.T) {
 			expectedCodesCount: 0,
 		},
 		{
-			name:                "missing reference",
-			valueSetURL:         "http://example.org/fhir/ValueSet/missing-ref",
-			version:             "",
-			expectError:         true,
-			expectSpecificError: ErrResourceNotLoaded,
-		},
-		{
 			name:               "no compose or expansion",
 			valueSetURL:        "http://example.org/fhir/ValueSet/no-compose-expansion",
 			version:            "",
 			expectedCodesCount: 0,
 		},
-		{
-			name:                "nonexistent ValueSet",
-			valueSetURL:         "http://example.org/fhir/ValueSet/nonexistent",
-			version:             "",
-			expectError:         true,
-			expectSpecificError: ErrResourceNotLoaded,
-		},
 	}
 
-	// Create provider with edge case test ValueSets
 	provider, err := NewInMemoryFHIRProvider(getEdgeCaseTestValueSets())
 	if err != nil {
 		t.Fatalf("Failed to create provider: %v", err)
@@ -447,18 +432,6 @@ func TestExpandValueSetEdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			codes, err := provider.ExpandValueSet(tt.valueSetURL, tt.version)
-			
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error, got nil")
-					return
-				}
-				if tt.expectSpecificError != nil && !errors.Is(err, tt.expectSpecificError) {
-					t.Errorf("Expected specific error %v, got: %v", tt.expectSpecificError, err)
-				}
-				return
-			}
-			
 			if err != nil {
 				t.Fatalf("ExpandValueSet failed: %v", err)
 			}
@@ -470,13 +443,52 @@ func TestExpandValueSetEdgeCases(t *testing.T) {
 	}
 }
 
+func TestExpandValueSetEdgeCasesErrors(t *testing.T) {
+	tests := []struct {
+		name                string
+		valueSetURL         string
+		version             string
+		expectSpecificError error
+	}{
+		{
+			name:                "missing reference",
+			valueSetURL:         "http://example.org/fhir/ValueSet/missing-ref",
+			version:             "",
+			expectSpecificError: ErrResourceNotLoaded,
+		},
+		{
+			name:                "nonexistent ValueSet",
+			valueSetURL:         "http://example.org/fhir/ValueSet/nonexistent",
+			version:             "",
+			expectSpecificError: ErrResourceNotLoaded,
+		},
+	}
+
+	provider, err := NewInMemoryFHIRProvider(getEdgeCaseTestValueSets())
+	if err != nil {
+		t.Fatalf("Failed to create provider: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := provider.ExpandValueSet(tt.valueSetURL, tt.version)
+			if err == nil {
+				t.Errorf("Expected error, got nil")
+				return
+			}
+			if tt.expectSpecificError != nil && !errors.Is(err, tt.expectSpecificError) {
+				t.Errorf("Expected specific error %v, got: %v", tt.expectSpecificError, err)
+			}
+		})
+	}
+}
+
 func TestExpandValueSetWithSystemFilters(t *testing.T) {
 	tests := []struct {
 		name               string
 		valueSetURL        string
 		version            string
 		expectedCodesCount int
-		expectError        bool
 	}{
 		{
 			name:               "system filter (no concepts)",
@@ -492,7 +504,6 @@ func TestExpandValueSetWithSystemFilters(t *testing.T) {
 		},
 	}
 
-	// Create provider with system filter test ValueSets
 	provider, err := NewInMemoryFHIRProvider(getSystemFilterTestValueSets())
 	if err != nil {
 		t.Fatalf("Failed to create provider: %v", err)
@@ -501,14 +512,6 @@ func TestExpandValueSetWithSystemFilters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			codes, err := provider.ExpandValueSet(tt.valueSetURL, tt.version)
-			
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error, got nil")
-				}
-				return
-			}
-			
 			if err != nil {
 				t.Fatalf("ExpandValueSet failed: %v", err)
 			}
@@ -521,7 +524,6 @@ func TestExpandValueSetWithSystemFilters(t *testing.T) {
 }
 
 func TestExpandValueSetCaching(t *testing.T) {
-	// Create provider with the test ValueSets
 	provider, err := NewInMemoryFHIRProvider(getMainTestValueSets())
 	if err != nil {
 		t.Fatalf("Failed to create provider: %v", err)
