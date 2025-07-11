@@ -238,9 +238,10 @@ func (i *interpreter) inValueSet(codeableConcept result.Value, codes model.IExpr
 		return false, nil
 	}
 
-	vr, ok := codes.(*model.ValuesetRef)
-	if !ok {
-		return false, fmt.Errorf("only ValueSet references are currently supported for valueset filtering")
+	// Evaluate the codes expression
+	codesValue, err := i.evalExpression(codes)
+	if err != nil {
+		return false, err
 	}
 
 	protoVal, ok := codeableConcept.GolangValue().(result.Named)
@@ -252,28 +253,44 @@ func (i *interpreter) inValueSet(codeableConcept result.Value, codes model.IExpr
 		return false, fmt.Errorf("internal error -- the input proto Value must be a *dtpb.CodeableConcept type. got: %s", reflect.ValueOf(codeableConcept).Type())
 	}
 
-	vs, err := i.evalValuesetRef(vr)
-	if err != nil {
-		return false, err
-	}
-
-	vsv, ok := vs.GolangValue().(result.ValueSet)
-	if !ok {
-		return false, fmt.Errorf("internal error - expected a ValueSetValue instead got %v", reflect.ValueOf(vs.GolangValue()).Type())
-	}
-
-	for _, coding := range ccPB.GetCoding() {
-		// TODO: b/331447080 - Convert to using system operators for evaluating valueset membership.
-		in, err := i.terminologyProvider.AnyInValueSet([]terminology.Code{{System: coding.GetSystem().Value, Code: coding.GetCode().Value}}, vsv.ID, vsv.Version)
-		if err != nil {
-			return false, err
+	// Handle different types of codes expressions
+	switch cv := codesValue.GolangValue().(type) {
+	case result.ValueSet:
+		// ValueSet case - check membership in the valueset
+		for _, coding := range ccPB.GetCoding() {
+			in, err := i.terminologyProvider.AnyInValueSet([]terminology.Code{{System: coding.GetSystem().Value, Code: coding.GetCode().Value}}, cv.ID, cv.Version)
+			if err != nil {
+				return false, err
+			}
+			if in {
+				return true, nil
+			}
 		}
-		if in {
-			return true, nil
-		}
-	}
+		return false, nil
 
-	return false, nil
+	case result.Code:
+		// Single Code case - check if any coding matches the code
+		for _, coding := range ccPB.GetCoding() {
+			if coding.GetSystem().Value == cv.System && coding.GetCode().Value == cv.Code {
+				return true, nil
+			}
+		}
+		return false, nil
+
+	case result.Concept:
+		// Concept case - check if any coding matches any code in the concept
+		for _, coding := range ccPB.GetCoding() {
+			for _, conceptCode := range cv.Codes {
+				if coding.GetSystem().Value == conceptCode.System && coding.GetCode().Value == conceptCode.Code {
+					return true, nil
+				}
+			}
+		}
+		return false, nil
+
+	default:
+		return false, fmt.Errorf("codes expression must evaluate to a ValueSet, Code, or Concept, got: %T", codesValue.GolangValue())
+	}
 }
 
 // unwrapContained returns the FHIR resource from within the ContainedResource.
