@@ -776,6 +776,13 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalTail,
 			},
 		}, nil
+	case *model.Descendants:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Any},
+				Result:   evalDescendants,
+			},
+		}, nil
 	case *model.Upper:
 		return []convert.Overload[evalUnarySignature]{
 			{

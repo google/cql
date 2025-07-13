@@ -450,6 +450,75 @@ func evalTail(m model.IUnaryExpression, listObj result.Value) (result.Value, err
 	return result.New(result.List{Value: list[1:], StaticType: staticType})
 }
 
+// Descendants(argument Any) List<Any>
+// Returns all descendant elements of a given element in a hierarchical structure
+// From FHIRPath specification: .descendants(X) === Descendants(X)
+func evalDescendants(m model.IUnaryExpression, operand result.Value) (result.Value, error) {
+	if result.IsNull(operand) {
+		return result.New(nil)
+	}
+	
+	var allDescendants []result.Value
+	
+	// Get immediate children of the operand
+	children, err := getElementChildren(operand)
+	if err != nil {
+		return result.Value{}, err
+	}
+	
+	// For each child, add it and recursively get its descendants
+	for _, child := range children {
+		allDescendants = append(allDescendants, child)
+		
+		// Recursively get descendants of this child
+		childDescendants, err := evalDescendants(m, child)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		if !result.IsNull(childDescendants) {
+			if list, ok := childDescendants.GolangValue().(result.List); ok {
+				allDescendants = append(allDescendants, list.Value...)
+			}
+		}
+	}
+	
+	return result.New(result.List{
+		Value:      allDescendants,
+		StaticType: &types.List{ElementType: types.Any},
+	})
+}
+
+// Helper function to get immediate children of an element
+func getElementChildren(element result.Value) ([]result.Value, error) {
+	switch ot := element.GolangValue().(type) {
+	case result.Named:
+		// For FHIR resources, get all property values
+		return getNamedElementChildren(ot)
+	case result.List:
+		// For lists, return all elements
+		return ot.Value, nil
+	case result.Tuple:
+		// For tuples, return all values
+		var children []result.Value
+		for _, value := range ot.Value {
+			children = append(children, value)
+		}
+		return children, nil
+	default:
+		// For primitive types, no children
+		return []result.Value{}, nil
+	}
+}
+
+// Helper function to get children from named elements (FHIR resources)
+func getNamedElementChildren(named result.Named) ([]result.Value, error) {
+	// For now, return empty list for Named types (FHIR resources)
+	// TODO: Implement proper proto message traversal using reflection
+	// to extract all field values as children
+	return []result.Value{}, nil
+}
+
 // Take(argument List<T>, number Integer) List<T>
 // https://cql.hl7.org/09-b-cqlreference.html#take
 // Removes the last n elements from the list.
