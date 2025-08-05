@@ -43,6 +43,7 @@
 <div class="tabholder">
 	<button  id="cqlTabButton"> CQL </button>
 	<button  id="dataTabButton"> Data </button>
+	<button  id="librariesTabButton"> Libraries </button>
 </div>
 
 <div id="cqlEntry" class="tabContent">
@@ -55,6 +56,23 @@
 	<h3>Data Editor</h3>
 	<div class="codeInputContainer">
 		<code-input lang="json" placeholder="Enter synthetic JSON FHIR Bundle here." class="codeInput" id="dataInput"></code-input>
+	</div>
+</div>
+<div id="librariesEntry" class="tabContent">
+	<h3>CQL Libraries</h3>
+	<p class="instructions">
+		Add additional CQL libraries to be included in your CQL execution.
+		Libraries can be created directly or uploaded from files.
+		Each library should have a name and contain valid CQL code. <br />
+		<b>Our parser only supports FHIRHelpers 4.0.1, it is automatically included in all execution--you do not need to add it here.</b>
+	</p>
+	<div id="librariesContainer">
+		<!-- Libraries will be added here dynamically -->
+	</div>
+	<div class="libraryButtons">
+		<button id="addLibrary" class="addButton">Add Library</button>
+		<label for="uploadLibrary" class="uploadButton">Add Library from File</label>
+		<input type="file" id="uploadLibrary" accept=".cql" style="display:none">
 	</div>
 </div>
 <button id="submit" class="submitButton">
