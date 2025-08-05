@@ -327,6 +327,153 @@ func evalDifferenceBetweenDate(b model.IBinaryExpression, lObj, rObj result.Valu
 	return dateTimeDifference(l, r, p)
 }
 
+// calculateMinDuration calculates the minimum possible duration between two DateTimes
+// considering their precision uncertainty
+func calculateMinDuration(l, r result.DateTime, p model.DateTimePrecision) (int, error) {
+	// For minimum duration, we want the latest possible start and earliest possible end
+	// This means expanding the left date to its latest possible value and right to its earliest
+	maxLeft := expandDateTimeToLatest(l)
+	minRight := expandDateTimeToEarliest(r)
+	
+	resultVal, err := dateTimeDifference(maxLeft, minRight, p)
+	if err != nil {
+		return 0, err
+	}
+	
+	val, err := result.ToInt32(resultVal)
+	if err != nil {
+		return 0, err
+	}
+	
+	return int(val), nil
+}
+
+// calculateMaxDuration calculates the maximum possible duration between two DateTimes
+// considering their precision uncertainty
+func calculateMaxDuration(l, r result.DateTime, p model.DateTimePrecision) (int, error) {
+	// For maximum duration, we want the earliest possible start and latest possible end
+	// This means expanding the left date to its earliest possible value and right to its latest
+	minLeft := expandDateTimeToEarliest(l)
+	maxRight := expandDateTimeToLatest(r)
+	
+	resultVal, err := dateTimeDifference(minLeft, maxRight, p)
+	if err != nil {
+		return 0, err
+	}
+	
+	val, err := result.ToInt32(resultVal)
+	if err != nil {
+		return 0, err
+	}
+	
+	return int(val), nil
+}
+
+// expandDateTimeToEarliest expands a DateTime to its earliest possible value given its precision
+func expandDateTimeToEarliest(dt result.DateTime) result.DateTime {
+	// If precision is already at the finest level, return as-is
+	if dt.Precision == model.MILLISECOND {
+		return dt
+	}
+	
+	// Set all unspecified components to their minimum values
+	year := dt.Date.Year()
+	month := dt.Date.Month()
+	day := dt.Date.Day()
+	hour := dt.Date.Hour()
+	minute := dt.Date.Minute()
+	second := dt.Date.Second()
+	nanosecond := dt.Date.Nanosecond()
+	
+	switch dt.Precision {
+	case model.YEAR:
+		month = 1
+		day = 1
+		hour = 0
+		minute = 0
+		second = 0
+		nanosecond = 0
+	case model.MONTH:
+		day = 1
+		hour = 0
+		minute = 0
+		second = 0
+		nanosecond = 0
+	case model.DAY:
+		hour = 0
+		minute = 0
+		second = 0
+		nanosecond = 0
+	case model.HOUR:
+		minute = 0
+		second = 0
+		nanosecond = 0
+	case model.MINUTE:
+		second = 0
+		nanosecond = 0
+	case model.SECOND:
+		nanosecond = 0
+	}
+	
+	return result.DateTime{
+		Date:      time.Date(year, month, day, hour, minute, second, nanosecond, dt.Date.Location()),
+		Precision: dt.Precision,
+	}
+}
+
+// expandDateTimeToLatest expands a DateTime to its latest possible value given its precision
+func expandDateTimeToLatest(dt result.DateTime) result.DateTime {
+	// If precision is already at the finest level, return as-is
+	if dt.Precision == model.MILLISECOND {
+		return dt
+	}
+	
+	// Set all unspecified components to their maximum values
+	year := dt.Date.Year()
+	month := dt.Date.Month()
+	day := dt.Date.Day()
+	hour := dt.Date.Hour()
+	minute := dt.Date.Minute()
+	second := dt.Date.Second()
+	nanosecond := dt.Date.Nanosecond()
+	
+	switch dt.Precision {
+	case model.YEAR:
+		month = 12
+		day = 31
+		hour = 23
+		minute = 59
+		second = 59
+		nanosecond = 999 * int(time.Millisecond/time.Nanosecond)
+	case model.MONTH:
+		// Get the last day of the month
+		day = time.Date(year, month+1, 0, 0, 0, 0, 0, dt.Date.Location()).Day()
+		hour = 23
+		minute = 59
+		second = 59
+		nanosecond = 999 * int(time.Millisecond/time.Nanosecond)
+	case model.DAY:
+		hour = 23
+		minute = 59
+		second = 59
+		nanosecond = 999 * int(time.Millisecond/time.Nanosecond)
+	case model.HOUR:
+		minute = 59
+		second = 59
+		nanosecond = 999 * int(time.Millisecond/time.Nanosecond)
+	case model.MINUTE:
+		second = 59
+		nanosecond = 999 * int(time.Millisecond/time.Nanosecond)
+	case model.SECOND:
+		nanosecond = 999 * int(time.Millisecond/time.Nanosecond)
+	}
+	
+	return result.DateTime{
+		Date:      time.Date(year, month, day, hour, minute, second, nanosecond, dt.Date.Location()),
+		Precision: dt.Precision,
+	}
+}
+
 // difference in _precision_ between(left DateTime, right DateTime) Integer
 // https://cql.hl7.org/09-b-cqlreference.html#difference
 // Returns the number of boundaries crossed between two datetimes.
@@ -666,9 +813,24 @@ func dateTimeDifference(l, r result.DateTime, opPrecision model.DateTimePrecisio
 
 	switch opPrecision {
 	case model.YEAR:
-		return result.New(right.Year() - left.Year())
+		years := right.Year() - left.Year()
+		// If the right month is before the left month, we haven't completed a full year
+		if right.Month() < left.Month() {
+			years--
+		} else if right.Month() == left.Month() {
+			// If months are equal, check the day
+			if right.Day() < left.Day() {
+				years--
+			}
+		}
+		return result.New(years)
 	case model.MONTH:
-		return result.New(12*(right.Year()-left.Year()) + int((right.Month())) - int(left.Month()))
+		months := 12*(right.Year()-left.Year()) + int(right.Month()) - int(left.Month())
+		// If the right day is before the left day, we haven't completed a full month
+		if right.Day() < left.Day() {
+			months--
+		}
+		return result.New(months)
 	case model.WEEK:
 		// Weekly borders crossed are number of times a Sunday boundary has been crossed.
 		// TODO(b/301606416): Weeks do not correctly support negative values.
@@ -930,4 +1092,160 @@ func convertQuantityUpToPrecision(q result.Quantity, wantPrecision model.DateTim
 		}
 	}
 	return result.Quantity{}, fmt.Errorf("error: failed to reach desired precision when adding Date/DateTime to Quantity with precisions want: %v, got: %v", wantPrecision, q.Unit)
+}
+
+// duration in _precision_ of(argument Interval<Date>) Integer
+// duration in _precision_ of(argument Interval<DateTime>) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#duration
+// Returns the duration of the interval in the specified precision.
+func (i *interpreter) evalDuration(m model.IUnaryExpression, intervalObj result.Value) (result.Value, error) {
+	duration := m.(*model.Duration)
+	if result.IsNull(intervalObj) {
+		return result.New(nil)
+	}
+
+	// Get the interval
+	interval, err := result.ToInterval(intervalObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Get start and end of the interval
+	startVal, err := start(intervalObj, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	endVal, err := end(intervalObj, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Handle null bounds
+	if result.IsNull(startVal) || result.IsNull(endVal) {
+		return result.New(nil)
+	}
+
+	// Validate precision
+	precision := duration.Precision
+	allowUnsetPrec := false
+	if err := validatePrecisionByType(precision, allowUnsetPrec, interval.StaticType.PointType); err != nil {
+		return result.Value{}, err
+	}
+
+	// Convert to DateTime for calculation
+	startDateTime, err := result.ToDateTime(startVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+	endDateTime, err := result.ToDateTime(endVal)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Calculate duration using the same logic as dateTimeDifference
+	return dateTimeDifference(startDateTime, endDateTime, precision)
+}
+
+// _precision_ between(low Date, high Date) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#duration
+// Returns the number of whole calendar periods for the specified precision between the first and second arguments.
+func evalDurationBetweenDate(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	m := b.(*model.DurationBetween)
+	p := model.DateTimePrecision(m.Precision)
+
+	// Handle null values
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+
+	// Validate date precisions
+	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY}); err != nil {
+		return result.Value{}, err
+	}
+
+	// Convert both to DateTime and compute duration
+	l, r, err := applyToValues(lObj, rObj, result.ToDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	return dateTimeDifference(l, r, p)
+}
+
+// _precision_ between(low DateTime, high DateTime) Integer
+// https://cql.hl7.org/09-b-cqlreference.html#duration
+// Returns the number of whole calendar periods for the specified precision between the first and second arguments.
+func evalDurationBetweenDateTime(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	m := b.(*model.DurationBetween)
+	p := model.DateTimePrecision(m.Precision)
+
+	// Handle null values
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+
+	// Validate datetime precisions
+	if err := validatePrecision(p, []model.DateTimePrecision{model.YEAR, model.MONTH, model.WEEK, model.DAY, model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND}); err != nil {
+		return result.Value{}, err
+	}
+
+	// Convert both to DateTime and compute duration
+	l, r, err := applyToValues(lObj, rObj, result.ToDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Check if there's uncertainty due to precision differences
+	// Duration between should return an interval when there's uncertainty
+	hasUncertainty := false
+	switch p {
+	case model.YEAR:
+		// For year calculations, we need at least month precision to be certain
+		hasUncertainty = l.Precision == model.YEAR || r.Precision == model.YEAR
+	case model.MONTH:
+		// For month calculations, we need at least day precision to be certain
+		hasUncertainty = (l.Precision == model.YEAR || l.Precision == model.MONTH) || 
+						 (r.Precision == model.YEAR || r.Precision == model.MONTH)
+	default:
+		// For all other precisions (day, hour, minute, second, millisecond), 
+		// we only have uncertainty if we don't have sufficient precision
+		hasUncertainty = !precisionGreaterOrEqual(l.Precision, p) || !precisionGreaterOrEqual(r.Precision, p)
+	}
+
+	if hasUncertainty {
+		// Calculate the minimum and maximum possible durations
+		minDuration, err := calculateMinDuration(l, r, p)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		maxDuration, err := calculateMaxDuration(l, r, p)
+		if err != nil {
+			return result.Value{}, err
+		}
+
+		// If min and max are the same, return a single value
+		if minDuration == maxDuration {
+			return result.New(minDuration)
+		}
+
+		// Return an interval representing the uncertainty
+		lowVal, err := result.New(minDuration)
+		if err != nil {
+			return result.Value{}, err
+		}
+		highVal, err := result.New(maxDuration)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return result.New(result.Interval{
+			Low:          lowVal,
+			High:         highVal,
+			LowInclusive: true,
+			HighInclusive: true,
+			StaticType:   &types.Interval{PointType: types.Integer},
+		})
+	}
+
+	return dateTimeDifference(l, r, p)
 }

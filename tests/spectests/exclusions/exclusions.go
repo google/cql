@@ -90,7 +90,6 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 			GroupExcludes: []string{
 				// TODO: b/342061715 - unsupported operators.
 				"DateTimeComponentFrom",
-				"Duration",
 				// TODO: b/342064491 - runtime error: invalid memory address or nil pointer dereference.
 				"SameAs",
 			},
@@ -193,10 +192,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"DateTimeDurationBetweenMonthUncertain5",
 				"DateTimeDurationBetweenMonthUncertain6",
 				"DateTimeDurationBetweenMonthUncertain7",
-				"DurationInYears",
 				"DurationInWeeks",
 				"DurationInWeeks2",
-				"DurationInWeeks3",
 				"DateTimeSubtract1YearInSeconds",
 				"TimeDurationBetweenHour",
 				"TimeDurationBetweenHourDiffPrecision",
@@ -205,10 +202,8 @@ func XMLTestFileExclusionDefinitions() map[string]XMLTestFileExclusions {
 				"TimeDurationBetweenSecond",
 				"TimeDurationBetweenMillis",
 				"DurationInHoursA",
-				"DurationInMinutesA",
+				"DurationInMinutesA", 
 				"DurationInDaysA",
-				"DurationInHoursAA",
-				"DurationInMinutesAA",
 				"DurationInDaysAA",
 				"DateTimeDifferenceUncertain",
 				// TODO: b/343800835 - Error in output date comparison based on execution timestamp logic.
