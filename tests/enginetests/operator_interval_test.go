@@ -1930,6 +1930,219 @@ func TestIntervalWidth(t *testing.T) {
 	}
 }
 
+func TestExceptInterval(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		{
+			name: "Integer interval except - no overlap",
+			cql:  "Interval[0, 5] except Interval[10, 15]",
+			wantModel: &model.Except{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(&types.Interval{PointType: types.Integer}),
+					Operands: []model.IExpression{
+						&model.Interval{
+							Low:           model.NewLiteral("0", types.Integer),
+							High:          model.NewLiteral("5", types.Integer),
+							LowInclusive:  true,
+							HighInclusive: true,
+							Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+						},
+						&model.Interval{
+							Low:           model.NewLiteral("10", types.Integer),
+							High:          model.NewLiteral("15", types.Integer),
+							LowInclusive:  true,
+							HighInclusive: true,
+							Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+						},
+					},
+				},
+			},
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(0)),
+				High:          newOrFatal(t, int32(5)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Integer interval except - partial overlap left",
+			cql:        "Interval[0, 5] except Interval[3, 7]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(0)),
+				High:          newOrFatal(t, int32(2)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Integer interval except - partial overlap right",
+			cql:        "Interval[5, 10] except Interval[0, 7]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(8)),
+				High:          newOrFatal(t, int32(10)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Integer interval except - properly contained",
+			cql:        "Interval[0, 10] except Interval[3, 7]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Integer interval except - complete overlap",
+			cql:        "Interval[3, 7] except Interval[0, 10]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Integer interval except - identical intervals",
+			cql:        "Interval[0, 5] except Interval[0, 5]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Integer interval except - null left",
+			cql:        "null as Interval<Integer> except Interval[0, 5]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Integer interval except - null right",
+			cql:        "Interval[0, 5] except null as Interval<Integer>",
+			wantResult: newOrFatal(t, nil),
+		},
+		// Decimal intervals
+		{
+			name:       "Decimal interval except - no overlap",
+			cql:        "Interval[0.0, 5.0] except Interval[10.0, 15.0]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, 0.0),
+				High:          newOrFatal(t, 5.0),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Decimal},
+			}),
+		},
+		{
+			name:       "Decimal interval except - partial overlap",
+			cql:        "Interval[0.0, 5.0] except Interval[3.0, 7.0]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, 0.0),
+				High:          newOrFatal(t, 2.99999999),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Decimal},
+			}),
+		},
+		// Long intervals
+		{
+			name:       "Long interval except - no overlap",
+			cql:        "Interval[0L, 5L] except Interval[10L, 15L]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int64(0)),
+				High:          newOrFatal(t, int64(5)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Long},
+			}),
+		},
+		{
+			name:       "Long interval except - partial overlap",
+			cql:        "Interval[0L, 5L] except Interval[3L, 7L]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int64(0)),
+				High:          newOrFatal(t, int64(2)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Long},
+			}),
+		},
+		// Quantity intervals
+		{
+			name:       "Quantity interval except - no overlap",
+			cql:        "Interval[0'cm', 5'cm'] except Interval[10'cm', 15'cm']",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.Quantity{Value: 0, Unit: "cm"}),
+				High:          newOrFatal(t, result.Quantity{Value: 5, Unit: "cm"}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Quantity},
+			}),
+		},
+		{
+			name:       "Quantity interval except - partial overlap",
+			cql:        "Interval[0'cm', 5'cm'] except Interval[3'cm', 7'cm']",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.Quantity{Value: 0, Unit: "cm"}),
+				High:          newOrFatal(t, result.Quantity{Value: 2.99999999, Unit: "cm"}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Quantity},
+			}),
+		},
+		// Date intervals (simplified - returns null for complex cases)
+		{
+			name:       "Date interval except - no overlap",
+			cql:        "Interval[@2020-01-01, @2020-01-05] except Interval[@2020-01-10, @2020-01-15]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.Date{Date: time.Date(2020, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+				High:          newOrFatal(t, result.Date{Date: time.Date(2020, time.January, 5, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Date},
+			}),
+		},
+		{
+			name:       "Date interval except - complete overlap",
+			cql:        "Interval[@2020-01-03, @2020-01-07] except Interval[@2020-01-01, @2020-01-10]",
+			wantResult: newOrFatal(t, nil),
+		},
+		// DateTime intervals (simplified - returns null for complex cases)
+		{
+			name:       "DateTime interval except - no overlap",
+			cql:        "Interval[@2020-01-01T, @2020-01-05T] except Interval[@2020-01-10T, @2020-01-15T]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.DateTime{Date: time.Date(2020, time.January, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+				High:          newOrFatal(t, result.DateTime{Date: time.Date(2020, time.January, 5, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.DateTime},
+			}),
+		},
+		{
+			name:       "DateTime interval except - complete overlap",
+			cql:        "Interval[@2020-01-03T, @2020-01-07T] except Interval[@2020-01-01T, @2020-01-10T]",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
 func TestComparison_Error(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -1946,6 +2159,11 @@ func TestComparison_Error(t *testing.T) {
 			name:                "Quantity in interval with not matching lower unit",
 			cql:                 "1'cm' in Interval[1'cm', 2'm']",
 			wantEvalErrContains: "in operator recieved Quantities with differing unit values",
+		},
+		{
+			name:                "Quantity interval except with mismatched units",
+			cql:                 "Interval[1'cm', 2'cm'] except Interval[1'm', 2'm']",
+			wantEvalErrContains: "except operator received Quantities with differing unit values",
 		},
 	}
 	for _, tc := range tests {

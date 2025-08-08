@@ -1767,7 +1767,17 @@ func (p *Parser) loadSystemOperators() error {
 		// LIST OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#list-operators-2
 		{
 			name:     "Except",
-			operands: [][]types.IType{{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}}},
+			operands: [][]types.IType{
+				{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
+				// INTERVAL OPERATORS - https://cql.hl7.org/09-b-cqlreference.html#interval-operators-3
+				{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+			},
 			model: func() model.IExpression {
 				return &model.Except{
 					BinaryExpression: &model.BinaryExpression{},
