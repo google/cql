@@ -813,6 +813,21 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalWidthInterval,
 			},
 		}, nil
+	case *model.DateTimeComponentFrom:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Date},
+				Result:   i.evalDateTimeComponentFrom,
+			},
+			{
+				Operands: []types.IType{types.DateTime},
+				Result:   i.evalDateTimeComponentFrom,
+			},
+			{
+				Operands: []types.IType{types.Time},
+				Result:   i.evalDateTimeComponentFrom,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}

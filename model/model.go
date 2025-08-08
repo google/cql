@@ -100,6 +100,8 @@ const (
 	SECOND DateTimePrecision = "second"
 	// MILLISECOND represents millisecond precision.
 	MILLISECOND DateTimePrecision = "millisecond"
+	// TIMEZONEOFFSET represents timezone offset extraction.
+	TIMEZONEOFFSET DateTimePrecision = "timezoneoffset"
 )
 
 // Unit represents the unit for a QuantityValue.
@@ -912,6 +914,14 @@ type Duration struct {
 
 var _ IUnaryExpression = &Duration{}
 
+// DateTimeComponentFrom ELM expression for extracting components from Date/DateTime/Time values.
+type DateTimeComponentFrom struct {
+	*UnaryExpression
+	Component DateTimePrecision
+}
+
+var _ IUnaryExpression = &DateTimeComponentFrom{}
+
 // Tail ELM Expression https://cql.hl7.org/09-b-cqlreference.html#tail.
 type Tail struct{ *UnaryExpression }
 
@@ -1696,3 +1706,6 @@ func (w *Width) GetName() string { return "Width" }
 
 // GetName returns the name of the system operator.
 func (d *Duration) GetName() string { return "Duration" }
+
+// GetName returns the name of the system operator.
+func (d *DateTimeComponentFrom) GetName() string { return "DateTimeComponentFrom" }
