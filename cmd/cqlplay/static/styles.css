@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-h2,h3 {
+ h2,h3 {
   font-family: Roboto, Helvetica;
 }
 
@@ -91,4 +91,115 @@ code-input {
 
 .submitButton {
   margin: 10px;
+}
+
+/* File Management Styles */
+.fileManagementContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px;
+}
+
+.dropZone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.dropZone.dragover {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.browseButton {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.browseButton:hover {
+  background-color: #40a9ff;
+}
+
+.uploadedFilesContainer {
+  margin-top: 20px;
+}
+
+.uploadedFiles {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.fileItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.fileItem:last-child {
+  border-bottom: none;
+}
+
+.fileInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.fileName {
+  font-weight: bold;
+}
+
+.fileSize {
+  font-size: 12px;
+  color: #888;
+}
+
+.fileActions {
+  display: flex;
+  gap: 8px;
+}
+
+.deleteButton {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.deleteButton:hover {
+  background-color: #ff7875;
+}
+
+.uploadProgress {
+  height: 4px;
+  width: 100%;
+  background-color: #f0f0f0;
+  border-radius: 2px;
+  margin-top: 4px;
+}
+
+.uploadProgressBar {
+  height: 100%;
+  background-color: #1890ff;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s;
 }
