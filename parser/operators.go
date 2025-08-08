@@ -88,6 +88,9 @@ func (v *visitor) resolveFunction(libraryName, funcName string, operands []model
 			return nil, err
 		}
 		t.Expression = model.ResultType(&types.List{ElementType: listElemType})
+	case *model.Collapse:
+		// For collapse, the result type is the same as the input type (list of intervals)
+		t.Expression = model.ResultType(resolved.WrappedOperands[0].GetResultType())
 	case *model.Avg:
 		listType := resolved.WrappedOperands[0].GetResultType().(*types.List)
 		t.Expression = model.ResultType(listType.ElementType)
@@ -1120,6 +1123,28 @@ func (p *Parser) loadSystemOperators() error {
 					NaryExpression: &model.NaryExpression{
 						Expression: model.ResultType(types.String),
 					},
+				}
+			},
+		},
+		{
+			name: "Collapse",
+			operands: [][]types.IType{
+				{&types.List{ElementType: &types.Interval{PointType: types.Date}}},
+				{&types.List{ElementType: &types.Interval{PointType: types.Date}}, types.Quantity},
+				{&types.List{ElementType: &types.Interval{PointType: types.DateTime}}},
+				{&types.List{ElementType: &types.Interval{PointType: types.DateTime}}, types.Quantity},
+				{&types.List{ElementType: &types.Interval{PointType: types.Time}}},
+				{&types.List{ElementType: &types.Interval{PointType: types.Time}}, types.Quantity},
+				{&types.List{ElementType: &types.Interval{PointType: types.Integer}}},
+				{&types.List{ElementType: &types.Interval{PointType: types.Integer}}, types.Quantity},
+				{&types.List{ElementType: &types.Interval{PointType: types.Decimal}}},
+				{&types.List{ElementType: &types.Interval{PointType: types.Decimal}}, types.Quantity},
+				{&types.List{ElementType: &types.Interval{PointType: types.Quantity}}},
+				{&types.List{ElementType: &types.Interval{PointType: types.Quantity}}, types.Quantity},
+			},
+			model: func() model.IExpression {
+				return &model.Collapse{
+					NaryExpression: &model.NaryExpression{},
 				}
 			},
 		},

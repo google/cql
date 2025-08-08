@@ -891,7 +891,7 @@ type Expand struct{ *BinaryExpression }
 // Has two signatures:
 // collapse(argument List<Interval<T>>) List<Interval<T>>
 // collapse(argument List<Interval<T>>, per Quantity) List<Interval<T>>
-type Collapse struct{ *BinaryExpression }
+type Collapse struct{ *NaryExpression }
 
 // CalculateAge CQL expression type
 type CalculateAge struct {
