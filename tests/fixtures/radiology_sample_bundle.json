@@ -1,0 +1,33 @@
+{
+	"resourceType": "Bundle",
+	"type": "transaction",
+	"entry": [
+		{
+			"fullUrl": "fullUrl",
+			"resource": {
+				"resourceType": "Patient",
+				"id": "example-patient"
+			}
+		},
+		{
+			"fullUrl": "fullUrl",
+			"resource": {
+				"resourceType": "DiagnosticReport",
+				"id": "normal-report",
+				"status": "final",
+				"category": [{"coding": [{"code": "RAD"}]}],
+				"conclusionCode": [{"coding": [{"system": "http://snomed.info/sct", "code": "260385009"}]}]
+			}
+		},
+		{
+			"fullUrl": "fullUrl",
+			"resource": {
+				"resourceType": "DiagnosticReport",
+				"id": "anomalous-report",
+				"status": "final",
+				"category": [{"coding": [{"code": "RAD"}]}],
+				"conclusionCode": [{"coding": [{"system": "http://snomed.info/sct", "code": "386661006"}]}]
+			}
+		}
+	]
+}
