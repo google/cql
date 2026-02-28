@@ -191,7 +191,7 @@ func (i *interpreter) evalRetrieve(expr *model.Retrieve) (result.Value, error) {
 		return result.Value{}, fmt.Errorf("internal error - retrieve result type should be a list of named types, got %v", listResultType)
 	}
 
-	l := []result.Value{}
+	l := make([]result.Value, 0, len(got))
 	for _, c := range got {
 		r, err := unwrapContained(c)
 		if err != nil {
