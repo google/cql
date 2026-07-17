@@ -704,7 +704,9 @@ func evalRound(_ model.INaryExpression, operands []result.Value) (result.Value, 
 	// the future). For now if the value is negative we round towards zero.
 	ratioedDecimal := d * ratio
 	_, frac := math.Modf(ratioedDecimal)
-	if frac == -0.5 {
+	// Use a small epsilon (1e-12) to detect halfway values, handling float precision errors from
+	// multiplication.
+	if math.Abs(frac+0.5) < 1e-12 {
 		// force go to round towards zero
 		ratioedDecimal += 0.1
 	}

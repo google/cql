@@ -23,14 +23,14 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
 
-    - name: Set up Go 1.22
-      uses: actions/setup-go@v5
+    - name: Set up Go
+      uses: actions/setup-go@v6
       with:
-        go-version: 1.22
+        go-version: 1.26
       id: go
 
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Get dependencies
       run: |
@@ -50,14 +50,14 @@ jobs:
         os: [ubuntu-latest]
     steps:
 
-    - name: Set up Go 1.22
-      uses: actions/setup-go@v5
+    - name: Set up Go
+      uses: actions/setup-go@v6
       with:
-        go-version: 1.22
+        go-version: 1.26
       id: go
 
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Get dependencies
       run: |
