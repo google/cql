@@ -563,4 +563,7 @@ type visitor struct {
 
 	// Accumulated parsing errors to be returned to the caller.
 	errors parsingErrors
+
+	// Track if we're currently parsing within a sort context
+	inSortContext bool
 }

@@ -450,6 +450,27 @@ func (r *Resolver[T, F]) Alias(name string, a T) error {
 	return nil
 }
 
+// UpdateAlias updates an existing alias in any scope with a new value. This is used to update
+// source aliases with iteration-specific values while maintaining the persistent scope structure.
+// The alias must already exist in some scope.
+func (r *Resolver[T, F]) UpdateAlias(name string, a T) error {
+	if len(r.aliases) == 0 {
+		return errors.New("internal error - no scope available for alias update")
+	}
+	
+	aKey := aliasKey{r.currLib, name}
+	
+	// Search from innermost to outermost scope to find the alias
+	for i := len(r.aliases) - 1; i >= 0; i-- {
+		if _, exists := r.aliases[i][aKey]; exists {
+			r.aliases[i][aKey] = a
+			return nil
+		}
+	}
+	
+	return fmt.Errorf("alias %s does not exist in any scope", name)
+}
+
 // PublicDefs returns the public definitions stored in the reference resolver.
 func (r *Resolver[T, F]) PublicDefs() (map[result.LibKey]map[string]T, error) {
 	pDefs := make(map[result.LibKey]map[string]T)
