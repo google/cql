@@ -117,6 +117,134 @@ func TestExists(t *testing.T) {
 	}
 }
 
+func TestDescendants(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantResult result.Value
+	}{
+		{
+			name:       "Descendants of null returns null",
+			cql:        "Descendants(null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Descendents spelling variant",
+			cql:        "Descendents(null)",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Fluent syntax with capital D - descendants",
+			cql:        "(null).Descendants()",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Fluent syntax with capital D - descendents",
+			cql:        "(null).Descendents()",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Fluent syntax with lowercase d - descendants",
+			cql:        "(null).descendants()",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Fluent syntax with lowercase d - descendents",
+			cql:        "(null).descendents()",
+			wantResult: newOrFatal(t, nil),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
+func TestFluentFunctionCaseSensitivity(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantResult result.Value
+	}{
+		// Test that fluent functions are case-sensitive
+		{
+			name:       "Add fluent - capital A",
+			cql:        "4.Add(4)",
+			wantResult: newOrFatal(t, 8),
+		},
+		{
+			name:       "IsNull fluent - capital I and N",
+			cql:        "(null).IsNull()",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "ToString fluent - capital T and S",
+			cql:        "42.ToString()",
+			wantResult: newOrFatal(t, "42"),
+		},
+		{
+			name:       "Length fluent - capital L",
+			cql:        "{1, 2, 3}.Length()",
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "First fluent - capital F",
+			cql:        "{1, 2, 3}.First()",
+			wantResult: newOrFatal(t, 1),
+		},
+		{
+			name:       "Last fluent - capital L",
+			cql:        "{1, 2, 3}.Last()",
+			wantResult: newOrFatal(t, 3),
+		},
+		{
+			name:       "Exists fluent - capital E",
+			cql:        "{1, 2, 3}.Exists()",
+			wantResult: newOrFatal(t, true),
+		},
+		{
+			name:       "Distinct fluent - capital D",
+			cql:        "{1, 1, 2}.Distinct()",
+			wantResult: newOrFatal(t, result.List{
+				Value:      []result.Value{newOrFatal(t, int32(1)), newOrFatal(t, int32(2))},
+				StaticType: &types.List{ElementType: types.Integer},
+			}),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+
+		})
+	}
+}
+
 func TestInList(t *testing.T) {
 	tests := []struct {
 		name       string
