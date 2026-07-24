@@ -125,6 +125,72 @@ func TestEnd(t *testing.T) {
 	}
 }
 
+func TestProperlyIncludedInInterval(t *testing.T) {
+	tests := []struct {
+		name string
+		cql  string
+		want result.Value
+	}{
+		{
+			name: "Properly included Date intervals",
+			cql:  `Interval[@2020-01-05, @2020-01-15] properly included in Interval[@2020-01-01, @2020-01-20]`,
+			want: newOrFatal(t, true),
+		},
+		{
+			name: "Equal Date intervals not properly included",
+			cql:  `Interval[@2020-01-01, @2020-01-15] properly included in Interval[@2020-01-01, @2020-01-15]`,
+			want: newOrFatal(t, false),
+		},
+		{
+			name: "Not included Date intervals",
+			cql:  `Interval[@2020-01-01, @2020-01-25] properly included in Interval[@2020-01-05, @2020-01-15]`,
+			want: newOrFatal(t, false),
+		},
+		{
+			name: "Properly included Integer intervals",
+			cql:  `Interval[5, 15] properly included in Interval[1, 20]`,
+			want: newOrFatal(t, true),
+		},
+		{
+			name: "Equal Integer intervals not properly included",
+			cql:  `Interval[1, 15] properly included in Interval[1, 15]`,
+			want: newOrFatal(t, false),
+		},
+		{
+			name: "Not included Integer intervals",
+			cql:  `Interval[1, 25] properly included in Interval[5, 15]`,
+			want: newOrFatal(t, false),
+		},
+		{
+			name: "Null left interval",
+			cql:  `(null as Interval<Date>) properly included in Interval[@2020-01-01, @2020-01-15]`,
+			want: newOrFatal(t, nil),
+		},
+		{
+			name: "Null right interval",
+			cql:  `Interval[@2020-01-01, @2020-01-15] properly included in (null as Interval<Date>)`,
+			want: newOrFatal(t, nil),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.want, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Evaluate diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestStart(t *testing.T) {
 	tests := []struct {
 		name       string

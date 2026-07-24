@@ -1246,6 +1246,38 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
 				Result:   evalProperlyIncludedInList,
 			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.String}, &types.Interval{PointType: types.String}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				Result:   i.evalProperlyIncludedInInterval,
+			},
 		}, nil
 	case *model.Skip:
 		return []convert.Overload[evalBinarySignature]{
