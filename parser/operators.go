@@ -2475,7 +2475,7 @@ func durationModel(precision model.DateTimePrecision) func() model.IExpression {
 	return func() model.IExpression {
 		return &model.Duration{
 			UnaryExpression: &model.UnaryExpression{
-				Expression: model.ResultType(types.Quantity),
+				Expression: model.ResultType(types.Integer),
 			},
 			Precision: precision,
 		}

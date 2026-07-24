@@ -519,15 +519,67 @@ func (v *visitor) VisitBetweenExpression(ctx *cql.BetweenExpressionContext) mode
 }
 
 func (v *visitor) VisitDurationBetweenExpression(ctx *cql.DurationBetweenExpressionContext) model.IExpression {
-	// Get the operands
-	left := v.VisitExpression(ctx.ExpressionTerm(0))
-	right := v.VisitExpression(ctx.ExpressionTerm(1))
+	precision := stringToPrecision(pluralToSingularDateTimePrecision(ctx.PluralDateTimePrecision().GetText()))
 
-	// Return a plain BinaryExpression as expected by the tests
-	return &model.BinaryExpression{
-		Expression: model.ResultType(types.Integer),
-		Operands:   []model.IExpression{left, right},
+	// Check if this is "duration in X of expr" or "duration in X between expr1 and expr2"
+	// Look for the keyword "between" - if it exists, we have two expressions
+	hasBetween := false
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		child := ctx.GetChild(i)
+		if t, ok := child.(antlr.TerminalNode); ok && t.GetText() == "between" {
+			hasBetween = true
+			break
+		}
 	}
+
+	if hasBetween {
+		// This is "duration in X between expr1 and expr2"
+		exprTerms := ctx.AllExpressionTerm()
+		if len(exprTerms) == 2 {
+			// Get operands
+			left := v.VisitExpression(exprTerms[0])
+			right := v.VisitExpression(exprTerms[1])
+
+			// Return a DurationBetween model
+			return &model.DurationBetween{
+				Precision: precision,
+				BinaryExpression: &model.BinaryExpression{
+					Operands:   []model.IExpression{left, right},
+					Expression: model.ResultType(types.Integer),
+				},
+			}
+		}
+	} else {
+		// This is "duration in X of expr"
+		exprTerm := ctx.ExpressionTerm(0)
+		if exprTerm != nil {
+			// Get the interval expression
+			intervalExpr := v.VisitExpression(exprTerm)
+
+			// Extract the start of the interval
+			startExpr, err := v.resolveFunction("", "Start", []model.IExpression{intervalExpr}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			// Extract the end of the interval
+			endExpr, err := v.resolveFunction("", "End", []model.IExpression{intervalExpr}, false)
+			if err != nil {
+				return v.badExpression(err.Error(), ctx)
+			}
+
+			// Return a DurationBetween model with Start and End as operands
+			return &model.DurationBetween{
+				Precision: precision,
+				BinaryExpression: &model.BinaryExpression{
+					Operands:   []model.IExpression{startExpr, endExpr},
+					Expression: model.ResultType(types.Integer),
+				},
+			}
+		}
+	}
+
+	return v.badExpression("unsupported duration between expression", ctx)
 }
 
 func (v *visitor) VisitExistenceExpression(ctx *cql.ExistenceExpressionContext) model.IExpression {
@@ -722,15 +774,43 @@ func (v *visitor) VisitPointExtractorExpressionTerm(ctx *cql.PointExtractorExpre
 }
 
 func (v *visitor) VisitDurationExpressionTerm(ctx *cql.DurationExpressionTermContext) model.IExpression {
+	// Get the precision from the context
+	precision := model.UNSETDATETIMEPRECISION
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		child := ctx.GetChild(i)
+		if childText, ok := getStringFromChild(child); ok {
+			// Check for all possible plural forms
+			switch childText {
+			case "days":
+				precision = model.DAY
+			case "months":
+				precision = model.MONTH
+			case "years":
+				precision = model.YEAR
+			case "hours":
+				precision = model.HOUR
+			case "minutes":
+				precision = model.MINUTE
+			case "seconds":
+				precision = model.SECOND
+			case "milliseconds":
+				precision = model.MILLISECOND
+			case "weeks":
+				precision = model.WEEK
+			}
+		}
+	}
+
 	// Get the interval operand
 	intervalExpr := v.VisitExpression(ctx.ExpressionTerm())
 
-	// Return a UnaryExpression for Duration as expected by the tests
-	resultType := types.Integer
-
-	return &model.UnaryExpression{
-		Operand:    intervalExpr,
-		Expression: model.ResultType(resultType),
+	// Return a Duration model
+	return &model.Duration{
+		UnaryExpression: &model.UnaryExpression{
+			Operand:    intervalExpr,
+			Expression: model.ResultType(types.Integer),
+		},
+		Precision: precision,
 	}
 }
 

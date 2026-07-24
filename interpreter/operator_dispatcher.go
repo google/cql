@@ -813,6 +813,17 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   evalWidthInterval,
 			},
 		}, nil
+	case *model.Duration:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Date}},
+				Result:   i.evalDuration,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.DateTime}},
+				Result:   i.evalDuration,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported Unary Expression %v", m.GetName())
 	}
@@ -1081,6 +1092,25 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{types.Date, types.DateTime},
 				Result:   evalDifferenceBetweenDateTime,
+			},
+		}, nil
+	case *model.DurationBetween:
+		return []convert.Overload[evalBinarySignature]{
+			{
+				Operands: []types.IType{types.Date, types.Date},
+				Result:   evalDurationBetweenDate,
+			},
+			{
+				Operands: []types.IType{types.DateTime, types.DateTime},
+				Result:   evalDurationBetweenDateTime,
+			},
+			{
+				Operands: []types.IType{types.DateTime, types.Date},
+				Result:   evalDurationBetweenDateTime,
+			},
+			{
+				Operands: []types.IType{types.Date, types.DateTime},
+				Result:   evalDurationBetweenDateTime,
 			},
 		}, nil
 	case *model.In:

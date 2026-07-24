@@ -617,6 +617,11 @@ func TestQuery(t *testing.T) {
 			cql:        "define TESTRESULT: (null as Code) l return l.code",
 			wantResult: newOrFatal(t, nil),
 		},
+		{
+			name:       "Duration in days",
+			cql:        "define TESTRESULT: duration in days of Interval[@2012-01-01, @2012-01-31]",
+			wantResult: newOrFatal(t, 30),
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
