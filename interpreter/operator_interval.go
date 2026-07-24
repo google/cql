@@ -641,3 +641,485 @@ func evalWidthInterval(m model.IUnaryExpression, intervalObj result.Value) (resu
 	}
 	return result.Value{}, fmt.Errorf("internal error - unsupported point type in evalWidthInterval: %v", start.RuntimeType())
 }
+
+// evalExceptIntervalInteger handles except for integer intervals
+func (i *interpreter) evalExceptIntervalInteger(leftStart, leftEnd, rightStart, rightEnd result.Value, leftInterval *result.Interval) (result.Value, error) {
+	ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToInt32)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// No overlap cases
+	if le < rs || ls > re {
+		return createCleanInterval(leftStart, leftEnd, leftInterval.LowInclusive, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	// Complete overlap - left is completely contained in right
+	if rs <= ls && le <= re {
+		return result.New(nil)
+	}
+
+	// Properly contained check - right is properly contained in left
+	if ls < rs && re < le {
+		return result.New(nil)
+	}
+
+	// Partial overlap cases
+	if rs <= ls && ls < re && re < le {
+		// Left overlap: return [re+1, le]
+		newStart, err := result.New(re + 1)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(newStart, leftEnd, true, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	if ls < rs && rs < le && le <= re {
+		// Right overlap: return [ls, rs-1]
+		newEnd, err := result.New(rs - 1)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(leftStart, newEnd, leftInterval.LowInclusive, true, leftInterval.StaticType)
+	}
+
+	return result.New(nil)
+}
+
+// evalExceptIntervalDate handles except for date intervals
+func (i *interpreter) evalExceptIntervalDate(leftStart, leftEnd, rightStart, rightEnd result.Value, leftInterval *result.Interval) (result.Value, error) {
+	ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// No overlap cases
+	comp1, err := compareDateTimeWithPrecision(le, rs, model.DAY)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp2, err := compareDateTimeWithPrecision(ls, re, model.DAY)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if comp1 == leftBeforeRight || comp2 == leftAfterRight {
+		return createCleanInterval(leftStart, leftEnd, leftInterval.LowInclusive, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	// Complete overlap - left is completely contained in right
+	comp3, err := compareDateTimeWithPrecision(rs, ls, model.DAY)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp4, err := compareDateTimeWithPrecision(le, re, model.DAY)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if (comp3 == leftBeforeRight || comp3 == leftEqualRight) && (comp4 == leftBeforeRight || comp4 == leftEqualRight) {
+		return result.New(nil)
+	}
+
+	// Properly contained check - right is properly contained in left
+	comp5, err := compareDateTimeWithPrecision(ls, rs, model.DAY)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp6, err := compareDateTimeWithPrecision(re, le, model.DAY)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if comp5 == leftBeforeRight && comp6 == leftBeforeRight {
+		return result.New(nil)
+	}
+
+	// TODO: For dates, we need to handle partial overlaps carefully
+	return result.New(nil)
+}
+
+// Helper function to apply a conversion function to 4 values
+func applyToValues4[T any](v1, v2, v3, v4 result.Value, converter func(result.Value) (T, error)) (T, T, T, T, error) {
+	var zero T
+	r1, err := converter(v1)
+	if err != nil {
+		return zero, zero, zero, zero, err
+	}
+	r2, err := converter(v2)
+	if err != nil {
+		return zero, zero, zero, zero, err
+	}
+	r3, err := converter(v3)
+	if err != nil {
+		return zero, zero, zero, zero, err
+	}
+	r4, err := converter(v4)
+	if err != nil {
+		return zero, zero, zero, zero, err
+	}
+	return r1, r2, r3, r4, nil
+}
+
+// createCleanInterval creates a new interval without source metadata
+func createCleanInterval(low, high result.Value, lowInclusive, highInclusive bool, staticType *types.Interval) (result.Value, error) {
+	return result.New(result.Interval{
+		Low:           low,
+		High:          high,
+		LowInclusive:  lowInclusive,
+		HighInclusive: highInclusive,
+		StaticType:    staticType,
+	})
+}
+
+// evalExceptIntervalNumeral handles except for numeric intervals (Integer, Long, Decimal)
+func evalExceptIntervalNumeral(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	// Handle null inputs
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+
+	// Get interval bounds
+	leftStart, leftEnd, err := startAndEnd(lObj, nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+	rightStart, rightEnd, err := startAndEnd(rObj, nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// If any bound is null, return null
+	if result.IsNull(leftStart) || result.IsNull(leftEnd) || result.IsNull(rightStart) || result.IsNull(rightEnd) {
+		return result.New(nil)
+	}
+
+	// Get the interval type for creating result
+	leftInterval, err := result.ToInterval(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Dispatch based on point type
+	switch leftStart.RuntimeType() {
+	case types.Integer:
+		ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToInt32)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return evalExceptIntervalNumeralLogic(ls, le, rs, re, leftStart, leftEnd, &leftInterval, func(val int32) (result.Value, error) {
+			return result.New(val + 1)
+		}, func(val int32) (result.Value, error) {
+			return result.New(val - 1)
+		})
+	case types.Long:
+		ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToInt64)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return evalExceptIntervalNumeralLogic(ls, le, rs, re, leftStart, leftEnd, &leftInterval, func(val int64) (result.Value, error) {
+			return result.New(val + 1)
+		}, func(val int64) (result.Value, error) {
+			return result.New(val - 1)
+		})
+	case types.Decimal:
+		ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToFloat64)
+		if err != nil {
+			return result.Value{}, err
+		}
+		const epsilon = 1e-8
+		return evalExceptIntervalNumeralLogic(ls, le, rs, re, leftStart, leftEnd, &leftInterval, func(val float64) (result.Value, error) {
+			return result.New(val + epsilon)
+		}, func(val float64) (result.Value, error) {
+			return result.New(val - epsilon)
+		})
+	default:
+		return result.Value{}, fmt.Errorf("unsupported numeric interval point type for except: %v", leftStart.RuntimeType())
+	}
+}
+
+// evalExceptIntervalNumeralLogic contains the core logic for numeric interval except operations
+func evalExceptIntervalNumeralLogic[T comparable](ls, le, rs, re T, leftStart, leftEnd result.Value, leftInterval *result.Interval, successor func(T) (result.Value, error), predecessor func(T) (result.Value, error)) (result.Value, error) {
+	// No overlap cases
+	if compareValues(le, rs) < 0 || compareValues(ls, re) > 0 {
+		return createCleanInterval(leftStart, leftEnd, leftInterval.LowInclusive, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	// Complete overlap - left is completely contained in right
+	if compareValues(rs, ls) <= 0 && compareValues(le, re) <= 0 {
+		return result.New(nil)
+	}
+
+	// Properly contained check - right is properly contained in left
+	if compareValues(ls, rs) < 0 && compareValues(re, le) < 0 {
+		return result.New(nil)
+	}
+
+	// Partial overlap cases
+	if compareValues(rs, ls) <= 0 && compareValues(ls, re) < 0 && compareValues(re, le) < 0 {
+		// Left overlap: return [re+1, le]
+		newStart, err := successor(re)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(newStart, leftEnd, true, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	if compareValues(ls, rs) < 0 && compareValues(rs, le) < 0 && compareValues(le, re) <= 0 {
+		// Right overlap: return [ls, rs-1]
+		newEnd, err := predecessor(rs)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(leftStart, newEnd, leftInterval.LowInclusive, true, leftInterval.StaticType)
+	}
+
+	return result.New(nil)
+}
+
+// compareValues compares two values of the same type
+func compareValues[T comparable](a, b T) int {
+	switch any(a).(type) {
+	case int32:
+		aVal := any(a).(int32)
+		bVal := any(b).(int32)
+		if aVal < bVal {
+			return -1
+		} else if aVal > bVal {
+			return 1
+		}
+		return 0
+	case int64:
+		aVal := any(a).(int64)
+		bVal := any(b).(int64)
+		if aVal < bVal {
+			return -1
+		} else if aVal > bVal {
+			return 1
+		}
+		return 0
+	case float64:
+		aVal := any(a).(float64)
+		bVal := any(b).(float64)
+		if aVal < bVal {
+			return -1
+		} else if aVal > bVal {
+			return 1
+		}
+		return 0
+	default:
+		// For other types, use basic comparison
+		if any(a) == any(b) {
+			return 0
+		}
+		// This is a fallback - in practice we should handle all numeric types above
+		return -1
+	}
+}
+
+// evalExceptIntervalQuantity handles except for quantity intervals
+func evalExceptIntervalQuantity(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	// Handle null inputs
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+
+	// Get interval bounds
+	leftStart, leftEnd, err := startAndEnd(lObj, nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+	rightStart, rightEnd, err := startAndEnd(rObj, nil)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// If any bound is null, return null
+	if result.IsNull(leftStart) || result.IsNull(leftEnd) || result.IsNull(rightStart) || result.IsNull(rightEnd) {
+		return result.New(nil)
+	}
+
+	// Get the interval type for creating result
+	leftInterval, err := result.ToInterval(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToQuantity)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Check unit compatibility
+	if ls.Unit != rs.Unit || le.Unit != re.Unit {
+		return result.Value{}, fmt.Errorf("except operator received Quantities with differing unit values")
+	}
+
+	// No overlap cases
+	if le.Value < rs.Value || ls.Value > re.Value {
+		return createCleanInterval(leftStart, leftEnd, leftInterval.LowInclusive, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	// Complete overlap - left is completely contained in right
+	if rs.Value <= ls.Value && le.Value <= re.Value {
+		return result.New(nil)
+	}
+
+	// Properly contained check - right is properly contained in left
+	if ls.Value < rs.Value && re.Value < le.Value {
+		return result.New(nil)
+	}
+
+	// Partial overlap cases
+	const epsilon = 1e-8
+	if rs.Value <= ls.Value && ls.Value < re.Value && re.Value < le.Value {
+		// Left overlap: return [re+epsilon, le]
+		newStart, err := result.New(result.Quantity{Value: re.Value + epsilon, Unit: re.Unit})
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(newStart, leftEnd, true, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	if ls.Value < rs.Value && rs.Value < le.Value && le.Value <= re.Value {
+		// Right overlap: return [ls, rs-epsilon]
+		newEnd, err := result.New(result.Quantity{Value: rs.Value - epsilon, Unit: rs.Unit})
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(leftStart, newEnd, leftInterval.LowInclusive, true, leftInterval.StaticType)
+	}
+
+	return result.New(nil)
+}
+
+// evalExceptIntervalDateTime handles except for date/datetime/time intervals
+func (i *interpreter) evalExceptIntervalDateTime(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	// Handle null inputs
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+
+	// Get interval bounds
+	leftStart, leftEnd, err := startAndEnd(lObj, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+	rightStart, rightEnd, err := startAndEnd(rObj, &i.evaluationTimestamp)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// If any bound is null, return null
+	if result.IsNull(leftStart) || result.IsNull(leftEnd) || result.IsNull(rightStart) || result.IsNull(rightEnd) {
+		return result.New(nil)
+	}
+
+	// Get the interval type for creating result
+	leftInterval, err := result.ToInterval(lObj)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Determine the precision based on the point type
+	var precision model.DateTimePrecision
+	switch leftStart.RuntimeType() {
+	case types.Date:
+		precision = model.DAY
+	case types.DateTime:
+		precision = model.DAY
+	case types.Time:
+		precision = model.MILLISECOND
+	default:
+		return result.Value{}, fmt.Errorf("unsupported temporal type for except: %v", leftStart.RuntimeType())
+	}
+
+	ls, le, rs, re, err := applyToValues4(leftStart, leftEnd, rightStart, rightEnd, result.ToDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// No overlap cases
+	comp1, err := compareDateTimeWithPrecision(le, rs, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp2, err := compareDateTimeWithPrecision(ls, re, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if comp1 == leftBeforeRight || comp2 == leftAfterRight {
+		return createCleanInterval(leftStart, leftEnd, leftInterval.LowInclusive, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	// Complete overlap - left is completely contained in right
+	comp3, err := compareDateTimeWithPrecision(rs, ls, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp4, err := compareDateTimeWithPrecision(le, re, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if (comp3 == leftBeforeRight || comp3 == leftEqualRight) && (comp4 == leftBeforeRight || comp4 == leftEqualRight) {
+		return result.New(nil)
+	}
+
+	// Properly contained check - right is properly contained in left
+	comp5, err := compareDateTimeWithPrecision(ls, rs, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp6, err := compareDateTimeWithPrecision(re, le, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if comp5 == leftBeforeRight && comp6 == leftBeforeRight {
+		return result.New(nil)
+	}
+
+	// Partial overlap cases - need to handle date/time arithmetic
+	// Left overlap: rs <= ls < re < le -> return [re+1, le]
+	comp7, err := compareDateTimeWithPrecision(rs, ls, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp8, err := compareDateTimeWithPrecision(ls, re, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp9, err := compareDateTimeWithPrecision(re, le, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if (comp7 == leftBeforeRight || comp7 == leftEqualRight) && comp8 == leftBeforeRight && comp9 == leftBeforeRight {
+		// Calculate the successor of re
+		newStart, err := successor(rightEnd, &i.evaluationTimestamp)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(newStart, leftEnd, true, leftInterval.HighInclusive, leftInterval.StaticType)
+	}
+
+	// Right overlap: ls < rs < le <= re -> return [ls, rs-1]
+	comp10, err := compareDateTimeWithPrecision(ls, rs, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp11, err := compareDateTimeWithPrecision(rs, le, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	comp12, err := compareDateTimeWithPrecision(le, re, precision)
+	if err != nil {
+		return result.Value{}, err
+	}
+	if comp10 == leftBeforeRight && comp11 == leftBeforeRight && (comp12 == leftBeforeRight || comp12 == leftEqualRight) {
+		// Calculate the predecessor of rs
+		newEnd, err := predecessor(rightStart, &i.evaluationTimestamp)
+		if err != nil {
+			return result.Value{}, err
+		}
+		return createCleanInterval(leftStart, newEnd, leftInterval.LowInclusive, true, leftInterval.StaticType)
+	}
+
+	// TODO: if we get here, it's a complex case that we can't handle yet
+	return result.New(nil)
+}

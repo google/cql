@@ -1217,6 +1217,35 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
 				Result:   evalExcept,
 			},
+			// Interval overloads
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Integer}, &types.Interval{PointType: types.Integer}},
+				Result:   evalExceptIntervalNumeral,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Long}, &types.Interval{PointType: types.Long}},
+				Result:   evalExceptIntervalNumeral,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Decimal}, &types.Interval{PointType: types.Decimal}},
+				Result:   evalExceptIntervalNumeral,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Date}, &types.Interval{PointType: types.Date}},
+				Result:   i.evalExceptIntervalDateTime,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.DateTime}, &types.Interval{PointType: types.DateTime}},
+				Result:   i.evalExceptIntervalDateTime,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Time}, &types.Interval{PointType: types.Time}},
+				Result:   i.evalExceptIntervalDateTime,
+			},
+			{
+				Operands: []types.IType{&types.Interval{PointType: types.Quantity}, &types.Interval{PointType: types.Quantity}},
+				Result:   evalExceptIntervalQuantity,
+			},
 		}, nil
 	case *model.Intersect:
 		return []convert.Overload[evalBinarySignature]{
