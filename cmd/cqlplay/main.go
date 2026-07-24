@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"flag"
+
 	log "github.com/golang/glog"
 	"github.com/google/cql"
 	"github.com/google/cql/retriever/local"
@@ -107,7 +108,13 @@ func handleEvalCQL(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	elm, err := cql.Parse(req.Context(), []string{evalCQLReq.CQL, fhirHelpers}, cql.ParseConfig{DataModels: [][]byte{fhirDM}})
+	// Combine main CQL with additional libraries and FHIRHelpers
+	cqlInputs := append([]string{evalCQLReq.CQL}, evalCQLReq.Libraries...)
+	// TODO: now that users can supply their own libraries, we may wish to only add FHIRHelpers if
+	// it's not already included. Though, our parser really only works with FHIR Helpers 4.0.1.
+	cqlInputs = append(cqlInputs, fhirHelpers)
+
+	elm, err := cql.Parse(req.Context(), cqlInputs, cql.ParseConfig{DataModels: [][]byte{fhirDM}})
 	if err != nil {
 		sendError(w, fmt.Errorf("failed to parse: %w", err), http.StatusInternalServerError)
 		return
@@ -147,8 +154,9 @@ func sendError(w http.ResponseWriter, err error, code int) {
 }
 
 type evalCQLRequest struct {
-	CQL  string `json:"cql"`
-	Data string `json:"data"`
+	CQL       string   `json:"cql"`
+	Data      string   `json:"data"`
+	Libraries []string `json:"libraries"`
 }
 
 func getTerminologyProvider() (*terminology.LocalFHIRProvider, error) {
