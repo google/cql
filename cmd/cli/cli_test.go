@@ -43,6 +43,7 @@ func TestCLI(t *testing.T) {
 		fhirBundle                 string
 		fhirTerminology            string
 		fhirParameters             string
+		parameters                 string
 		returnPrivateDefs          bool
 		executionTimestampOverride string
 		wantTestResult             string
@@ -55,7 +56,7 @@ func TestCLI(t *testing.T) {
 			fhirBundle:      `{"resourceType": "Bundle", "id": "example", "entry": []}`,
 			fhirTerminology: `{"resourceType": "ValueSet", "id": "https://test/emptyVS", "url": "https://test/emptyVS"}`,
 			fhirParameters:  `{"resourceType": "Parameters", "id": "example", "parameter": []}`,
-			wantTestResult:  `{"@type": "System.Boolean", "value": true}`,
+			wantTestResult:  `"TESTRESULT": {"@type": "System.Boolean", "value": true}`,
 		},
 		{
 			name: "ReturnPrivateDefs is set and returned",
@@ -64,7 +65,7 @@ func TestCLI(t *testing.T) {
 			define private TESTRESULT: true`,
 			fhirBundle:        `{"resourceType": "Bundle", "id": "example", "entry": []}`,
 			returnPrivateDefs: true,
-			wantTestResult:    `{"@type": "System.Boolean", "value": true}`,
+			wantTestResult:    `"TESTRESULT": {"@type": "System.Boolean", "value": true}`,
 		},
 		{
 			name: "Can override execution timestamp",
@@ -73,7 +74,17 @@ func TestCLI(t *testing.T) {
 			define TESTRESULT: Now()`,
 			fhirBundle:                 `{"resourceType": "Bundle", "id": "example", "entry": []}`,
 			executionTimestampOverride: "@2018-02-02T15:02:03.000-04:00",
-			wantTestResult:             `{"@type": "System.DateTime","value": "@2018-02-02T15:02:03.000-04:00"}`,
+			wantTestResult:             `"TESTRESULT": {"@type": "System.DateTime","value": "@2018-02-02T15:02:03.000-04:00"}`,
+		},
+		{
+			name: "Parameters passed without FHIR parameters file",
+			cql: `
+			library TESTLIB
+			parameter ParamString String default 'default'
+			define TESTRESULT: ParamString`,
+			fhirBundle:     `{"resourceType": "Bundle", "id": "example", "entry": []}`,
+			parameters:     "TESTLIB.ParamString='override'",
+			wantTestResult: `"ParamString": {"@type": "System.String", "value": "override"}, "TESTRESULT": {"@type": "System.String", "value": "override"}`,
 		},
 	}
 	for _, tc := range tests {
@@ -103,6 +114,7 @@ func TestCLI(t *testing.T) {
 				JSONOutputDir:              testDirCfg.JSONOutputDir,
 				ReturnPrivateDefs:          tc.returnPrivateDefs,
 				ExecutionTimestampOverride: tc.executionTimestampOverride,
+				Parameters:                 tc.parameters,
 			}
 			if tc.fhirTerminology != "" {
 				cfg.FHIRTerminologyDir = testDirCfg.FHIRTerminologyDir
@@ -137,7 +149,7 @@ func TestCLI(t *testing.T) {
 				"evalResults": [
 					{
 						"expressionDefinitions": {
-							"TESTRESULT": %s
+							%s
 						},
 						"libName": "TESTLIB",
 						"libVersion": ""

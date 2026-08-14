@@ -202,12 +202,19 @@ func mainWrapper(ctx context.Context, cfg cliConfig) error {
 		config.Parameters = params
 	}
 	if cfg.Parameters != "" {
+		if config.Parameters == nil {
+			config.Parameters = make(map[result.DefKey]string)
+		}
 		for _, param := range strings.Split(cfg.Parameters, ",") {
 			parts := strings.Split(param, "=")
 			if len(parts) != 2 {
 				return fmt.Errorf("--parameters was passed an invalid input string: %s", param)
 			}
-			config.Parameters[result.DefKey{Name: parts[0]}] = parts[1]
+			key := result.DefKey{Name: parts[0]}
+			if nameParts := strings.Split(parts[0], "."); len(nameParts) == 2 {
+				key = result.DefKey{Library: result.LibKey{Name: nameParts[0]}, Name: nameParts[1]}
+			}
+			config.Parameters[key] = parts[1]
 		}
 	}
 	elm, err := cql.Parse(ctx, cqlLibs, config)
@@ -256,7 +263,7 @@ func runCQLWithBundleDir(ctx context.Context, elm *cql.ELM, fhirBundleDir string
 		return err
 	}
 	if len(bundleFilePaths) == 0 {
-		fmt.Printf("no files found in FHIR bundle directory %s, exiting", fhirBundleDir)
+		fmt.Printf("no files found in FHIR bundle directory %s, exiting\n", fhirBundleDir)
 		return nil
 	}
 
