@@ -1584,8 +1584,11 @@ func (i *interpreter) evalModeDate(_ model.IUnaryExpression, operand result.Valu
 	}
 
 	// Count occurrences of each value
-	counts := make(map[string]int)
-	dateMap := make(map[string]result.Date)
+	type dateKey struct {
+		year, month, day int
+	}
+	counts := make(map[dateKey]int)
+	dateMap := make(map[dateKey]result.Date)
 
 	for _, elem := range l {
 		if result.IsNull(elem) {
@@ -1596,8 +1599,12 @@ func (i *interpreter) evalModeDate(_ model.IUnaryExpression, operand result.Valu
 			return result.Value{}, err
 		}
 
-		// Format date as string to use as map key
-		key := fmt.Sprintf("%d-%02d-%02d", v.Date.Year(), v.Date.Month(), v.Date.Day())
+		// Use a struct key to avoid fmt.Sprintf overhead
+		key := dateKey{
+			year:  v.Date.Year(),
+			month: int(v.Date.Month()),
+			day:   v.Date.Day(),
+		}
 		counts[key]++
 		dateMap[key] = v
 	}
@@ -1607,7 +1614,7 @@ func (i *interpreter) evalModeDate(_ model.IUnaryExpression, operand result.Valu
 	}
 
 	// Find the most frequent value
-	var modeKey string
+	var modeKey dateKey
 	maxCount := 0
 	for key, count := range counts {
 		if count > maxCount {
@@ -1631,8 +1638,11 @@ func (i *interpreter) evalModeDateTime(_ model.IUnaryExpression, operand result.
 	}
 
 	// Count occurrences of each value
-	counts := make(map[string]int)
-	dtMap := make(map[string]result.DateTime)
+	type dateTimeKey struct {
+		year, month, day, hour, minute, second, millisecond int
+	}
+	counts := make(map[dateTimeKey]int)
+	dtMap := make(map[dateTimeKey]result.DateTime)
 
 	for _, elem := range l {
 		if result.IsNull(elem) {
@@ -1643,11 +1653,16 @@ func (i *interpreter) evalModeDateTime(_ model.IUnaryExpression, operand result.
 			return result.Value{}, err
 		}
 
-		// Format datetime as string to use as map key
-		key := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d.%03d",
-			v.Date.Year(), v.Date.Month(), v.Date.Day(),
-			v.Date.Hour(), v.Date.Minute(), v.Date.Second(),
-			v.Date.Nanosecond()/1000000)
+		// Use a struct key to avoid fmt.Sprintf overhead
+		key := dateTimeKey{
+			year:        v.Date.Year(),
+			month:       int(v.Date.Month()),
+			day:         v.Date.Day(),
+			hour:        v.Date.Hour(),
+			minute:      v.Date.Minute(),
+			second:      v.Date.Second(),
+			millisecond: v.Date.Nanosecond() / 1000000,
+		}
 		counts[key]++
 		dtMap[key] = v
 	}
@@ -1657,7 +1672,7 @@ func (i *interpreter) evalModeDateTime(_ model.IUnaryExpression, operand result.
 	}
 
 	// Find the most frequent value
-	var modeKey string
+	var modeKey dateTimeKey
 	maxCount := 0
 	for key, count := range counts {
 		if count > maxCount {
@@ -1681,8 +1696,11 @@ func (i *interpreter) evalModeTime(_ model.IUnaryExpression, operand result.Valu
 	}
 
 	// Count occurrences of each value
-	counts := make(map[string]int)
-	timeMap := make(map[string]result.Time)
+	type timeKey struct {
+		hour, minute, second, millisecond int
+	}
+	counts := make(map[timeKey]int)
+	timeMap := make(map[timeKey]result.Time)
 
 	for _, elem := range l {
 		if result.IsNull(elem) {
@@ -1693,10 +1711,13 @@ func (i *interpreter) evalModeTime(_ model.IUnaryExpression, operand result.Valu
 			return result.Value{}, err
 		}
 
-		// Format time as string to use as map key
-		key := fmt.Sprintf("%02d:%02d:%02d.%03d",
-			v.Date.Hour(), v.Date.Minute(), v.Date.Second(),
-			v.Date.Nanosecond()/1000000)
+		// Use a struct key to avoid fmt.Sprintf overhead
+		key := timeKey{
+			hour:        v.Date.Hour(),
+			minute:      v.Date.Minute(),
+			second:      v.Date.Second(),
+			millisecond: v.Date.Nanosecond() / 1000000,
+		}
 		counts[key]++
 		timeMap[key] = v
 	}
@@ -1706,7 +1727,7 @@ func (i *interpreter) evalModeTime(_ model.IUnaryExpression, operand result.Valu
 	}
 
 	// Find the most frequent value
-	var modeKey string
+	var modeKey timeKey
 	maxCount := 0
 	for key, count := range counts {
 		if count > maxCount {

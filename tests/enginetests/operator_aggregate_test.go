@@ -1364,6 +1364,21 @@ func TestMode(t *testing.T) {
 			cql:        "Mode({'a', 'b', 'c', 'b', 'a', 'b'})",
 			wantResult: newOrFatal(t, "b"),
 		},
+		{
+			name:       "Mode({@T01:01, @T01:02, @T01:01})",
+			cql:        "Mode({@T01:01, @T01:02, @T01:01})",
+			wantResult: newOrFatal(t, result.Time{Date: time.Date(0, 1, 1, 1, 1, 0, 0, time.UTC), Precision: model.MINUTE}),
+		},
+		{
+			name:       "Mode({@2012-01-01, @2012-01-02, @2012-01-01})",
+			cql:        "Mode({@2012-01-01, @2012-01-02, @2012-01-01})",
+			wantResult: newOrFatal(t, result.Date{Date: time.Date(2012, 1, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+		},
+		{
+			name:       "Mode({@2012-01-01T01:01, @2012-01-01T01:02, @2012-01-01T01:01})",
+			cql:        "Mode({@2012-01-01T01:01, @2012-01-01T01:02, @2012-01-01T01:01})",
+			wantResult: newOrFatal(t, result.DateTime{Date: time.Date(2012, 1, 1, 1, 1, 0, 0, time.UTC), Precision: model.MINUTE}),
+		},
 	}
 
 	for _, tc := range tests {
