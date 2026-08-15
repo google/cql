@@ -199,6 +199,15 @@ func TestMalformedCQLSingleLibrary(t *testing.T) {
 			errCount:    1,
 		},
 		{
+			name: "Invalid Collapse Expression",
+			cql: dedent.Dedent(`
+			using FHIR version '4.0.1'
+			define "Param": collapse 4
+				`),
+			errContains: []string{" could not resolve Collapse(System.Integer)"},
+			errCount:    1,
+		},
+		{
 			name: "Using Declaration with Local Identifier",
 			cql: dedent.Dedent(`
 			using FHIR version '4.0.1' called FIRE
