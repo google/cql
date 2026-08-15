@@ -863,6 +863,131 @@ func validatePrecisionByType(precision model.DateTimePrecision, allowUnset bool,
 	}
 }
 
+// evalDateTimeComponentFrom extracts a specific component (year, month, day, etc.) from a date or datetime value
+func (i *interpreter) evalDateTimeComponentFrom(m model.IUnaryExpression, val result.Value) (result.Value, error) {
+	dtComponent, ok := m.(*model.DateTimeComponentFrom)
+	if !ok {
+		return result.Value{}, fmt.Errorf("expected DateTimeComponentFrom expression, got %T", m)
+	}
+
+	// Handle null values
+	if result.IsNull(val) {
+		return result.New(nil)
+	}
+
+	// Determine the actual runtime type first to avoid conversion issues
+	switch val.RuntimeType() {
+	case types.DateTime:
+		dt, err := result.ToDateTime(val)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		switch dtComponent.Component {
+		case model.TIMEZONEOFFSET:
+			// Timezone offset is always available for DateTime values regardless of precision
+			_, offset := dt.Date.Zone()
+			offsetHours := float64(offset) / 3600.0
+			return result.New(offsetHours)
+		default:
+			// Check if the precision is sufficient for other components
+			if !precisionGreaterOrEqual(dtComponent.Component, dt.Precision) {
+				return result.New(nil)
+			}
+		}
+
+		switch dtComponent.Component {
+		case model.YEAR:
+			return result.New(int32(dt.Date.Year()))
+		case model.MONTH:
+			return result.New(int32(dt.Date.Month()))
+		case model.DAY:
+			return result.New(int32(dt.Date.Day()))
+		case model.HOUR:
+			return result.New(int32(dt.Date.Hour()))
+		case model.MINUTE:
+			return result.New(int32(dt.Date.Minute()))
+		case model.SECOND:
+			return result.New(int32(dt.Date.Second()))
+		case model.MILLISECOND:
+			return result.New(int32(dt.Date.Nanosecond() / 1000000))
+		case model.TIMEZONEOFFSET:
+			// Extract timezone offset in hours from UTC
+			_, offset := dt.Date.Zone()
+			offsetHours := float64(offset) / 3600.0
+			return result.New(offsetHours)
+		default:
+			return result.Value{}, fmt.Errorf("unsupported date/time component: %v", dtComponent.Component)
+		}
+		
+	case types.Date:
+		d, err := result.ToDate(val)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		// Check if the precision is sufficient
+		if !precisionGreaterOrEqual(dtComponent.Component, d.Precision) {
+			return result.New(nil)
+		}
+
+		switch dtComponent.Component {
+		case model.YEAR:
+			return result.New(int32(d.Date.Year()))
+		case model.MONTH:
+			return result.New(int32(d.Date.Month()))
+		case model.DAY:
+			return result.New(int32(d.Date.Day()))
+		case model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND:
+			// These components don't exist in Date values
+			return result.New(nil)
+		default:
+			return result.Value{}, fmt.Errorf("unsupported date component: %v", dtComponent.Component)
+		}
+		
+	case types.Time:
+		t, err := result.ToTime(val)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		switch dtComponent.Component {
+		case model.YEAR, model.MONTH, model.DAY:
+			// These components don't exist in Time values
+			return result.New(nil)
+		case model.HOUR:
+			// Check if the precision is sufficient
+			if !precisionGreaterOrEqual(dtComponent.Component, t.Precision) {
+				return result.New(nil)
+			}
+			return result.New(int32(t.Date.Hour()))
+		case model.MINUTE:
+			// Check if the precision is sufficient
+			if !precisionGreaterOrEqual(dtComponent.Component, t.Precision) {
+				return result.New(nil)
+			}
+			return result.New(int32(t.Date.Minute()))
+		case model.SECOND:
+			// Check if the precision is sufficient
+			if !precisionGreaterOrEqual(dtComponent.Component, t.Precision) {
+				return result.New(nil)
+			}
+			return result.New(int32(t.Date.Second()))
+		case model.MILLISECOND:
+			// Check if the precision is sufficient
+			if !precisionGreaterOrEqual(dtComponent.Component, t.Precision) {
+				return result.New(nil)
+			}
+			return result.New(int32(t.Date.Nanosecond() / 1000000))
+		default:
+			return result.Value{}, fmt.Errorf("unsupported time component: %v", dtComponent.Component)
+		}
+		
+	default:
+		return result.Value{}, fmt.Errorf("operand is not a DateTime, Date, or Time value, got %v", val.RuntimeType())
+	}
+}
+
 // precisionGreaterOrEqual returns true if l is of greater or equal precision than r.
 func precisionGreaterOrEqual(l, r model.DateTimePrecision) bool {
 	if l == r {

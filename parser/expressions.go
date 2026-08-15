@@ -188,23 +188,95 @@ func (v *visitor) VisitParenthesizedTerm(ctx *cql.ParenthesizedTermContext) mode
 }
 
 func (v *visitor) VisitTimeUnitExpressionTerm(ctx *cql.TimeUnitExpressionTermContext) model.IExpression {
-	// parses statements like: "date from expression"
-	// TODO: b/301606416 - Implement time units where left is dateTimePrecision.
+	// parses statements like: "date from expression" or "year from date"
 	dtc := ctx.GetChild(0).(*cql.DateTimeComponentContext)
+	
+	var dateTimeComponent string
 	switch component := dtc.GetChild(0).(type) {
 	case antlr.TerminalNode:
-		dateTimeComponent := component.GetText()
-		switch dateTimeComponent {
-		case "date":
-			return &model.ToDate{
-				UnaryExpression: &model.UnaryExpression{
-					Operand:    v.VisitExpression(ctx.ExpressionTerm()),
-					Expression: model.ResultType(types.Date),
-				},
-			}
+		// Handle case like "date from expression"
+		dateTimeComponent = component.GetText()
+	case *cql.DateTimePrecisionContext:
+		// Handle case like "year from date", "month from date", etc.
+		dateTimeComponent = component.GetText()
+	default:
+		return v.badExpression(fmt.Sprintf("unsupported date time component conversion (e.g. X in 'X from expression'). got: %s, supported components: date, year, month, day, hour, minute, second, millisecond", dtc.GetText()), ctx)
+	}
+
+	switch dateTimeComponent {
+	case "date":
+		return &model.ToDate{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Date),
+			},
+		}
+	case "year":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.YEAR,
+		}
+	case "month":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.MONTH,
+		}
+	case "day":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.DAY,
+		}
+	case "hour":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.HOUR,
+		}
+	case "minute":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.MINUTE,
+		}
+	case "second":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.SECOND,
+		}
+	case "millisecond":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Integer),
+			},
+			Component: model.MILLISECOND,
+		}
+	case "timezoneoffset":
+		return &model.DateTimeComponentFrom{
+			UnaryExpression: &model.UnaryExpression{
+				Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+				Expression: model.ResultType(types.Decimal),
+			},
+			Component: model.TIMEZONEOFFSET,
 		}
 	}
-	return v.badExpression(fmt.Sprintf("unsupported date time component conversion (e.g. X in 'X from expression'). got: %s, only %v supported", dtc.GetText(), "date"), ctx)
+	return v.badExpression(fmt.Sprintf("unsupported date time component conversion (e.g. X in 'X from expression'). got: %s, supported components: date, year, month, day, hour, minute, second, millisecond, timezoneoffset", dtc.GetText()), ctx)
 }
 
 func (v *visitor) VisitTupleSelectorTerm(ctx *cql.TupleSelectorTermContext) model.IExpression {
