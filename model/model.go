@@ -1696,3 +1696,27 @@ func (w *Width) GetName() string { return "Width" }
 
 // GetName returns the name of the system operator.
 func (d *Duration) GetName() string { return "Duration" }
+
+// DateTimeComponentFrom extracts a component from a DateTime value.
+// https://cql.hl7.org/09-b-cqlreference.html#datetime-component-from
+type DateTimeComponentFrom struct {
+	*UnaryExpression
+	Precision DateTimePrecision
+}
+
+var _ IUnaryExpression = &DateTimeComponentFrom{}
+
+// GetName returns the name of the system operator.
+func (d *DateTimeComponentFrom) GetName() string { return "DateTimeComponentFrom" }
+
+// TimeComponentFrom extracts a component from a Time value.
+// https://cql.hl7.org/09-b-cqlreference.html#datetime-component-from
+type TimeComponentFrom struct {
+	*UnaryExpression
+	Precision DateTimePrecision
+}
+
+var _ IUnaryExpression = &TimeComponentFrom{}
+
+// GetName returns the name of the system operator.
+func (t *TimeComponentFrom) GetName() string { return "TimeComponentFrom" }

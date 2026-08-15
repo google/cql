@@ -551,6 +551,32 @@ func evalCompareDateTime(m model.IBinaryExpression, lObj, rObj result.Value) (re
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", m)
 }
 
+// op(left Time, right Time) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#less
+// https://cql.hl7.org/09-b-cqlreference.html#less-or-equal
+// https://cql.hl7.org/09-b-cqlreference.html#greater
+// https://cql.hl7.org/09-b-cqlreference.html#greater-or-equal
+func evalCompareTime(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	l, r, err := applyToValues(lObj, rObj, result.ToTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch m.(type) {
+	case *model.Less:
+		return beforeTime(l, r)
+	case *model.LessOrEqual:
+		return beforeOrEqualTime(l, r)
+	case *model.Greater:
+		return afterTime(l, r)
+	case *model.GreaterOrEqual:
+		return afterOrEqualTime(l, r)
+	}
+	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", m)
+}
+
 func compare[n cmp.Ordered](m model.IBinaryExpression, l, r n) (result.Value, error) {
 	switch m.(type) {
 	case *model.Less:
@@ -597,4 +623,39 @@ func evalCompareQuantity(m model.IBinaryExpression, lObj, rObj result.Value) (re
 		return result.New(nil)
 	}
 	return compare(m, convertedVal, r.Value)
+}
+
+// evalEquivalentTime evaluates the equivalent operator for Time values.
+// https://cql.hl7.org/09-b-cqlreference.html#equivalent-3
+func evalEquivalentTime(m model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) && result.IsNull(rObj) {
+		return result.New(true)
+	}
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(false)
+	}
+	l, r, err := applyToValues(lObj, rObj, result.ToTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+
+	compareResult, err := compareDateTime(lDateTime, rDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(false)
+	case leftEqualRight:
+		return result.New(true)
+	case leftAfterRight:
+		return result.New(false)
+	case insufficientPrecision:
+		return result.New(false)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in evalEquivalentTime")
 }

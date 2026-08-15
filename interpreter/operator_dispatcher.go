@@ -732,6 +732,28 @@ func (i *interpreter) unaryOverloads(m model.IUnaryExpression) ([]convert.Overlo
 				Result:   i.evalGeometricMeanQuantity,
 			},
 		}, nil
+	case *model.DateTimeComponentFrom:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.DateTime},
+				Result:   evalDateTimeComponentFrom,
+			},
+			{
+				Operands: []types.IType{types.Date},
+				Result:   evalDateTimeComponentFrom,
+			},
+			{
+				Operands: []types.IType{types.Time},
+				Result:   evalDateTimeComponentFrom,
+			},
+		}, nil
+	case *model.TimeComponentFrom:
+		return []convert.Overload[evalUnarySignature]{
+			{
+				Operands: []types.IType{types.Time},
+				Result:   evalTimeComponentFrom,
+			},
+		}, nil
 	case *model.Product:
 		return []convert.Overload[evalUnarySignature]{
 			{
@@ -962,6 +984,10 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Operands: []types.IType{types.Date, types.Date},
 				Result:   evalEquivalentDateTime,
 			},
+			{
+				Operands: []types.IType{types.Time, types.Time},
+				Result:   evalEquivalentTime,
+			},
 			// The parser will make sure the List<T>, List<T> have correctly matching or converted T.
 			{
 				Operands: []types.IType{&types.List{ElementType: types.Any}, &types.List{ElementType: types.Any}},
@@ -1008,6 +1034,10 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 				Result:   evalCompareDateTime,
 			},
 			{
+				Operands: []types.IType{types.Time, types.Time},
+				Result:   evalCompareTime,
+			},
+			{
 				Operands: []types.IType{types.Quantity, types.Quantity},
 				Result:   evalCompareQuantity,
 			},
@@ -1021,6 +1051,10 @@ func (i *interpreter) binaryOverloads(m model.IBinaryExpression) ([]convert.Over
 			{
 				Operands: []types.IType{types.DateTime, types.DateTime},
 				Result:   evalCompareDateTimeWithPrecision,
+			},
+			{
+				Operands: []types.IType{types.Time, types.Time},
+				Result:   evalCompareTimeWithPrecision,
 			},
 			{
 				Operands: []types.IType{types.Date, &types.Interval{PointType: types.Date}},

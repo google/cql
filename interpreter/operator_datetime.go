@@ -99,6 +99,41 @@ func evalCompareDateTimeWithPrecision(b model.IBinaryExpression, lObj, rObj resu
 	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", b)
 }
 
+// op(left Time, right Time) Boolean
+// https://cql.hl7.org/09-b-cqlreference.html#after
+// https://cql.hl7.org/09-b-cqlreference.html#before
+// https://cql.hl7.org/09-b-cqlreference.html#same-or-after-1
+// https://cql.hl7.org/09-b-cqlreference.html#same-or-before-1
+func evalCompareTimeWithPrecision(b model.IBinaryExpression, lObj, rObj result.Value) (result.Value, error) {
+	if result.IsNull(lObj) || result.IsNull(rObj) {
+		return result.New(nil)
+	}
+	p, err := precisionFromBinaryExpression(b)
+	if err != nil {
+		return result.Value{}, err
+	}
+	allowUnsetPrec := true
+	if err := validateTimePrecision(p, allowUnsetPrec); err != nil {
+		return result.Value{}, err
+	}
+	l, r, err := applyToValues(lObj, rObj, result.ToTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+
+	switch b.(type) {
+	case *model.After:
+		return afterTimeWithPrecision(l, r, p)
+	case *model.Before:
+		return beforeTimeWithPrecision(l, r, p)
+	case *model.SameOrAfter:
+		return afterOrEqualTimeWithPrecision(l, r, p)
+	case *model.SameOrBefore:
+		return beforeOrEqualTimeWithPrecision(l, r, p)
+	}
+	return result.Value{}, fmt.Errorf("internal error - unsupported Binary Comparison Expression %v", b)
+}
+
 func precisionFromBinaryExpression(b model.IBinaryExpression) (model.DateTimePrecision, error) {
 	var p model.DateTimePrecision
 	switch t := b.(type) {
@@ -278,6 +313,202 @@ func beforeOrEqualDateTimeWithPrecision(l, r result.DateTime, p model.DateTimePr
 		return result.New(nil)
 	}
 	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in dateTimeBefore")
+}
+
+// afterTime returns whether or not the given Time comes after the right Time.
+// Returns null in cases where values cannot be compared such as insufficient precision.
+func afterTime(l, r result.Time) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTime(lDateTime, rDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(false)
+	case leftEqualRight:
+		return result.New(false)
+	case leftAfterRight:
+		return result.New(true)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in afterTime")
+}
+
+// beforeTime returns whether or not the given Time comes before the right Time.
+// Returns null in cases where values cannot be compared such as insufficient precision.
+func beforeTime(l, r result.Time) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTime(lDateTime, rDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(true)
+	case leftEqualRight:
+		return result.New(false)
+	case leftAfterRight:
+		return result.New(false)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in beforeTime")
+}
+
+// afterOrEqualTime returns whether or not the given Time is on or after the right Time.
+// Returns null in cases where values cannot be compared such as insufficient precision.
+func afterOrEqualTime(l, r result.Time) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTime(lDateTime, rDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(false)
+	case leftEqualRight:
+		return result.New(true)
+	case leftAfterRight:
+		return result.New(true)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in afterOrEqualTime")
+}
+
+// beforeOrEqualTime returns whether or not the given Time is on or before the right Time.
+// Returns null in cases where values cannot be compared such as insufficient precision.
+func beforeOrEqualTime(l, r result.Time) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTime(lDateTime, rDateTime)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(true)
+	case leftEqualRight:
+		return result.New(true)
+	case leftAfterRight:
+		return result.New(false)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in beforeOrEqualTime")
+}
+
+// afterTimeWithPrecision returns whether or not the given Time comes after the right Time
+// up to the given precision. Returns null in cases where values cannot be compared
+// such as insufficient precision.
+func afterTimeWithPrecision(l, r result.Time, p model.DateTimePrecision) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTimeWithPrecision(lDateTime, rDateTime, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(false)
+	case leftEqualRight:
+		return result.New(false)
+	case leftAfterRight:
+		return result.New(true)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in afterTimeWithPrecision")
+}
+
+// beforeTimeWithPrecision returns whether or not the given Time comes before the right Time
+// up to the given precision. Returns null in cases where values cannot be compared
+// such as insufficient precision.
+func beforeTimeWithPrecision(l, r result.Time, p model.DateTimePrecision) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTimeWithPrecision(lDateTime, rDateTime, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(true)
+	case leftEqualRight:
+		return result.New(false)
+	case leftAfterRight:
+		return result.New(false)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in beforeTimeWithPrecision")
+}
+
+// afterOrEqualTimeWithPrecision returns whether or not the given Time is on or after the right Time
+// up to the given precision. Returns null in cases where values cannot be compared
+// such as insufficient precision.
+func afterOrEqualTimeWithPrecision(l, r result.Time, p model.DateTimePrecision) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTimeWithPrecision(lDateTime, rDateTime, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(false)
+	case leftEqualRight:
+		return result.New(true)
+	case leftAfterRight:
+		return result.New(true)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in afterOrEqualTimeWithPrecision")
+}
+
+// beforeOrEqualTimeWithPrecision returns whether or not the given Time is on or before the right Time
+// up to the given precision. Returns null in cases where values cannot be compared
+// such as insufficient precision.
+func beforeOrEqualTimeWithPrecision(l, r result.Time, p model.DateTimePrecision) (result.Value, error) {
+	// Convert Time to DateTime for comparison
+	lDateTime := result.DateTime{Date: l.Date, Precision: l.Precision}
+	rDateTime := result.DateTime{Date: r.Date, Precision: r.Precision}
+	
+	compareResult, err := compareDateTimeWithPrecision(lDateTime, rDateTime, p)
+	if err != nil {
+		return result.Value{}, err
+	}
+	switch compareResult {
+	case leftBeforeRight:
+		return result.New(true)
+	case leftEqualRight:
+		return result.New(true)
+	case leftAfterRight:
+		return result.New(false)
+	case insufficientPrecision:
+		return result.New(nil)
+	}
+	return result.Value{}, errors.New("internal error - reached the end of timeComparison enum in beforeOrEqualTimeWithPrecision")
 }
 
 // CanConvertQuantity(left Quantity, right String) Boolean
@@ -842,6 +1073,14 @@ func validateDatePrecision(precision model.DateTimePrecision, allowUnset bool) e
 	return validatePrecision(precision, allowed)
 }
 
+func validateTimePrecision(precision model.DateTimePrecision, allowUnset bool) error {
+	allowed := []model.DateTimePrecision{model.HOUR, model.MINUTE, model.SECOND, model.MILLISECOND}
+	if allowUnset {
+		allowed = append(allowed, model.UNSETDATETIMEPRECISION)
+	}
+	return validatePrecision(precision, allowed)
+}
+
 // validatePrecision returns an error if p is not in validPs.
 func validatePrecision(p model.DateTimePrecision, validPs []model.DateTimePrecision) error {
 	for _, v := range validPs {
@@ -930,4 +1169,148 @@ func convertQuantityUpToPrecision(q result.Quantity, wantPrecision model.DateTim
 		}
 	}
 	return result.Quantity{}, fmt.Errorf("error: failed to reach desired precision when adding Date/DateTime to Quantity with precisions want: %v, got: %v", wantPrecision, q.Unit)
+}
+
+// evalDateTimeComponentFrom extracts a component from a DateTime, Date, or Time value.
+// https://cql.hl7.org/09-b-cqlreference.html#year-from
+// https://cql.hl7.org/09-b-cqlreference.html#month-from
+// https://cql.hl7.org/09-b-cqlreference.html#day-from
+// https://cql.hl7.org/09-b-cqlreference.html#hour-from
+// https://cql.hl7.org/09-b-cqlreference.html#minute-from
+// https://cql.hl7.org/09-b-cqlreference.html#second-from
+// https://cql.hl7.org/09-b-cqlreference.html#millisecond-from
+func evalDateTimeComponentFrom(m model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	
+	componentFrom, ok := m.(*model.DateTimeComponentFrom)
+	if !ok {
+		return result.Value{}, fmt.Errorf("internal error - expected DateTimeComponentFrom, got %T", m)
+	}
+	
+	precision := componentFrom.Precision
+	
+	// Handle different operand types
+	switch obj.RuntimeType() {
+	case types.DateTime:
+		dt, err := result.ToDateTime(obj)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		// Check if the DateTime has sufficient precision for the requested component
+		if !precisionGreaterOrEqual(dt.Precision, precision) {
+			return result.New(nil)
+		}
+		
+		switch precision {
+		case model.YEAR:
+			return result.New(int32(dt.Date.Year()))
+		case model.MONTH:
+			return result.New(int32(dt.Date.Month()))
+		case model.DAY:
+			return result.New(int32(dt.Date.Day()))
+		case model.HOUR:
+			return result.New(int32(dt.Date.Hour()))
+		case model.MINUTE:
+			return result.New(int32(dt.Date.Minute()))
+		case model.SECOND:
+			return result.New(int32(dt.Date.Second()))
+		case model.MILLISECOND:
+			return result.New(int32(dt.Date.UnixMilli() % 1000))
+		default:
+			return result.Value{}, fmt.Errorf("internal error - unsupported DateTime component precision %v", precision)
+		}
+		
+	case types.Date:
+		d, err := result.ToDate(obj)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		// Check if the Date has sufficient precision for the requested component
+		if !precisionGreaterOrEqual(d.Precision, precision) {
+			return result.New(nil)
+		}
+		
+		switch precision {
+		case model.YEAR:
+			return result.New(int32(d.Date.Year()))
+		case model.MONTH:
+			return result.New(int32(d.Date.Month()))
+		case model.DAY:
+			return result.New(int32(d.Date.Day()))
+		default:
+			return result.Value{}, fmt.Errorf("internal error - unsupported Date component precision %v", precision)
+		}
+		
+	case types.Time:
+		t, err := result.ToTime(obj)
+		if err != nil {
+			return result.Value{}, err
+		}
+		
+		// Check if the Time has sufficient precision for the requested component
+		if !precisionGreaterOrEqual(t.Precision, precision) {
+			return result.New(nil)
+		}
+		
+		switch precision {
+		case model.HOUR:
+			return result.New(int32(t.Date.Hour()))
+		case model.MINUTE:
+			return result.New(int32(t.Date.Minute()))
+		case model.SECOND:
+			return result.New(int32(t.Date.Second()))
+		case model.MILLISECOND:
+			return result.New(int32(t.Date.UnixMilli() % 1000))
+		default:
+			return result.Value{}, fmt.Errorf("internal error - unsupported Time component precision %v", precision)
+		}
+		
+	default:
+		return result.Value{}, fmt.Errorf("internal error - DateTimeComponentFrom called with unsupported type %v", obj.RuntimeType())
+	}
+}
+
+// evalTimeComponentFrom extracts a component from a Time value.
+// https://cql.hl7.org/09-b-cqlreference.html#hour-from
+// https://cql.hl7.org/09-b-cqlreference.html#minute-from
+// https://cql.hl7.org/09-b-cqlreference.html#second-from
+// https://cql.hl7.org/09-b-cqlreference.html#millisecond-from
+func evalTimeComponentFrom(m model.IUnaryExpression, obj result.Value) (result.Value, error) {
+	if result.IsNull(obj) {
+		return result.New(nil)
+	}
+	
+	t, err := result.ToTime(obj)
+	if err != nil {
+		return result.Value{}, err
+	}
+	
+	componentFrom, ok := m.(*model.TimeComponentFrom)
+	if !ok {
+		return result.Value{}, fmt.Errorf("internal error - expected TimeComponentFrom, got %T", m)
+	}
+	
+	precision := componentFrom.Precision
+	
+	// Check if the Time has sufficient precision for the requested component
+	if !precisionGreaterOrEqual(t.Precision, precision) {
+		return result.New(nil)
+	}
+	
+	switch precision {
+	case model.HOUR:
+		return result.New(int32(t.Date.Hour()))
+	case model.MINUTE:
+		return result.New(int32(t.Date.Minute()))
+	case model.SECOND:
+		return result.New(int32(t.Date.Second()))
+	case model.MILLISECOND:
+		return result.New(int32(t.Date.UnixMilli() % 1000))
+	default:
+		return result.Value{}, fmt.Errorf("internal error - unsupported Time component precision %v", precision)
+	}
 }

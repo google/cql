@@ -188,23 +188,81 @@ func (v *visitor) VisitParenthesizedTerm(ctx *cql.ParenthesizedTermContext) mode
 }
 
 func (v *visitor) VisitTimeUnitExpressionTerm(ctx *cql.TimeUnitExpressionTermContext) model.IExpression {
-	// parses statements like: "date from expression"
-	// TODO: b/301606416 - Implement time units where left is dateTimePrecision.
+	// parses statements like: "[year|month|day|hour|second|timezone] from [Date|DateTime|Time]" 
+	// "date from expression", "hour from expression", etc.
 	dtc := ctx.GetChild(0).(*cql.DateTimeComponentContext)
 	switch component := dtc.GetChild(0).(type) {
 	case antlr.TerminalNode:
 		dateTimeComponent := component.GetText()
+		operand := v.VisitExpression(ctx.ExpressionTerm())
+		
 		switch dateTimeComponent {
 		case "date":
 			return &model.ToDate{
 				UnaryExpression: &model.UnaryExpression{
-					Operand:    v.VisitExpression(ctx.ExpressionTerm()),
+					Operand:    operand,
 					Expression: model.ResultType(types.Date),
 				},
 			}
+		case "year":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.YEAR,
+			}
+		case "month":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.MONTH,
+			}
+		case "day":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.DAY,
+			}
+		case "hour":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.HOUR,
+			}
+		case "minute":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.MINUTE,
+			}
+		case "second":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.SECOND,
+			}
+		case "millisecond":
+			return &model.DateTimeComponentFrom{
+				UnaryExpression: &model.UnaryExpression{
+					Operand:    operand,
+					Expression: model.ResultType(types.Integer),
+				},
+				Precision: model.MILLISECOND,
+			}
 		}
 	}
-	return v.badExpression(fmt.Sprintf("unsupported date time component conversion (e.g. X in 'X from expression'). got: %s, only %v supported", dtc.GetText(), "date"), ctx)
+	return v.badExpression(fmt.Sprintf("unsupported date time component conversion (e.g. X in 'X from expression'). got: %s, supported: %v", dtc.GetText(), []string{"date", "year", "month", "day", "hour", "minute", "second", "millisecond"}), ctx)
 }
 
 func (v *visitor) VisitTupleSelectorTerm(ctx *cql.TupleSelectorTermContext) model.IExpression {
