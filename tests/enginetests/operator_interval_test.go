@@ -125,6 +125,266 @@ func TestEnd(t *testing.T) {
 	}
 }
 
+func TestIntersectInterval(t *testing.T) {
+	tests := []struct {
+		name       string
+		cql        string
+		wantModel  model.IExpression
+		wantResult result.Value
+	}{
+		// Basic integer interval tests
+		{
+			name: "Integer intervals with overlap",
+			cql:  "Interval[1, 5] intersect Interval[3, 7]",
+			wantModel: &model.Intersect{
+				BinaryExpression: &model.BinaryExpression{
+					Expression: model.ResultType(&types.Interval{PointType: types.Integer}),
+					Operands: []model.IExpression{
+						&model.Interval{
+							Low:           model.NewLiteral("1", types.Integer),
+							High:          model.NewLiteral("5", types.Integer),
+							LowInclusive:  true,
+							HighInclusive: true,
+							Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+						},
+						&model.Interval{
+							Low:           model.NewLiteral("3", types.Integer),
+							High:          model.NewLiteral("7", types.Integer),
+							LowInclusive:  true,
+							HighInclusive: true,
+							Expression:    model.ResultType(&types.Interval{PointType: types.Integer}),
+						},
+					},
+				},
+			},
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(3)),
+				High:          newOrFatal(t, int32(5)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Integer intervals with no overlap",
+			cql:        "Interval[1, 3] intersect Interval[5, 7]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Integer intervals touching at boundary",
+			cql:        "Interval[1, 3] intersect Interval[3, 7]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(3)),
+				High:          newOrFatal(t, int32(3)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Integer intervals with exclusive bounds",
+			cql:        "Interval[1, 3) intersect Interval(2, 7]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Identical integer intervals",
+			cql:        "Interval[1, 5] intersect Interval[1, 5]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(1)),
+				High:          newOrFatal(t, int32(5)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		// Null handling tests
+		{
+			name:       "Left interval is null",
+			cql:        "null as Interval<Integer> intersect Interval[3, 7]",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Right interval is null",
+			cql:        "Interval[1, 5] intersect null as Interval<Integer>",
+			wantResult: newOrFatal(t, nil),
+		},
+		{
+			name:       "Both intervals are null",
+			cql:        "null as Interval<Integer> intersect null as Interval<Integer>",
+			wantResult: newOrFatal(t, nil),
+		},
+		// Decimal interval tests
+		{
+			name:       "Decimal intervals with overlap",
+			cql:        "Interval[1.5, 5.5] intersect Interval[3.0, 7.0]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, 3.0),
+				High:          newOrFatal(t, 5.5),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Decimal},
+			}),
+		},
+		{
+			name:       "Decimal intervals with no overlap",
+			cql:        "Interval[1.0, 2.5] intersect Interval[3.0, 4.5]",
+			wantResult: newOrFatal(t, nil),
+		},
+		// Long interval tests
+		{
+			name:       "Long intervals with overlap",
+			cql:        "Interval[1L, 5L] intersect Interval[3L, 7L]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int64(3)),
+				High:          newOrFatal(t, int64(5)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Long},
+			}),
+		},
+		// Quantity interval tests
+		{
+			name:       "Quantity intervals with overlap",
+			cql:        "Interval[1'cm', 5'cm'] intersect Interval[3'cm', 7'cm']",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.Quantity{Value: 3, Unit: "cm"}),
+				High:          newOrFatal(t, result.Quantity{Value: 5, Unit: "cm"}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Quantity},
+			}),
+		},
+		// Date interval tests
+		{
+			name:       "Date intervals with overlap",
+			cql:        "Interval[@2020-01-01, @2020-06-01] intersect Interval[@2020-03-01, @2020-09-01]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.Date{Date: time.Date(2020, time.March, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+				High:          newOrFatal(t, result.Date{Date: time.Date(2020, time.June, 1, 0, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.DAY}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Date},
+			}),
+		},
+		{
+			name:       "Date intervals with no overlap",
+			cql:        "Interval[@2020-01-01, @2020-02-01] intersect Interval[@2020-03-01, @2020-04-01]",
+			wantResult: newOrFatal(t, nil),
+		},
+		// DateTime interval tests
+		{
+			name:       "DateTime intervals with overlap",
+			cql:        "Interval[@2020-01-01T10:00:00, @2020-01-01T15:00:00] intersect Interval[@2020-01-01T12:00:00, @2020-01-01T18:00:00]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, result.DateTime{Date: time.Date(2020, time.January, 1, 12, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.SECOND}),
+				High:          newOrFatal(t, result.DateTime{Date: time.Date(2020, time.January, 1, 15, 0, 0, 0, defaultEvalTimestamp.Location()), Precision: model.SECOND}),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.DateTime},
+			}),
+		},
+		// Edge cases
+		{
+			name:       "First interval completely contains second",
+			cql:        "Interval[1, 10] intersect Interval[3, 7]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(3)),
+				High:          newOrFatal(t, int32(7)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Second interval completely contains first",
+			cql:        "Interval[3, 7] intersect Interval[1, 10]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(3)),
+				High:          newOrFatal(t, int32(7)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		{
+			name:       "Intervals with mixed inclusivity",
+			cql:        "Interval[1, 5) intersect Interval(3, 7]",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(4)),
+				High:          newOrFatal(t, int32(4)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+		// Functional syntax
+		{
+			name:       "Functional syntax",
+			cql:        "Intersect(Interval[1, 5], Interval[3, 7])",
+			wantResult: newOrFatal(t, result.Interval{
+				Low:           newOrFatal(t, int32(3)),
+				High:          newOrFatal(t, int32(5)),
+				LowInclusive:  true,
+				HighInclusive: true,
+				StaticType:    &types.Interval{PointType: types.Integer},
+			}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantModel, getTESTRESULTModel(t, parsedLibs)); tc.wantModel != nil && diff != "" {
+				t.Errorf("Parse diff (-want +got):\n%s", diff)
+			}
+
+			results, err := interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err != nil {
+				t.Fatalf("Eval returned unexpected error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantResult, getTESTRESULT(t, results), protocmp.Transform()); diff != "" {
+				t.Errorf("Eval diff (-want +got)\n%v", diff)
+			}
+		})
+	}
+}
+
+func TestIntersectInterval_Error(t *testing.T) {
+	tests := []struct {
+		name                string
+		cql                 string
+		wantEvalErrContains string
+	}{
+		{
+			name:                "Quantity intervals with different units",
+			cql:                 "Interval[1'cm', 5'cm'] intersect Interval[3'm', 7'm']",
+			wantEvalErrContains: "intersect operator received Quantities with differing unit values",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := newFHIRParser(t)
+			parsedLibs, err := p.Libraries(context.Background(), wrapInLib(t, tc.cql), parser.Config{})
+			if err != nil {
+				t.Fatalf("Parse returned unexpected error: %v", err)
+			}
+
+			_, err = interpreter.Eval(context.Background(), parsedLibs, defaultInterpreterConfig(t, p))
+			if err == nil {
+				t.Fatal("Eval succeeded, wanted error")
+			}
+			if !strings.Contains(err.Error(), tc.wantEvalErrContains) {
+				t.Errorf("Unexpected evaluation error contents. got (%v), want contains (%v)", err.Error(), tc.wantEvalErrContains)
+			}
+		})
+	}
+}
+
 func TestStart(t *testing.T) {
 	tests := []struct {
 		name       string
