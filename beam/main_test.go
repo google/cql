@@ -110,7 +110,7 @@ func TestPipeline(t *testing.T) {
 			wantOutput: []*cbpb.BeamResult{},
 			wantError: []*cbpb.BeamError{
 				{
-					ErrorMessage: proto.String("failed during CQL evaluation: EvalTest 1.0, could not find ValueSet{urn:example:nosuchvalueset, } resource not loaded"),
+					ErrorMessage: proto.String("failed during CQL evaluation: EvalTest 1.0, failed to evaluate expression HasDiabetes: could not find ValueSet{urn:example:nosuchvalueset, } resource not loaded"),
 					SourceUri:    proto.String("bundle:bundle1"),
 				},
 			},

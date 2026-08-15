@@ -220,7 +220,7 @@ func (i *interpreter) evalLibrary(lib *model.Library, passedParams map[result.De
 			case *model.ExpressionDef:
 				res, err := i.evalExpression(s.GetExpression())
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to evaluate expression %s: %w", s.GetName(), err)
 				}
 				d := &reference.Def[result.Value]{
 					Name:             s.GetName(),
