@@ -1038,32 +1038,10 @@ func (i *interpreter) evalPopulationStdDevDecimal(m model.IUnaryExpression, oper
 		return result.Value{}, err
 	}
 
-	countValue, err := i.evalCount(m, operand)
-	if err != nil {
-		return result.Value{}, err
-	}
-	if result.IsNull(countValue) {
-		return result.New(nil)
-	}
-	count, err := result.ToInt32(countValue)
-	if err != nil {
-		return result.Value{}, err
-	}
-	if count == 0 {
-		return result.New(nil)
-	}
-	meanValue, err := i.evalAvg(m, operand)
-	if err != nil {
-		return result.Value{}, err
-	}
-	if result.IsNull(meanValue) {
-		return result.New(nil)
-	}
-	mean, err := result.ToFloat64(meanValue)
-	if err != nil {
-		return result.Value{}, err
-	}
-	var sum float64
+	var count float64
+	var mean float64
+	var m2 float64
+
 	for _, elem := range l {
 		if result.IsNull(elem) {
 			continue
@@ -1072,10 +1050,20 @@ func (i *interpreter) evalPopulationStdDevDecimal(m model.IUnaryExpression, oper
 		if err != nil {
 			return result.Value{}, err
 		}
-		sum += (v - mean) * (v - mean)
+
+		count++
+		delta := v - mean
+		mean += delta / count
+		delta2 := v - mean
+		m2 += delta * delta2
 	}
+
+	if count == 0 {
+		return result.New(nil)
+	}
+
 	// Round to 8 decimal places to match CQL expected precision
-	stdDev := math.Sqrt(sum / float64(count))
+	stdDev := math.Sqrt(m2 / count)
 	roundedStdDev := math.Round(stdDev*100000000) / 100000000
 	return result.New(roundedStdDev)
 }
